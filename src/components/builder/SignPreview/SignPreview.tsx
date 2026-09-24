@@ -1,0 +1,112 @@
+import { getBackgroundById } from "@/data/signBackgrounds";
+import { getIllustrationStyleById } from "@/data/illustrationStyles";
+import { SignBackgroundLayer } from "@/components/sign/SignBackgroundLayer/SignBackgroundLayer";
+import { SignFrame } from "@/components/sign/SignFrame/SignFrame";
+import type { SignDesignState } from "@/types/signDesign";
+import styles from "./SignPreview.module.scss";
+
+type SignPreviewSize = "compact" | "default" | "large" | "workspace" | "hero";
+
+type SignPreviewProps = {
+  design: SignDesignState;
+  size?: SignPreviewSize;
+  showMockDisclaimer?: boolean;
+  className?: string;
+};
+
+function textScaleForSize(size: SignPreviewSize): number {
+  switch (size) {
+    case "compact":
+      return 0.5;
+    case "hero":
+    case "workspace":
+      return 1.05;
+    case "large":
+      return 1.1;
+    default:
+      return 1;
+  }
+}
+
+export function SignPreview({
+  design,
+  size = "default",
+  showMockDisclaimer = false,
+  className,
+}: SignPreviewProps) {
+  const background = getBackgroundById(design.backgroundId);
+  const styleMeta = getIllustrationStyleById(design.illustration?.styleId ?? null);
+  const filterClass =
+    design.illustration?.source === "mockAi" && styleMeta
+      ? styles[styleMeta.previewFilter]
+      : "";
+
+  const { x, y, scale } = design.illustrationTransform;
+  const illustrationTransform = `translate(${x}%, ${y}%) scale(${scale})`;
+
+  const textPositionClass =
+    design.text.position === "top"
+      ? styles.textTop
+      : design.text.position === "center"
+        ? styles.textCenter
+        : styles.textBottom;
+
+  const altText = design.originalImage?.fileName
+    ? `תצוגה מקדימה — ${design.originalImage.fileName}`
+    : "תצוגה מקדימה של השלט";
+
+  return (
+    <div
+      className={[styles.root, styles[size], className].filter(Boolean).join(" ")}
+      role="img"
+      aria-label={altText}
+    >
+      <div className={styles.frameWrap}>
+        <SignFrame material={design.material}>
+          {background ? (
+            <SignBackgroundLayer variant={background.variant} />
+          ) : (
+            <div className={styles.emptyHint}>בחרו רקע כדי לראות תצוגה מלאה</div>
+          )}
+
+          {design.illustration && (
+            <div className={styles.illustrationLayer}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={design.illustration.objectUrl}
+                alt=""
+                aria-hidden="true"
+                className={[styles.illustrationImg, filterClass].filter(Boolean).join(" ")}
+                style={{ transform: illustrationTransform }}
+              />
+            </div>
+          )}
+
+          {design.text.value.trim() && (
+            <div
+              className={[
+                styles.textLayer,
+                textPositionClass,
+                styles.textAlignCenter,
+              ].join(" ")}
+              style={{
+                color: design.text.color,
+                fontSize: `${Math.round(design.text.size * textScaleForSize(size))}px`,
+              }}
+              aria-hidden="true"
+            >
+              {design.text.value}
+            </div>
+          )}
+        </SignFrame>
+      </div>
+
+      {showMockDisclaimer && design.illustration?.source === "mockAi" && (
+        <p className={styles.mockBadge} role="note">
+          תצוגת האיור היא דוגמה זמנית בלבד — לא מייצגת את איכות או המראה של האיור
+          שיווצר בשלב הבא.
+        </p>
+      )}
+    </div>
+  );
+}

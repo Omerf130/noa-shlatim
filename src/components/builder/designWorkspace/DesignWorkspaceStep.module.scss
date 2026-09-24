@@ -1,0 +1,60 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.header {
+  margin: 0;
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(1.375rem, 3vw, 1.625rem);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+}
+
+.tab {
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-1);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  @media (min-width: 400px) {
+    font-size: 0.9375rem;
+  }
+}
+
+.tabActive {
+  background: var(--color-surface);
+  color: var(--color-primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.panelArea {
+  min-height: 12rem;
+}

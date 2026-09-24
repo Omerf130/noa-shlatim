@@ -1,11 +1,11 @@
 import type { DesignPlaceholderVariant } from "@/data/designPlaceholders";
+import { SignBackgroundLayer } from "@/components/sign/SignBackgroundLayer/SignBackgroundLayer";
 import styles from "./SignDesignPlaceholder.module.scss";
 
 type SignDesignPlaceholderProps = {
   variant: DesignPlaceholderVariant;
   ariaLabel: string;
   className?: string;
-  /** When true, shows a small “sign frame” overlay for preview contexts */
   showSignFrame?: boolean;
 };
 
@@ -17,11 +17,11 @@ export function SignDesignPlaceholder({
 }: SignDesignPlaceholderProps) {
   return (
     <div
-      className={[styles.root, styles[variant], className].filter(Boolean).join(" ")}
+      className={[styles.root, className].filter(Boolean).join(" ")}
       role="img"
       aria-label={ariaLabel}
     >
-      <div className={styles.pattern} aria-hidden="true" />
+      <SignBackgroundLayer variant={variant} />
       {showSignFrame && (
         <div className={styles.signFrame} aria-hidden="true">
           <span className={styles.signKnob} />

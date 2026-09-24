@@ -1,0 +1,88 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.hint {
+  margin: 0;
+  padding: var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-md);
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 12rem;
+  padding: var(--space-6);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+  text-align: center;
+}
+
+.dragOver {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.icon {
+  color: var(--color-primary);
+}
+
+.dropText {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.previewBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.previewImg {
+  max-width: 100%;
+  max-height: 16rem;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.fileName {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: 0.9375rem;
+}

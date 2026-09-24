@@ -1,0 +1,184 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.panelIntro {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.textInput {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.range {
+  width: 100%;
+  min-height: 2.75rem;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatchSelected {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.segment {
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.segmentActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.thumbGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+
+  @media (min-width: 520px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+}
+
+.thumbSelected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.thumbVisual {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.thumbLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.materialRow {
+  display: grid;
+  gap: var(--space-3);
+
+  @media (min-width: 400px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.materialCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  min-height: 2.75rem;
+}
+
+.materialSelected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.materialSample {
+  width: 100%;
+  max-width: 5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.sampleWood {
+  background: linear-gradient(160deg, #e8d4bc, #a67c52);
+}
+
+.sampleMagnet {
+  background: linear-gradient(160deg, #ececec, #b0b0b0);
+}
+
+.materialTitle {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.materialDesc {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

@@ -7,11 +7,6 @@
   aspect-ratio: 4 / 5;
 }
 
-.pattern {
-  position: absolute;
-  inset: 0;
-}
-
 .signFrame {
   position: absolute;
   inset: 12%;
@@ -31,52 +26,4 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--color-border);
-}
-
-.warmSunset .pattern {
-  background: linear-gradient(
-    165deg,
-    #f5d5c8 0%,
-    #e8b4a0 45%,
-    #c46953 100%
-  );
-}
-
-.sageGarden .pattern {
-  background: linear-gradient(
-    145deg,
-    #dce8dd 0%,
-    #a8c4ab 50%,
-    #7a9e7e 100%
-  );
-}
-
-.terracottaClay .pattern {
-  background: linear-gradient(180deg, #f0e0d6 0%, #c46953 70%, #8f4f3d 100%);
-}
-
-.creamDots .pattern {
-  background-color: #faf3ea;
-  background-image: radial-gradient(
-    circle at 20% 30%,
-    rgba(196, 105, 83, 0.15) 2px,
-    transparent 2px
-  );
-  background-size: 18px 18px;
-}
-
-.softBlueHour .pattern {
-  background: linear-gradient(
-    200deg,
-    #e8eef3 0%,
-    #c5d4e0 40%,
-    #9eb3c4 100%
-  );
-}
-
-.playfulShapes .pattern {
-  background-color: #f3ede4;
-  background-image:
-    radial-gradient(circle at 80% 20%, var(--color-accent-soft) 0%, transparent 45%),
-    radial-gradient(circle at 15% 75%, var(--color-primary-soft) 0%, transparent 40%);
 }

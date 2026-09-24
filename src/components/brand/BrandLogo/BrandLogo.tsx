@@ -2,19 +2,18 @@ import Link from "next/link";
 import styles from "./BrandLogo.module.scss";
 
 type BrandLogoProps = {
-  /** Compact single-line lockup for tight headers */
   variant?: "default" | "compact";
   asLink?: boolean;
   className?: string;
 };
 
-function PawMark() {
+function PawMark({ className }: { className?: string }) {
   return (
     <svg
-      className={styles.paw}
+      className={className}
       viewBox="0 0 16 16"
-      width={14}
-      height={14}
+      width={12}
+      height={12}
       aria-hidden="true"
     >
       <ellipse cx="8" cy="11" rx="3.2" ry="2.6" fill="currentColor" />
@@ -22,6 +21,35 @@ function PawMark() {
       <circle cx="8" cy="5" r="1.7" fill="currentColor" />
       <circle cx="11.5" cy="6.5" r="1.6" fill="currentColor" />
     </svg>
+  );
+}
+
+function NameWordmark() {
+  return (
+    <span className={styles.name} aria-hidden="false">
+      <span className={styles.letter} data-letter="nun">
+        נ
+      </span>
+      <span className={styles.letter} data-letter="vav">
+        ו
+      </span>
+      <span className={styles.letter} data-letter="he">
+        ע
+        <PawMark className={styles.pawOnHe} />
+      </span>
+      <span className={styles.letter} data-letter="heh">
+        ה
+      </span>
+      <svg className={styles.underline} viewBox="0 0 120 12" aria-hidden="true">
+        <path
+          d="M4 8 C 30 2, 50 10, 75 6 S 110 4, 116 7"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -33,10 +61,7 @@ function LogoContent({ variant }: { variant: "default" | "compact" }) {
         variant === "compact" ? styles.compact : "",
       ].join(" ")}
     >
-      <span className={styles.primaryLine}>
-        <span className={styles.name}>נועה</span>
-        <PawMark />
-      </span>
+      <NameWordmark />
       <span className={styles.tagline}>שלטים לדלת</span>
     </span>
   );

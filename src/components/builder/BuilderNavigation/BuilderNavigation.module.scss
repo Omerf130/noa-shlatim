@@ -1,0 +1,19 @@
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
