@@ -1,15 +1,13 @@
 .frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: var(--sign-aspect-ratio, 3 / 2);
   max-height: 100%;
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3) var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-2);
   background: linear-gradient(145deg, #faf7f2, #ebe4da);
-  border: 2px solid var(--color-border);
-  box-shadow:
-    var(--shadow-lg),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
 }
 
 .knob {
@@ -30,21 +28,28 @@
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: calc(var(--radius-sm) - 1px);
   overflow: hidden;
   background: var(--color-surface-muted);
-  box-shadow: inset 0 2px 8px rgba(31, 27, 24, 0.06);
+  box-shadow: inset 0 1px 4px rgba(31, 27, 24, 0.08);
 }
 
 .wood {
-  background: linear-gradient(160deg, #e8d4bc 0%, #c9a67a 45%, #a67c52 100%);
-  border-color: #8f6848;
+  padding: var(--space-2) var(--space-2) var(--space-2);
+  background: linear-gradient(165deg, #e8d4bc 0%, #c9a67a 50%, #a67c52 100%);
+  border-color: #9a7048;
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .magnet {
-  background: linear-gradient(160deg, #ececec 0%, #c8c8c8 100%);
-  border-color: #999;
-  box-shadow:
-    var(--shadow-lg),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 2px var(--space-1) var(--space-1);
+  background: linear-gradient(180deg, #f2f2f2 0%, #d4d4d4 100%);
+  border-color: #b8b8b8;
+  box-shadow: var(--shadow-sm);
+}
+
+.magnet .canvas {
+  box-shadow: inset 0 0 0 1px rgba(31, 27, 24, 0.06);
 }

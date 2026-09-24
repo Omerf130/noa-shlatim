@@ -3,6 +3,19 @@
   inset: 0;
 }
 
+.imageWrap {
+  overflow: hidden;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  user-select: none;
+}
+
 .warmSunset {
   background: linear-gradient(165deg, #f5d5c8 0%, #e8b4a0 45%, #c46953 100%);
 }

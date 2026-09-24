@@ -20,7 +20,7 @@ export function SignFrame({ material, children, className }: SignFrameProps) {
         .filter(Boolean)
         .join(" ")}
     >
-      <span className={styles.knob} aria-hidden="true" />
+      {material === "wood" && <span className={styles.knob} aria-hidden="true" />}
       <div className={styles.canvas}>{children}</div>
     </div>
   );

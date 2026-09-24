@@ -4,6 +4,16 @@ export type Material = "wood" | "magnet";
 
 export type TextPosition = "top" | "center" | "bottom";
 
+/** Stable ID for order/print — maps to loaded sign text fonts in the app. */
+export type SignTextFontStyleId = "clean" | "soft" | "personal";
+
+/** Stable multicolor preset — maps to curated gradient in preview/print. */
+export type SignTextMulticolorId = "rainbow" | "sunset" | "ocean" | "pastel";
+
+export type TextColor =
+  | { kind: "solid"; hex: string }
+  | { kind: "multicolor"; preset: SignTextMulticolorId };
+
 export type LocalImageRef = {
   objectUrl: string;
   fileName: string;
@@ -20,9 +30,10 @@ export type IllustrationAsset = {
 
 export type TextDesign = {
   value: string;
-  color: string;
+  color: TextColor;
   size: number;
   position: TextPosition;
+  fontStyle: SignTextFontStyleId;
 };
 
 export type IllustrationTransform = {
@@ -43,11 +54,14 @@ export type SignDesignState = {
   material: Material | null;
 };
 
+export const defaultTextColor: TextColor = { kind: "solid", hex: "#1f1b18" };
+
 export const defaultTextDesign: TextDesign = {
   value: "",
-  color: "#1f1b18",
+  color: defaultTextColor,
   size: 24,
   position: "bottom",
+  fontStyle: "clean",
 };
 
 export const defaultIllustrationTransform: IllustrationTransform = {

@@ -1,5 +1,10 @@
 import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
+import { getSignTextFontOption } from "@/data/signTextFonts";
+import { isMulticolorTextColor } from "@/data/signTextColors";
+import { signTextFontFamily } from "@/lib/fonts/signTextFonts";
+import { multicolorTextStyleClass } from "@/lib/sign/multicolorTextPresets";
+import { solidTextColorCss } from "@/lib/sign/textColorStyle";
 import { SignBackgroundLayer } from "@/components/sign/SignBackgroundLayer/SignBackgroundLayer";
 import { SignFrame } from "@/components/sign/SignFrame/SignFrame";
 import type { SignDesignState } from "@/types/signDesign";
@@ -51,6 +56,13 @@ export function SignPreview({
         ? styles.textCenter
         : styles.textBottom;
 
+  const fontMeta = getSignTextFontOption(design.text.fontStyle);
+  const textColor = design.text.color;
+  const textMulticolor = isMulticolorTextColor(textColor);
+  const multicolorClass = textMulticolor
+    ? styles[multicolorTextStyleClass(textColor.preset)]
+    : null;
+
   const altText = design.originalImage?.fileName
     ? `תצוגה מקדימה — ${design.originalImage.fileName}`
     : "תצוגה מקדימה של השלט";
@@ -64,7 +76,7 @@ export function SignPreview({
       <div className={styles.frameWrap}>
         <SignFrame material={design.material}>
           {background ? (
-            <SignBackgroundLayer variant={background.variant} />
+            <SignBackgroundLayer background={background} />
           ) : (
             <div className={styles.emptyHint}>בחרו רקע כדי לראות תצוגה מלאה</div>
           )}
@@ -88,10 +100,14 @@ export function SignPreview({
                 styles.textLayer,
                 textPositionClass,
                 styles.textAlignCenter,
+                textMulticolor ? styles.textMulticolorBase : styles.textSolid,
+                multicolorClass,
               ].join(" ")}
               style={{
-                color: design.text.color,
+                color: textMulticolor ? undefined : solidTextColorCss(design.text.color),
                 fontSize: `${Math.round(design.text.size * textScaleForSize(size))}px`,
+                fontFamily: signTextFontFamily(design.text.fontStyle),
+                fontWeight: fontMeta.fontWeight,
               }}
               aria-hidden="true"
             >

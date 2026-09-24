@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { signTextFontClassNames } from "@/lib/fonts/signTextFontLoader";
 import { Rubik } from "next/font/google";
 import "./globals.scss";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={rubik.variable}>
+    <html lang="he" dir="rtl" className={`${rubik.variable} ${signTextFontClassNames}`}>
       <body>{children}</body>
     </html>
   );

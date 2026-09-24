@@ -1,16 +1,13 @@
 "use client";
 
 import { useBuilder } from "@/components/builder/BuilderContext";
+import {
+  signTextSolidColors,
+  solidTextColor,
+  textColorsEqual,
+} from "@/data/signTextColors";
 import type { TextPosition } from "@/types/signDesign";
 import styles from "./stepShared.module.scss";
-
-const TEXT_COLORS = [
-  { value: "#1f1b18", label: "פחם" },
-  { value: "#ffffff", label: "לבן" },
-  { value: "#c46953", label: "טרקוטה" },
-  { value: "#5c5752", label: "אפור חם" },
-  { value: "#2d4a3e", label: "ירוק כהה" },
-];
 
 const POSITIONS: { value: TextPosition; label: string }[] = [
   { value: "top", label: "למעלה" },
@@ -67,20 +64,25 @@ export function TextStep() {
           צבע
         </span>
         <div className={styles.swatches} role="group" aria-labelledby="text-color-label">
-          {TEXT_COLORS.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              className={[
-                styles.swatch,
-                text.color === c.value ? styles.swatchSelected : "",
-              ].join(" ")}
-              style={{ backgroundColor: c.value }}
-              aria-label={c.label}
-              aria-pressed={text.color === c.value}
-              onClick={() => dispatch({ type: "SET_TEXT", patch: { color: c.value } })}
-            />
-          ))}
+          {signTextSolidColors.map((c) => {
+            const colorValue = solidTextColor(c.hex);
+            const selected = textColorsEqual(text.color, colorValue);
+            return (
+              <button
+                key={c.hex}
+                type="button"
+                className={[styles.swatch, selected ? styles.swatchSelected : ""].join(
+                  " ",
+                )}
+                style={{ backgroundColor: c.hex }}
+                aria-label={c.label}
+                aria-pressed={selected}
+                onClick={() =>
+                  dispatch({ type: "SET_TEXT", patch: { color: colorValue } })
+                }
+              />
+            );
+          })}
         </div>
       </div>
 

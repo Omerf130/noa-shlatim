@@ -1,6 +1,9 @@
-import { signBackgrounds, type SignBackgroundVariant } from "./signBackgrounds";
+import {
+  signBackgroundVariantItems,
+  type SignBackgroundVariant,
+} from "./signBackgroundVariants";
 
-/** Homepage grid — derived from shared background catalog. */
+/** Homepage grid — legacy CSS variants; visual pass later. */
 export type DesignPlaceholderVariant = SignBackgroundVariant;
 
 export type DesignPlaceholderItem = {
@@ -9,10 +12,9 @@ export type DesignPlaceholderItem = {
   variant: DesignPlaceholderVariant;
 };
 
-export const designPlaceholderItems: DesignPlaceholderItem[] = signBackgrounds.map(
-  (bg) => ({
+export const designPlaceholderItems: DesignPlaceholderItem[] =
+  signBackgroundVariantItems.map((bg) => ({
     id: bg.id,
     ariaLabel: `עיצוב רקע — ${bg.name}`,
     variant: bg.variant,
-  }),
-);
+  }));

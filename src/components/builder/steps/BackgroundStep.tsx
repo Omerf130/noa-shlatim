@@ -29,7 +29,7 @@ export function BackgroundStep() {
             title={bg.name}
           >
             <div className={[styles.bgThumb, bgStyles.thumbInner].join(" ")}>
-              <SignBackgroundLayer variant={bg.variant} />
+              <SignBackgroundLayer background={bg} />
             </div>
           </ChoiceCard>
         ))}

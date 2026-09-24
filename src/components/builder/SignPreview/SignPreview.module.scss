@@ -23,6 +23,12 @@
 
 .frameWrap {
   width: 100%;
+  filter: drop-shadow(0 8px 24px rgba(31, 27, 24, 0.12));
+}
+
+.workspace .frameWrap,
+.hero .frameWrap {
+  filter: drop-shadow(0 12px 32px rgba(31, 27, 24, 0.14));
 }
 
 .mockClassic {
@@ -59,13 +65,70 @@
 
 .textLayer {
   position: absolute;
-  inset-inline: var(--space-4);
+  inset-inline: var(--space-3);
   z-index: 2;
-  font-weight: 600;
-  line-height: 1.2;
-  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+  line-height: 1.25;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   pointer-events: none;
   word-break: break-word;
+}
+
+.textSolid {
+  text-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.7),
+    0 1px 5px rgba(31, 27, 24, 0.22);
+}
+
+.textMulticolorBase {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: none;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.textMulticolorRainbow {
+  background-image: linear-gradient(
+    95deg,
+    #1d4ed8 0%,
+    #7c3aed 34%,
+    #db2777 68%,
+    #ea580c 100%
+  );
+}
+
+.textMulticolorSunset {
+  background-image: linear-gradient(
+    95deg,
+    #9f1239 0%,
+    #e11d48 38%,
+    #f97316 72%,
+    #fbbf24 100%
+  );
+}
+
+.textMulticolorOcean {
+  background-image: linear-gradient(
+    95deg,
+    #1e3a8a 0%,
+    #0891b2 45%,
+    #059669 100%
+  );
+}
+
+.textMulticolorPastel {
+  background-image: linear-gradient(
+    95deg,
+    #ec4899 0%,
+    #a855f7 32%,
+    #38bdf8 64%,
+    #fb7185 100%
+  );
 }
 
 .textTop {
