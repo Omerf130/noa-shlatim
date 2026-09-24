@@ -175,3 +175,57 @@
   font-size: 0.9375rem;
   line-height: 1.55;
 }
+
+.generateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.generateActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.errorText {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-danger, #b42318);
+  line-height: 1.5;
+}
+
+.aiPreview {
+  width: 100%;
+  max-width: 280px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: repeating-conic-gradient(#e8e8e8 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+}
+
+.aiPreviewImg {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.mockCaption {
+  margin: var(--space-3) 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+  margin-inline-end: var(--space-2);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

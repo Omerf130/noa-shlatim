@@ -8,6 +8,7 @@ type ChoiceCardProps = {
   title: string;
   description?: string;
   children?: React.ReactNode;
+  disabled?: boolean;
 };
 
 export function ChoiceCard({
@@ -18,16 +19,24 @@ export function ChoiceCard({
   title,
   description,
   children,
+  disabled = false,
 }: ChoiceCardProps) {
   return (
     <label
-      className={[styles.card, checked ? styles.selected : ""].filter(Boolean).join(" ")}
+      className={[
+        styles.card,
+        checked ? styles.selected : "",
+        disabled ? styles.disabled : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <input
         type="radio"
         name={name}
         value={value}
         checked={checked}
+        disabled={disabled}
         onChange={() => onChange(value)}
         className={styles.input}
       />

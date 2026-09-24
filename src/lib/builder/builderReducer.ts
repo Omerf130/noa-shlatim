@@ -1,7 +1,6 @@
 import type { BuilderState, BuilderStepId } from "@/types/builder";
 import type {
   CreationMode,
-  IllustrationAsset,
   IllustrationTransform,
   LocalImageRef,
   Material,
@@ -16,12 +15,17 @@ import {
 import { initialBuilderUiState } from "@/types/builder";
 import { getNextStep, getPrevStep } from "./steps";
 import { revokeObjectUrl } from "./objectUrl";
+import { revokeIllustrationIfNeeded } from "./revokeIllustrationUrl";
 
 export type BuilderAction =
   | { type: "SET_CREATION_MODE"; mode: CreationMode }
   | { type: "SET_UPLOAD"; image: LocalImageRef }
   | { type: "CLEAR_UPLOAD" }
   | { type: "SET_ILLUSTRATION_STYLE"; styleId: string }
+  | { type: "SET_AI_ILLUSTRATION"; objectUrl: string }
+  | { type: "SET_MOCK_ILLUSTRATION" }
+  | { type: "AI_GENERATION_START" }
+  | { type: "AI_GENERATION_ERROR"; errorCode: string; userMessage: string }
   | { type: "SET_BACKGROUND"; backgroundId: string }
   | { type: "SET_TEXT"; patch: Partial<TextDesign> }
   | { type: "SET_ILLUSTRATION_TRANSFORM"; patch: Partial<IllustrationTransform> }
@@ -56,6 +60,17 @@ function revokeDesignUrls(design: SignDesignState): void {
   urls.forEach(revokeObjectUrl);
 }
 
+function clearPhotoPathIllustration(state: BuilderState): SignDesignState {
+  revokeIllustrationIfNeeded(
+    state.design.illustration,
+    state.design.originalImage?.objectUrl,
+  );
+  return {
+    ...state.design,
+    illustration: null,
+  };
+}
+
 export function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
   switch (action.type) {
     case "SET_CREATION_MODE": {
@@ -66,18 +81,18 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       return {
         ...state,
         design: { ...resetAfterModeChange(), creationMode: action.mode },
-        ui: { ...state.ui, currentStepId: "start", checkoutMessageVisible: false },
+        ui: { ...initialBuilderUiState, currentStepId: "start" },
       };
     }
 
     case "SET_UPLOAD": {
       revokeDesignUrls(state.design);
       const mode = state.design.creationMode;
-      let illustration: IllustrationAsset | null = null;
+      let illustration = null;
       if (mode === "illustration") {
         illustration = {
           objectUrl: action.image.objectUrl,
-          source: "upload",
+          source: "upload" as const,
           styleId: null,
         };
       }
@@ -86,7 +101,12 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         design: {
           ...state.design,
           originalImage: action.image,
+          photoIllustrationStyleId: null,
           illustration,
+        },
+        ui: {
+          ...state.ui,
+          aiIllustration: { status: "idle" },
         },
       };
     }
@@ -98,23 +118,107 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         design: {
           ...state.design,
           originalImage: null,
+          photoIllustrationStyleId: null,
           illustration: null,
+        },
+        ui: {
+          ...state.ui,
+          aiIllustration: { status: "idle" },
         },
       };
     }
 
     case "SET_ILLUSTRATION_STYLE": {
       if (!state.design.originalImage) return state;
-      const illustration: IllustrationAsset = {
-        objectUrl: state.design.originalImage.objectUrl,
-        source: "mockAi",
-        styleId: action.styleId,
-      };
+      const styleChanged = state.design.photoIllustrationStyleId !== action.styleId;
+      let design = state.design;
+      if (styleChanged) {
+        design = clearPhotoPathIllustration(state);
+        design = { ...design, photoIllustrationStyleId: action.styleId };
+        return {
+          ...state,
+          design,
+          ui: {
+            ...state.ui,
+            aiIllustration: { status: "idle" },
+          },
+        };
+      }
       return {
         ...state,
-        design: { ...state.design, illustration },
+        design: { ...state.design, photoIllustrationStyleId: action.styleId },
       };
     }
+
+    case "SET_AI_ILLUSTRATION": {
+      const styleId = state.design.photoIllustrationStyleId;
+      if (!styleId) return state;
+      revokeIllustrationIfNeeded(
+        state.design.illustration,
+        state.design.originalImage?.objectUrl,
+      );
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          illustration: {
+            objectUrl: action.objectUrl,
+            source: "ai",
+            styleId,
+          },
+        },
+        ui: {
+          ...state.ui,
+          aiIllustration: { status: "success" },
+        },
+      };
+    }
+
+    case "SET_MOCK_ILLUSTRATION": {
+      const styleId = state.design.photoIllustrationStyleId;
+      if (!state.design.originalImage || !styleId) return state;
+      revokeIllustrationIfNeeded(
+        state.design.illustration,
+        state.design.originalImage.objectUrl,
+      );
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          illustration: {
+            objectUrl: state.design.originalImage.objectUrl,
+            source: "mockAi",
+            styleId,
+          },
+        },
+        ui: {
+          ...state.ui,
+          aiIllustration: { status: "success" },
+        },
+      };
+    }
+
+    case "AI_GENERATION_START":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          aiIllustration: { status: "generating" },
+        },
+      };
+
+    case "AI_GENERATION_ERROR":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          aiIllustration: {
+            status: "error",
+            errorCode: action.errorCode,
+            userMessage: action.userMessage,
+          },
+        },
+      };
 
     case "SET_BACKGROUND":
       return {

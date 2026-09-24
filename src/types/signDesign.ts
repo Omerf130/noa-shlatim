@@ -10,7 +10,7 @@ export type LocalImageRef = {
   mimeType: string;
 };
 
-export type IllustrationSource = "upload" | "mockAi";
+export type IllustrationSource = "upload" | "mockAi" | "ai";
 
 export type IllustrationAsset = {
   objectUrl: string;
@@ -34,6 +34,8 @@ export type IllustrationTransform = {
 export type SignDesignState = {
   creationMode: CreationMode | null;
   originalImage: LocalImageRef | null;
+  /** Selected style on photo path (before / after generation). */
+  photoIllustrationStyleId: string | null;
   illustration: IllustrationAsset | null;
   backgroundId: string | null;
   text: TextDesign;
@@ -57,6 +59,7 @@ export const defaultIllustrationTransform: IllustrationTransform = {
 export const initialSignDesignState: SignDesignState = {
   creationMode: null,
   originalImage: null,
+  photoIllustrationStyleId: null,
   illustration: null,
   backgroundId: null,
   text: defaultTextDesign,

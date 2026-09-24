@@ -17,7 +17,7 @@ export function validateImageFile(file: File): string | null {
   return null;
 }
 
-export function createObjectUrl(file: File): string {
+export function createObjectUrl(file: File | Blob): string {
   return URL.createObjectURL(file);
 }
 

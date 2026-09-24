@@ -13,7 +13,7 @@ import styles from "./ImageUpload.module.scss";
 
 type ImageUploadProps = {
   value: LocalImageRef | null;
-  onChange: (image: LocalImageRef | null) => void;
+  onChange: (image: LocalImageRef | null, sourceFile?: File | null) => void;
   hint?: string;
 };
 
@@ -33,11 +33,14 @@ export function ImageUpload({ value, onChange, hint }: ImageUploadProps) {
       setError(null);
       if (value) revokeObjectUrl(value.objectUrl);
       const objectUrl = createObjectUrl(file);
-      onChange({
-        objectUrl,
-        fileName: file.name,
-        mimeType: file.type,
-      });
+      onChange(
+        {
+          objectUrl,
+          fileName: file.name,
+          mimeType: file.type,
+        },
+        file,
+      );
     },
     [onChange, value],
   );
@@ -57,7 +60,7 @@ export function ImageUpload({ value, onChange, hint }: ImageUploadProps) {
 
   const remove = () => {
     if (value) revokeObjectUrl(value.objectUrl);
-    onChange(null);
+    onChange(null, null);
     setError(null);
   };
 

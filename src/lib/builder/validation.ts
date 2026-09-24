@@ -8,11 +8,7 @@ export function canProceed(step: BuilderStepId, design: SignDesignState): boolea
     case "upload":
       return design.originalImage !== null;
     case "illustrationStyle":
-      return (
-        design.illustration !== null &&
-        design.illustration.source === "mockAi" &&
-        design.illustration.styleId !== null
-      );
+      return canLeaveIllustrationStyleStep(design);
     case "design":
       return isDesignWorkspaceComplete(design);
     case "review":
@@ -20,6 +16,13 @@ export function canProceed(step: BuilderStepId, design: SignDesignState): boolea
     default:
       return false;
   }
+}
+
+export function canLeaveIllustrationStyleStep(design: SignDesignState): boolean {
+  if (!design.photoIllustrationStyleId) return false;
+  if (design.illustration?.source === "ai") return true;
+  if (design.illustration?.source === "mockAi") return true;
+  return false;
 }
 
 export function isDesignWorkspaceComplete(design: SignDesignState): boolean {
@@ -33,8 +36,11 @@ export function isDesignComplete(design: SignDesignState): boolean {
   if (!design.creationMode || !design.originalImage || !design.illustration) {
     return false;
   }
-  if (design.creationMode === "photo" && !design.illustration.styleId) {
-    return false;
+  if (design.creationMode === "photo") {
+    if (!design.photoIllustrationStyleId) return false;
+    if (design.illustration.source !== "ai" && design.illustration.source !== "mockAi") {
+      return false;
+    }
   }
   return isDesignWorkspaceComplete(design);
 }
@@ -50,7 +56,7 @@ export function stepValidationHint(
     case "upload":
       return "העלו תמונה כדי להמשיך.";
     case "illustrationStyle":
-      return "בחרו סגנון איור לדוגמה.";
+      return "בחרו סגנון, צרו איור, ואז המשיכו.";
     case "design": {
       const missing: string[] = [];
       if (!design.backgroundId) missing.push("רקע");

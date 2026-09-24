@@ -7,9 +7,16 @@ export type BuilderStepId =
   | "design"
   | "review";
 
+export type AiGenerationStatus = "idle" | "generating" | "success" | "error";
+
 export type BuilderUiState = {
   currentStepId: BuilderStepId;
   checkoutMessageVisible: boolean;
+  aiIllustration: {
+    status: AiGenerationStatus;
+    errorCode?: string;
+    userMessage?: string;
+  };
 };
 
 export type BuilderState = {
@@ -20,4 +27,7 @@ export type BuilderState = {
 export const initialBuilderUiState: BuilderUiState = {
   currentStepId: "start",
   checkoutMessageVisible: false,
+  aiIllustration: {
+    status: "idle",
+  },
 };

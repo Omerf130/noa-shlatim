@@ -12,7 +12,17 @@ export function ReviewStep() {
 
   const pathLabel =
     design.creationMode === "photo" ? "מתמונה רגילה" : "מאיור קיים";
-  const styleName = getIllustrationStyleById(design.illustration?.styleId ?? null)?.name;
+  const styleName = getIllustrationStyleById(
+    design.photoIllustrationStyleId ?? design.illustration?.styleId ?? null,
+  )?.name;
+  const illustrationKind =
+    design.creationMode === "photo"
+      ? design.illustration?.source === "ai"
+        ? "איור AI"
+        : design.illustration?.source === "mockAi"
+          ? "דוגמה (QA)"
+          : null
+      : null;
   const bgName = getBackgroundById(design.backgroundId)?.name;
   const materialLabel =
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
@@ -31,8 +41,11 @@ export function ReviewStep() {
         </div>
         {design.creationMode === "photo" && styleName && (
           <div className={styles.summaryItem}>
-            <dt>סגנון (דוגמה)</dt>
-            <dd>{styleName}</dd>
+            <dt>סגנון איור</dt>
+            <dd>
+              {styleName}
+              {illustrationKind ? ` · ${illustrationKind}` : ""}
+            </dd>
           </div>
         )}
         <div className={styles.summaryItem}>
