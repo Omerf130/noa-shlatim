@@ -1,0 +1,24 @@
+.header {
+  margin-bottom: var(--space-10);
+  max-width: 36rem;
+}
+
+.center {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(1.625rem, 4vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}

@@ -1,0 +1,34 @@
+@use "../../../styles/mixins" as *;
+
+.section {
+  @include section-padding;
+  background: var(--color-surface-muted);
+}
+
+.heading {
+  max-width: 42rem;
+}
+
+.grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+}
+
+.item {
+  min-width: 0;
+}
+
+.ctaWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-10);
+}
