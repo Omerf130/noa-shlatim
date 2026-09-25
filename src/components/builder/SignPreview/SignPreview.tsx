@@ -10,13 +10,20 @@ import { SignFrame } from "@/components/sign/SignFrame/SignFrame";
 import type { SignDesignState } from "@/types/signDesign";
 import styles from "./SignPreview.module.scss";
 
-type SignPreviewSize = "compact" | "default" | "large" | "workspace" | "hero";
+type SignPreviewSize =
+  | "compact"
+  | "default"
+  | "large"
+  | "workspace"
+  | "hero"
+  | "showcase";
 
 type SignPreviewProps = {
   design: SignDesignState;
   size?: SignPreviewSize;
   showMockDisclaimer?: boolean;
   className?: string;
+  ariaLabel?: string;
 };
 
 function textScaleForSize(size: SignPreviewSize): number {
@@ -28,6 +35,8 @@ function textScaleForSize(size: SignPreviewSize): number {
       return 1.05;
     case "large":
       return 1.1;
+    case "showcase":
+      return 0.72;
     default:
       return 1;
   }
@@ -38,6 +47,7 @@ export function SignPreview({
   size = "default",
   showMockDisclaimer = false,
   className,
+  ariaLabel,
 }: SignPreviewProps) {
   const background = getBackgroundById(design.backgroundId);
   const styleMeta = getIllustrationStyleById(design.illustration?.styleId ?? null);
@@ -71,7 +81,7 @@ export function SignPreview({
     <div
       className={[styles.root, styles[size], className].filter(Boolean).join(" ")}
       role="img"
-      aria-label={altText}
+      aria-label={ariaLabel ?? altText}
     >
       <div className={styles.frameWrap}>
         <SignFrame material={design.material}>

@@ -7,6 +7,12 @@
   --color-primary-soft: rgba(196, 105, 83, 0.12);
   --color-accent: #7a9e7e;
   --color-accent-soft: rgba(122, 158, 126, 0.15);
+  --color-brand-green: #2d4a3e;
+  --color-brand-green-hover: #243d32;
+  --color-brand-green-soft: rgba(45, 74, 62, 0.1);
+  --color-terracotta: #c46953;
+  --font-home-display: var(--font-rubik), system-ui, sans-serif;
+  --section-y: clamp(3.5rem, 8vw, 5.5rem);
   --color-text: #1f1b18;
   --color-text-muted: #5c5752;
   --color-border: #e8e2da;

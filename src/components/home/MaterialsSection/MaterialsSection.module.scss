@@ -1,69 +1,63 @@
-@use "../../../styles/mixins" as *;
-
 .section {
-  @include section-padding;
-  background: var(--color-surface);
+  background: var(--color-bg);
 }
 
 .heading {
-  margin-inline: auto;
+  margin-bottom: var(--space-10);
+
+  :global(h2) {
+    font-family: var(--font-home-display);
+    color: var(--color-brand-green);
+  }
 }
 
-.list {
+.grid {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 
-  @media (min-width: 520px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-10);
   }
 }
 
 .tile {
   text-align: center;
-  padding: var(--space-6);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
 }
 
-.preview {
-  width: 100%;
-  max-width: 8rem;
-  aspect-ratio: 1;
+.previewWrap {
+  max-width: 280px;
   margin: 0 auto var(--space-5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
 }
 
-.wood {
-  background:
-    repeating-linear-gradient(
-      92deg,
-      rgba(139, 94, 60, 0.15) 0,
-      rgba(139, 94, 60, 0.15) 2px,
-      transparent 2px,
-      transparent 8px
-    ),
-    linear-gradient(180deg, #d4a574 0%, #a67c52 100%);
+.frame {
+  width: 100%;
 }
 
-.magnet {
-  background: linear-gradient(145deg, #ececec 0%, #b8b8b8 100%);
-  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.4);
+.faceHint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    var(--color-surface-muted) 0%,
+    var(--color-surface) 100%
+  );
 }
 
 .name {
   margin: 0 0 var(--space-2);
-  font-size: 1.125rem;
+  font-size: 1.375rem;
   font-weight: 700;
+  color: var(--color-brand-green);
 }
 
 .desc {
-  margin: 0;
+  margin: 0 auto;
+  max-width: 22rem;
   font-size: 0.9375rem;
+  line-height: 1.6;
   color: var(--color-text-muted);
-  line-height: 1.55;
 }

@@ -1,17 +1,12 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
+import { homeNavLinks, homePrimaryCta } from "@/data/homeNav";
 import { Button } from "@/components/ui/Button/Button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import styles from "./Header.module.scss";
-
-const navLinks = [
-  { href: "/", label: "דף הבית" },
-  { href: "#how-it-works", label: "איך זה עובד" },
-  { href: "#designs", label: "עיצובים" },
-] as const;
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,8 +51,8 @@ export function Header() {
 
         <nav className={styles.desktopNav} aria-label="ניווט ראשי">
           <ul className={styles.navList}>
-            {navLinks.map((link) => (
-              <li key={link.href}>
+            {homeNavLinks.map((link) => (
+              <li key={link.href + link.label}>
                 <Link href={link.href} className={styles.navLink}>
                   {link.label}
                 </Link>
@@ -67,8 +62,8 @@ export function Header() {
         </nav>
 
         <div className={styles.actions}>
-          <Button href="/create" className={styles.desktopCta}>
-            מתחילים לעצב
+          <Button href={homePrimaryCta.href} variant="brand" className={styles.desktopCta}>
+            {homePrimaryCta.label}
           </Button>
 
           <button
@@ -95,8 +90,8 @@ export function Header() {
         hidden={!menuOpen}
       >
         <ul className={styles.mobileList}>
-          {navLinks.map((link) => (
-            <li key={link.href}>
+          {homeNavLinks.map((link) => (
+            <li key={link.href + link.label}>
               <Link
                 href={link.href}
                 className={styles.mobileLink}
@@ -108,8 +103,13 @@ export function Header() {
             </li>
           ))}
           <li className={styles.mobileCtaItem}>
-            <Button href="/create" className={styles.mobileCta} onClick={onNavClick}>
-              מתחילים לעצב
+            <Button
+              href={homePrimaryCta.href}
+              variant="brand"
+              className={styles.mobileCta}
+              onClick={onNavClick}
+            >
+              {homePrimaryCta.label}
             </Button>
           </li>
         </ul>
