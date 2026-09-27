@@ -13,6 +13,10 @@ import type { SignTextMulticolorId } from "@/types/signDesign";
 import { signTextFontOptions } from "@/data/signTextFonts";
 import { signTextFontFamily } from "@/lib/fonts/signTextFonts";
 import type { TextPosition } from "@/types/signDesign";
+import { DecorationPicker } from "@/components/builder/designWorkspace/shared/DecorationPicker";
+import { SelectedDecorationControls } from "@/components/builder/designWorkspace/shared/SelectedDecorationControls";
+import { getSelectedDecorationId } from "@/lib/sign/designSelection";
+import decorStyles from "@/components/builder/designWorkspace/shared/decorationControls.module.scss";
 import { useState } from "react";
 import styles from "./mobileEditor.module.scss";
 
@@ -36,6 +40,13 @@ export function MobileTextControls() {
   const { state, dispatch } = useBuilder();
   const { text } = state.design;
   const [active, setActive] = useState<TextSubtool>("text");
+  const selectedDecorationId = getSelectedDecorationId(
+    state.ui.designWorkspace.selectedElement,
+  );
+
+  if (selectedDecorationId) {
+    return <SelectedDecorationControls />;
+  }
 
   return (
     <div>
@@ -58,18 +69,25 @@ export function MobileTextControls() {
       </div>
 
       {active === "text" && (
-        <input
-          id="mobile-sign-text"
-          type="text"
-          className={styles.textInput}
-          value={text.value}
-          onChange={(e) =>
-            dispatch({ type: "SET_TEXT", patch: { value: e.target.value } })
-          }
-          placeholder="משפחת כהן"
-          maxLength={40}
-          aria-label="מה כתוב על השלט?"
-        />
+        <div className={decorStyles.inputRow}>
+          <input
+            id="mobile-sign-text"
+            type="text"
+            className={styles.textInput}
+            value={text.value}
+            onChange={(e) =>
+              dispatch({ type: "SET_TEXT", patch: { value: e.target.value } })
+            }
+            placeholder="משפחת כהן"
+            maxLength={40}
+            aria-label="מה כתוב על השלט?"
+          />
+          <DecorationPicker
+            onPick={(decorationType) =>
+              dispatch({ type: "ADD_DECORATION", decorationType })
+            }
+          />
+        </div>
       )}
 
       {active === "font" && (

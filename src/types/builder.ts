@@ -11,7 +11,10 @@ export type AiGenerationStatus = "idle" | "generating" | "success" | "error";
 
 export type DesignWorkspaceTab = "background" | "text" | "image" | "material";
 
-export type DesignSelectedElement = "illustration" | "text";
+export type DesignSelectedElement =
+  | { kind: "text" }
+  | { kind: "illustration" }
+  | { kind: "decoration"; id: string };
 
 export type BuilderUiState = {
   currentStepId: BuilderStepId;

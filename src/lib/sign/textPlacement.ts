@@ -1,31 +1,30 @@
 import type { CSSProperties } from "react";
 import type { TextPosition } from "@/types/signDesign";
+import { TEXT_PRESET_INSET_CQH } from "@/lib/sign/signCanvasUnits";
 
 /**
- * Single source of truth: preset anchor + canvas-relative offsets (offsetX/Y are % of canvas).
+ * Preset anchor + canvas-relative offsets (offsetX/Y = % of canvas width/height).
  */
 export function getTextLayerPlacement(
   position: TextPosition,
   offsetX: number,
   offsetY: number,
-  canvasWidthPx: number,
-  canvasHeightPx: number,
 ): CSSProperties {
-  const dx = (offsetX / 100) * canvasWidthPx;
-  const dy = (offsetY / 100) * canvasHeightPx;
-
   const shared: CSSProperties = {
     left: "50%",
     right: "auto",
     insetInline: "auto",
   };
 
+  const dx = `${offsetX}cqw`;
+  const dy = `${offsetY}cqh`;
+
   if (position === "top") {
     return {
       ...shared,
-      top: "var(--space-3)",
+      top: `${TEXT_PRESET_INSET_CQH}%`,
       bottom: "auto",
-      transform: `translate(calc(-50% + ${dx}px), ${dy}px)`,
+      transform: `translate(calc(-50% + ${dx}), ${dy})`,
     };
   }
 
@@ -33,8 +32,8 @@ export function getTextLayerPlacement(
     return {
       ...shared,
       top: "auto",
-      bottom: "var(--space-3)",
-      transform: `translate(calc(-50% + ${dx}px), ${dy}px)`,
+      bottom: `${TEXT_PRESET_INSET_CQH}%`,
+      transform: `translate(calc(-50% + ${dx}), ${dy})`,
     };
   }
 
@@ -42,6 +41,6 @@ export function getTextLayerPlacement(
     ...shared,
     top: "50%",
     bottom: "auto",
-    transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`,
+    transform: `translate(calc(-50% + ${dx}), calc(-50% + ${dy}))`,
   };
 }

@@ -51,6 +51,8 @@ export function SignCompositionEditor({
         onIllustrationTransformPatch: (patch) =>
           dispatch({ type: "SET_ILLUSTRATION_TRANSFORM", patch }),
         onTextPatch: (patch) => dispatch({ type: "SET_TEXT", patch }),
+        onDecorationPatch: (id, patch) =>
+          dispatch({ type: "UPDATE_DECORATION", id, patch }),
       }}
     />
   );

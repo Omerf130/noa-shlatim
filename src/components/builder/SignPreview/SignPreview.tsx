@@ -9,9 +9,18 @@ import { multicolorTextStyleClass } from "@/lib/sign/multicolorTextPresets";
 import { solidTextColorCss } from "@/lib/sign/textColorStyle";
 import { clampIllustrationXY, clampTextOffset } from "@/lib/sign/compositionBounds";
 import { pointerDeltaToIllustrationXY } from "@/lib/sign/illustrationDragMath";
+import { getIllustrationPlacementStyle } from "@/lib/sign/illustrationPlacement";
 import { pointerDeltaToTextOffset } from "@/lib/sign/textDragMath";
 import { getTextLayerPlacement } from "@/lib/sign/textPlacement";
+import { textFontSizeCqw } from "@/lib/sign/signCanvasUnits";
+import {
+  getSelectedDecorationId,
+  isIllustrationSelected,
+  isTextSelected,
+} from "@/lib/sign/designSelection";
 import { useSignCompositionDrag } from "@/hooks/useSignCompositionDrag";
+import { SignDecorationItem } from "@/components/builder/SignPreview/SignDecorationItem";
+import type { DecorationInstance } from "@/types/signDesign";
 import { SignBackgroundLayer } from "@/components/sign/SignBackgroundLayer/SignBackgroundLayer";
 import { SignFrame } from "@/components/sign/SignFrame/SignFrame";
 import type {
@@ -19,7 +28,7 @@ import type {
   DesignWorkspaceTab,
 } from "@/types/builder";
 import type { IllustrationTransform, SignDesignState, TextDesign } from "@/types/signDesign";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import styles from "./SignPreview.module.scss";
 
 export type SignPreviewSize =
@@ -38,6 +47,10 @@ export type CompositionEditorConfig = {
   onFocusTool: (tab: DesignWorkspaceTab) => void;
   onIllustrationTransformPatch: (patch: Partial<IllustrationTransform>) => void;
   onTextPatch: (patch: Partial<TextDesign>) => void;
+  onDecorationPatch: (
+    id: string,
+    patch: Partial<Pick<DecorationInstance, "x" | "y" | "scale" | "color">>,
+  ) => void;
 };
 
 type SignPreviewProps = {
@@ -49,24 +62,6 @@ type SignPreviewProps = {
   compositionEditor?: CompositionEditorConfig;
 };
 
-function textScaleForSize(size: SignPreviewSize): number {
-  switch (size) {
-    case "compact":
-      return 0.5;
-    case "hero":
-    case "workspace":
-      return 1.05;
-    case "large":
-      return 1.1;
-    case "showcase":
-      return 0.72;
-    case "mobileStage":
-      return 0.82;
-    default:
-      return 1;
-  }
-}
-
 export function SignPreview({
   design,
   size = "default",
@@ -76,28 +71,10 @@ export function SignPreview({
   compositionEditor,
 }: SignPreviewProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const illustrationImgRef = useRef<HTMLImageElement>(null);
-  const illustrationDraggableRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const dragMeasureRef = useRef({ imgW: 0, imgH: 0, canvasW: 0, canvasH: 0 });
+  const dragMeasureRef = useRef({ canvasW: 0, canvasH: 0 });
 
   const editorEnabled = Boolean(compositionEditor);
-
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const rect = el.getBoundingClientRect();
-      setCanvasSize({ w: rect.width, h: rect.height });
-    };
-
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const background = getBackgroundById(design.backgroundId);
   const styleMeta = getIllustrationStyleById(design.illustration?.styleId ?? null);
@@ -107,14 +84,12 @@ export function SignPreview({
       : "";
 
   const { x, y, scale } = design.illustrationTransform;
-  const illustrationTransform = `translate(${x}%, ${y}%) scale(${scale})`;
+  const illustrationPlacement = getIllustrationPlacementStyle(x, y, scale);
 
   const textLayerPlacement = getTextLayerPlacement(
     design.text.position,
     design.text.offsetX,
     design.text.offsetY,
-    canvasSize.w,
-    canvasSize.h,
   );
 
   const fontMeta = getSignTextFontOption(design.text.fontStyle);
@@ -131,12 +106,9 @@ export function SignPreview({
   const captureDragMeasure = useCallback(() => {
     const canvas = canvasRef.current;
     const canvasRect = canvas?.getBoundingClientRect();
-    dragMeasureRef.current = {
-      imgW: (illustrationDraggableRef.current ?? illustrationImgRef.current)?.offsetWidth ?? 0,
-      imgH: (illustrationDraggableRef.current ?? illustrationImgRef.current)?.offsetHeight ?? 0,
-      canvasW: canvasRect?.width ?? 0,
-      canvasH: canvasRect?.height ?? 0,
-    };
+    const canvasW = canvasRect?.width ?? 0;
+    const canvasH = canvasRect?.height ?? 0;
+    dragMeasureRef.current = { canvasW, canvasH };
   }, []);
 
   const { bindDragTarget: bindIllustrationDrag } = useSignCompositionDrag({
@@ -147,9 +119,17 @@ export function SignPreview({
     onDragEnd: () => setIsDragging(false),
     onDragMove: (deltaX, deltaY, startState) => {
       if (!compositionEditor) return;
-      const { imgW, imgH } = dragMeasureRef.current;
-      const { dx, dy } = pointerDeltaToIllustrationXY(deltaX, deltaY, imgW, imgH);
-      const clamped = clampIllustrationXY(startState.x + dx, startState.y + dy);
+      const { canvasW, canvasH } = dragMeasureRef.current;
+      const { dOffsetX, dOffsetY } = pointerDeltaToIllustrationXY(
+        deltaX,
+        deltaY,
+        canvasW,
+        canvasH,
+      );
+      const clamped = clampIllustrationXY(
+        startState.x + dOffsetX,
+        startState.y + dOffsetY,
+      );
       compositionEditor.onIllustrationTransformPatch(clamped);
     },
   });
@@ -189,9 +169,10 @@ export function SignPreview({
     }
   };
 
-  const illustrationSelected =
-    editorEnabled && compositionEditor?.selectedElement === "illustration";
-  const textSelected = editorEnabled && compositionEditor?.selectedElement === "text";
+  const selected = compositionEditor?.selectedElement ?? null;
+  const illustrationSelected = editorEnabled && isIllustrationSelected(selected);
+  const textSelected = editorEnabled && isTextSelected(selected);
+  const selectedDecorationId = getSelectedDecorationId(selected);
 
   const illustrationDragHandlers = bindIllustrationDrag({ x, y });
   const textDragHandlers = bindTextDrag({
@@ -201,13 +182,27 @@ export function SignPreview({
 
   const focusIllustration = () => {
     compositionEditor?.onFocusTool("image");
-    compositionEditor?.onSelectElement("illustration");
+    compositionEditor?.onSelectElement({ kind: "illustration" });
   };
 
   const focusText = () => {
     compositionEditor?.onFocusTool("text");
-    compositionEditor?.onSelectElement("text");
+    compositionEditor?.onSelectElement({ kind: "text" });
   };
+
+  const focusDecoration = (id: string) => {
+    compositionEditor?.onFocusTool("text");
+    compositionEditor?.onSelectElement({ kind: "decoration", id });
+  };
+
+  const illustrationImgClass = [
+    styles.illustrationImg,
+    filterClass,
+    editorEnabled ? styles.illustrationImgEditor : "",
+    illustrationSelected ? styles.compositionSelected : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
@@ -241,53 +236,54 @@ export function SignPreview({
           )}
 
           {design.illustration && (
-            <div
-              className={[
-                styles.illustrationLayer,
-                editorEnabled ? styles.illustrationLayerEditor : "",
-              ].join(" ")}
-            >
-              {editorEnabled ? (
-                <div
-                  ref={illustrationDraggableRef}
-                  className={[
-                    styles.compositionDraggable,
-                    styles.compositionDraggableActive,
-                    illustrationSelected ? styles.compositionSelected : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  style={{ transform: illustrationTransform }}
-                  {...illustrationDragHandlers}
-                  onPointerDown={(e: React.PointerEvent<HTMLDivElement>) => {
-                    focusIllustration();
-                    illustrationDragHandlers.onPointerDown(e);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="גרירת האיור על השלט"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    ref={illustrationImgRef}
-                    src={design.illustration.objectUrl}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className={[styles.illustrationImg, filterClass].filter(Boolean).join(" ")}
-                  />
-                </div>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
+            <div className={styles.illustrationLayer}>
+              <div
+                className={styles.illustrationAnchor}
+                style={illustrationPlacement.anchor}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  ref={illustrationImgRef}
                   src={design.illustration.objectUrl}
                   alt=""
                   aria-hidden="true"
-                  className={[styles.illustrationImg, filterClass].filter(Boolean).join(" ")}
-                  style={{ transform: illustrationTransform }}
+                  draggable={false}
+                  className={illustrationImgClass}
+                  style={{ transform: illustrationPlacement.imgTransform }}
+                  {...(editorEnabled
+                    ? {
+                        ...illustrationDragHandlers,
+                        onPointerDown: (e: React.PointerEvent<HTMLImageElement>) => {
+                          focusIllustration();
+                          illustrationDragHandlers.onPointerDown(e);
+                        },
+                        role: "button" as const,
+                        tabIndex: 0,
+                        "aria-label": "גרירת האיור על השלט",
+                      }
+                    : {})}
                 />
-              )}
+              </div>
+            </div>
+          )}
+
+          {design.decorations.length > 0 && (
+            <div className={styles.decorationsLayer} aria-hidden={editorEnabled ? undefined : true}>
+              {design.decorations.map((decoration) => (
+                <SignDecorationItem
+                  key={decoration.id}
+                  decoration={decoration}
+                  editorEnabled={editorEnabled}
+                  selected={editorEnabled && selectedDecorationId === decoration.id}
+                  canvasMeasureRef={dragMeasureRef}
+                  onSelect={focusDecoration}
+                  onPatch={(id, patch) => compositionEditor?.onDecorationPatch(id, patch)}
+                  onDragStart={() => {
+                    captureDragMeasure();
+                    setIsDragging(true);
+                  }}
+                  onDragEnd={() => setIsDragging(false)}
+                />
+              ))}
             </div>
           )}
 
@@ -310,7 +306,7 @@ export function SignPreview({
                   .join(" ")}
                 style={{
                   color: textMulticolor ? undefined : solidTextColorCss(design.text.color),
-                  fontSize: `${Math.round(design.text.size * textScaleForSize(size))}px`,
+                  fontSize: textFontSizeCqw(design.text.size),
                   fontFamily: signTextFontFamily(design.text.fontStyle),
                   fontWeight: fontMeta.fontWeight,
                 }}

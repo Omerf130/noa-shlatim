@@ -23,6 +23,8 @@
 }
 
 .textInput {
+  flex: 1;
+  min-width: 0;
   font-family: inherit;
   font-size: 1rem;
   padding: var(--space-3) var(--space-4);

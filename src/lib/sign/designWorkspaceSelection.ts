@@ -5,7 +5,7 @@ export function selectedElementForTab(
   tab: DesignWorkspaceTab,
   design: SignDesignState,
 ): DesignSelectedElement | null {
-  if (tab === "image" && design.illustration) return "illustration";
-  if (tab === "text" && design.text.value.trim().length > 0) return "text";
+  if (tab === "image" && design.illustration) return { kind: "illustration" };
+  if (tab === "text" && design.text.value.trim().length > 0) return { kind: "text" };
   return null;
 }

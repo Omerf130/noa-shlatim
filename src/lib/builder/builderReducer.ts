@@ -5,8 +5,16 @@ import type {
   DesignWorkspaceTab,
 } from "@/types/builder";
 import { selectedElementForTab } from "@/lib/sign/designWorkspaceSelection";
+import { defaultColorForDecorationType } from "@/data/signDecorations";
+import { duplicateDecorationOffset, spawnDecorationPosition } from "@/lib/sign/decorationSpawn";
+import {
+  clampDecorationScale,
+  clampDecorationXY,
+} from "@/lib/sign/compositionBounds";
 import type {
   CreationMode,
+  DecorationInstance,
+  DecorationTypeId,
   IllustrationTransform,
   LocalImageRef,
   Material,
@@ -14,6 +22,7 @@ import type {
   TextDesign,
 } from "@/types/signDesign";
 import {
+  defaultDecorationScale,
   defaultIllustrationTransform,
   defaultTextDesign,
   initialSignDesignState,
@@ -46,7 +55,15 @@ export type BuilderAction =
       type: "SET_DESIGN_WORKSPACE_FOCUS";
       tab: DesignWorkspaceTab;
       selectedElement: DesignSelectedElement | null;
-    };
+    }
+  | { type: "ADD_DECORATION"; decorationType: DecorationTypeId }
+  | {
+      type: "UPDATE_DECORATION";
+      id: string;
+      patch: Partial<Pick<DecorationInstance, "x" | "y" | "scale" | "color">>;
+    }
+  | { type: "DELETE_DECORATION"; id: string }
+  | { type: "DUPLICATE_DECORATION"; id: string };
 
 export const initialBuilderState: BuilderState = {
   design: initialSignDesignState,
@@ -277,6 +294,101 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         ...state,
         design: { ...state.design, material: action.material },
       };
+
+    case "ADD_DECORATION": {
+      const count = state.design.decorations.length;
+      const { x, y } = spawnDecorationPosition(count);
+      const id = crypto.randomUUID();
+      const instance: DecorationInstance = {
+        id,
+        type: action.decorationType,
+        x,
+        y,
+        scale: defaultDecorationScale,
+        color: defaultColorForDecorationType(action.decorationType),
+      };
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          decorations: [...state.design.decorations, instance],
+        },
+        ui: {
+          ...state.ui,
+          designWorkspace: {
+            activeTab: "text",
+            selectedElement: { kind: "decoration", id },
+          },
+        },
+      };
+    }
+
+    case "UPDATE_DECORATION": {
+      const decorations = state.design.decorations.map((d) => {
+        if (d.id !== action.id) return d;
+        const next = { ...d, ...action.patch };
+        const xy = clampDecorationXY(next.x, next.y);
+        return {
+          ...next,
+          x: xy.x,
+          y: xy.y,
+          scale: clampDecorationScale(next.scale),
+        };
+      });
+      return {
+        ...state,
+        design: { ...state.design, decorations },
+      };
+    }
+
+    case "DELETE_DECORATION": {
+      const decorations = state.design.decorations.filter((d) => d.id !== action.id);
+      const selected = state.ui.designWorkspace.selectedElement;
+      const clearSelection =
+        selected?.kind === "decoration" && selected.id === action.id;
+      return {
+        ...state,
+        design: { ...state.design, decorations },
+        ui: clearSelection
+          ? {
+              ...state.ui,
+              designWorkspace: {
+                ...state.ui.designWorkspace,
+                selectedElement: null,
+              },
+            }
+          : state.ui,
+      };
+    }
+
+    case "DUPLICATE_DECORATION": {
+      const source = state.design.decorations.find((d) => d.id === action.id);
+      if (!source) return state;
+      const { x, y } = duplicateDecorationOffset(source.x, source.y);
+      const id = crypto.randomUUID();
+      const clone: DecorationInstance = {
+        id,
+        type: source.type,
+        x,
+        y,
+        scale: source.scale,
+        color: source.color ?? defaultColorForDecorationType(source.type),
+      };
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          decorations: [...state.design.decorations, clone],
+        },
+        ui: {
+          ...state.ui,
+          designWorkspace: {
+            activeTab: "text",
+            selectedElement: { kind: "decoration", id },
+          },
+        },
+      };
+    }
 
     case "SET_DESIGN_WORKSPACE_TAB": {
       const selectedElement = selectedElementForTab(action.tab, state.design);
