@@ -1,6 +1,8 @@
 "use client";
 
 import { BuilderNavigation } from "@/components/builder/BuilderNavigation/BuilderNavigation";
+import navStyles from "@/components/builder/BuilderNavigation/BuilderNavigation.module.scss";
+import { SignCompositionEditor } from "@/components/builder/SignPreview/SignCompositionEditor";
 import { SignPreview } from "@/components/builder/SignPreview/SignPreview";
 import { useBuilder } from "@/components/builder/BuilderContext";
 import type { BuilderStepId } from "@/types/builder";
@@ -35,16 +37,6 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
         .filter(Boolean)
         .join(" ")}
     >
-      {isDesign && (
-        <div className={styles.mobileDesignPreview}>
-          <SignPreview
-            design={design}
-            size="compact"
-            showMockDisclaimer={showMockDisclaimer}
-          />
-        </div>
-      )}
-
       {isReview && (
         <div className={styles.reviewHeroPreview}>
           <SignPreview
@@ -58,8 +50,7 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
       <div className={styles.mainRow}>
         {isDesign && (
           <aside className={styles.designPreviewColumn} aria-label="תצוגת השלט">
-            <SignPreview
-              design={design}
+            <SignCompositionEditor
               size="workspace"
               showMockDisclaimer={showMockDisclaimer}
             />
@@ -72,7 +63,13 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
         </div>
       </div>
 
-      {!isReview && <BuilderNavigation className={styles.mobileStickyNav} />}
+      {!isReview && (
+        <BuilderNavigation
+          className={[styles.mobileStickyNav, navStyles.mobileSticky]
+            .filter(Boolean)
+            .join(" ")}
+        />
+      )}
     </div>
   );
 }

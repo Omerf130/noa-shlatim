@@ -9,6 +9,10 @@ export type BuilderStepId =
 
 export type AiGenerationStatus = "idle" | "generating" | "success" | "error";
 
+export type DesignWorkspaceTab = "background" | "text" | "image" | "material";
+
+export type DesignSelectedElement = "illustration" | "text";
+
 export type BuilderUiState = {
   currentStepId: BuilderStepId;
   checkoutMessageVisible: boolean;
@@ -17,11 +21,20 @@ export type BuilderUiState = {
     errorCode?: string;
     userMessage?: string;
   };
+  designWorkspace: {
+    activeTab: DesignWorkspaceTab;
+    selectedElement: DesignSelectedElement | null;
+  };
 };
 
 export type BuilderState = {
   design: SignDesignState;
   ui: BuilderUiState;
+};
+
+export const initialDesignWorkspaceUi = {
+  activeTab: "background" as const,
+  selectedElement: null,
 };
 
 export const initialBuilderUiState: BuilderUiState = {
@@ -30,4 +43,5 @@ export const initialBuilderUiState: BuilderUiState = {
   aiIllustration: {
     status: "idle",
   },
+  designWorkspace: { ...initialDesignWorkspaceUi },
 };

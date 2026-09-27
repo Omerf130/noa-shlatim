@@ -9,9 +9,15 @@ export function BuilderProgress() {
   const steps = getStepsForMode(state.design.creationMode);
   const current = state.ui.currentStepId;
   const currentIndex = steps.indexOf(current);
+  const isCompactDesign = current === "design";
 
   return (
-    <nav className={styles.nav} aria-label="התקדמות בעיצוב">
+    <nav
+      className={[styles.nav, isCompactDesign ? styles.compactDesign : ""]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label="התקדמות בעיצוב"
+    >
       <ol className={styles.list}>
         {steps.map((stepId, index) => {
           const meta = getStepMeta(stepId);

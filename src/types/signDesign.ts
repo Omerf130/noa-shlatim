@@ -34,6 +34,9 @@ export type TextDesign = {
   size: number;
   position: TextPosition;
   fontStyle: SignTextFontStyleId;
+  /** Fine tuning as % of sign canvas width/height; 0 = preset anchor only. */
+  offsetX: number;
+  offsetY: number;
 };
 
 export type IllustrationTransform = {
@@ -62,6 +65,8 @@ export const defaultTextDesign: TextDesign = {
   size: 24,
   position: "bottom",
   fontStyle: "clean",
+  offsetX: 0,
+  offsetY: 0,
 };
 
 export const defaultIllustrationTransform: IllustrationTransform = {

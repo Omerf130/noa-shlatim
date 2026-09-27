@@ -1,4 +1,10 @@
-import type { BuilderState, BuilderStepId } from "@/types/builder";
+import type {
+  BuilderState,
+  BuilderStepId,
+  DesignSelectedElement,
+  DesignWorkspaceTab,
+} from "@/types/builder";
+import { selectedElementForTab } from "@/lib/sign/designWorkspaceSelection";
 import type {
   CreationMode,
   IllustrationTransform,
@@ -33,7 +39,14 @@ export type BuilderAction =
   | { type: "GO_NEXT" }
   | { type: "GO_BACK" }
   | { type: "GO_TO_STEP"; stepId: BuilderStepId }
-  | { type: "SHOW_CHECKOUT_MESSAGE" };
+  | { type: "SHOW_CHECKOUT_MESSAGE" }
+  | { type: "SET_DESIGN_WORKSPACE_TAB"; tab: DesignWorkspaceTab }
+  | { type: "SET_DESIGN_SELECTED_ELEMENT"; element: DesignSelectedElement | null }
+  | {
+      type: "SET_DESIGN_WORKSPACE_FOCUS";
+      tab: DesignWorkspaceTab;
+      selectedElement: DesignSelectedElement | null;
+    };
 
 export const initialBuilderState: BuilderState = {
   design: initialSignDesignState,
@@ -226,14 +239,26 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         design: { ...state.design, backgroundId: action.backgroundId },
       };
 
-    case "SET_TEXT":
+    case "SET_TEXT": {
+      const { patch } = action;
+      const resetsOffsets =
+        "position" in patch &&
+        patch.position !== undefined &&
+        !("offsetX" in patch) &&
+        !("offsetY" in patch);
+      const nextText = {
+        ...state.design.text,
+        ...patch,
+        ...(resetsOffsets ? { offsetX: 0, offsetY: 0 } : {}),
+      };
       return {
         ...state,
         design: {
           ...state.design,
-          text: { ...state.design.text, ...action.patch },
+          text: nextText,
         },
       };
+    }
 
     case "SET_ILLUSTRATION_TRANSFORM":
       return {
@@ -253,12 +278,57 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         design: { ...state.design, material: action.material },
       };
 
+    case "SET_DESIGN_WORKSPACE_TAB": {
+      const selectedElement = selectedElementForTab(action.tab, state.design);
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          designWorkspace: {
+            activeTab: action.tab,
+            selectedElement,
+          },
+        },
+      };
+    }
+
+    case "SET_DESIGN_SELECTED_ELEMENT":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          designWorkspace: {
+            ...state.ui.designWorkspace,
+            selectedElement: action.element,
+          },
+        },
+      };
+
+    case "SET_DESIGN_WORKSPACE_FOCUS":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          designWorkspace: {
+            activeTab: action.tab,
+            selectedElement: action.selectedElement,
+          },
+        },
+      };
+
     case "GO_NEXT": {
       const next = getNextStep(state.design.creationMode, state.ui.currentStepId);
       if (!next) return state;
       return {
         ...state,
-        ui: { ...state.ui, currentStepId: next },
+        ui: {
+          ...state.ui,
+          currentStepId: next,
+          designWorkspace: {
+            ...state.ui.designWorkspace,
+            selectedElement: null,
+          },
+        },
       };
     }
 

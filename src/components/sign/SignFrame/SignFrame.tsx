@@ -1,14 +1,26 @@
 import type { Material } from "@/types/signDesign";
-import type { ReactNode } from "react";
+import type { CSSProperties, PointerEventHandler, ReactNode, Ref } from "react";
 import styles from "./SignFrame.module.scss";
 
 type SignFrameProps = {
   material?: Material | null;
   children: ReactNode;
   className?: string;
+  canvasRef?: Ref<HTMLDivElement>;
+  canvasClassName?: string;
+  canvasStyle?: CSSProperties;
+  onCanvasPointerDown?: PointerEventHandler<HTMLDivElement>;
 };
 
-export function SignFrame({ material, children, className }: SignFrameProps) {
+export function SignFrame({
+  material,
+  children,
+  className,
+  canvasRef,
+  canvasClassName,
+  canvasStyle,
+  onCanvasPointerDown,
+}: SignFrameProps) {
   return (
     <div
       className={[
@@ -21,7 +33,14 @@ export function SignFrame({ material, children, className }: SignFrameProps) {
         .join(" ")}
     >
       {material === "wood" && <span className={styles.knob} aria-hidden="true" />}
-      <div className={styles.canvas}>{children}</div>
+      <div
+        ref={canvasRef}
+        className={[styles.canvas, canvasClassName].filter(Boolean).join(" ")}
+        style={canvasStyle}
+        onPointerDown={onCanvasPointerDown}
+      >
+        {children}
+      </div>
     </div>
   );
 }

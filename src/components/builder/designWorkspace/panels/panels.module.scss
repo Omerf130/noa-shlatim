@@ -29,11 +29,13 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+  scroll-margin-bottom: 6rem;
 }
 
 .range {
   width: 100%;
   min-height: 2.75rem;
+  scroll-margin-bottom: 6rem;
 }
 
 .swatches {

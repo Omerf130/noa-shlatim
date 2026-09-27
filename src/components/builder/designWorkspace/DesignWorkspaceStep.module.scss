@@ -1,8 +1,12 @@
-.workspace {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  min-width: 0;
+.desktopWorkspace {
+  display: none;
+
+  @media (min-width: 960px) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+  }
 }
 
 .header {
@@ -46,6 +50,11 @@
 
   @media (min-width: 400px) {
     font-size: 0.9375rem;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 

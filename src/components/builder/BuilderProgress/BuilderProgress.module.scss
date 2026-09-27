@@ -4,6 +4,26 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.compactDesign {
+  @media (max-width: 959px) {
+    padding-block: 0;
+    margin-bottom: calc(var(--space-2) * -1);
+
+    .item {
+      font-size: 0.75rem;
+    }
+
+    .label {
+      padding: var(--space-1) 0;
+    }
+
+    .item:not(:last-child)::after {
+      width: 0.75rem;
+      margin-inline: var(--space-1);
+    }
+  }
+}
+
 .list {
   display: flex;
   align-items: center;

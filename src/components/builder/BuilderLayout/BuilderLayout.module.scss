@@ -9,6 +9,13 @@
   }
 }
 
+.layout.designMode {
+  @media (max-width: 959px) {
+    gap: var(--space-4);
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .centered {
   max-width: 40rem;
   margin-inline: auto;
@@ -49,9 +56,11 @@
   gap: var(--space-4);
 }
 
-.mobileDesignPreview {
-  @media (min-width: 960px) {
-    display: none;
+.layout.designMode .controls {
+  @media (max-width: 959px) {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
   }
 }
 

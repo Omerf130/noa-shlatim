@@ -4,7 +4,8 @@ import { BackgroundPanel } from "@/components/builder/designWorkspace/panels/Bac
 import { ImagePanel } from "@/components/builder/designWorkspace/panels/ImagePanel";
 import { MaterialPanel } from "@/components/builder/designWorkspace/panels/MaterialPanel";
 import { TextPanel } from "@/components/builder/designWorkspace/panels/TextPanel";
-import { useState } from "react";
+import { MobileDesignEditor } from "@/components/builder/designWorkspace/mobile/MobileDesignEditor";
+import { useBuilder } from "@/components/builder/BuilderContext";
 import styles from "./DesignWorkspaceStep.module.scss";
 
 type DesignTab = "background" | "text" | "image" | "material";
@@ -17,49 +18,58 @@ const tabs: { id: DesignTab; label: string }[] = [
 ];
 
 export function DesignWorkspaceStep() {
-  const [activeTab, setActiveTab] = useState<DesignTab>("background");
+  const { state, dispatch } = useBuilder();
+  const activeTab = state.ui.designWorkspace.activeTab;
 
   return (
-    <div className={styles.workspace}>
-      <header className={styles.header}>
-        <h2 className={styles.title}>עיצוב השלט</h2>
-        <p className={styles.subtitle}>התאימו רקע, טקסט, תמונה וחומר — הכל במקום אחד.</p>
-      </header>
+    <>
+      <MobileDesignEditor />
 
-      <div
-        className={styles.tabs}
-        role="tablist"
-        aria-label="אפשרויות עיצוב"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`panel-${tab.id}`}
-            className={[styles.tab, activeTab === tab.id ? styles.tabActive : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className={styles.desktopWorkspace}>
+        <header className={styles.header}>
+          <h2 className={styles.title}>עיצוב השלט</h2>
+          <p className={styles.subtitle}>
+            התאימו רקע, טקסט, תמונה וחומר — הכל במקום אחד.
+          </p>
+        </header>
 
-      <div
-        id={`panel-${activeTab}`}
-        role="tabpanel"
-        aria-labelledby={`tab-${activeTab}`}
-        className={styles.panelArea}
-      >
-        {activeTab === "background" && <BackgroundPanel />}
-        {activeTab === "text" && <TextPanel />}
-        {activeTab === "image" && <ImagePanel />}
-        {activeTab === "material" && <MaterialPanel />}
+        <div
+          className={styles.tabs}
+          role="tablist"
+          aria-label="אפשרויות עיצוב"
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
+              className={[styles.tab, activeTab === tab.id ? styles.tabActive : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() =>
+                dispatch({ type: "SET_DESIGN_WORKSPACE_TAB", tab: tab.id })
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          id={`panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+          className={styles.panelArea}
+        >
+          {activeTab === "background" && <BackgroundPanel />}
+          {activeTab === "text" && <TextPanel />}
+          {activeTab === "image" && <ImagePanel />}
+          {activeTab === "material" && <MaterialPanel />}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
