@@ -1,0 +1,36 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+  background: var(--color-bg-muted, #f9fafb);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 26rem;
+  padding: var(--space-8) var(--space-6);
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: 0 1px 3px rgb(16 24 40 / 8%);
+}
+
+.logo {
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0 0 var(--space-6);
+  font-size: 0.9375rem;
+  color: var(--color-text-muted, #667085);
+}
