@@ -8,9 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "seed:admin": "tsx scripts/seed-admin.ts",
-    "verify:admin-db": "tsx scripts/verify-admin-db.ts"
+    "verify:admin-db": "tsx scripts/verify-admin-db.ts",
+    "verify:blob": "tsx scripts/verify-blob.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "^3.0.3",
     "file-type": "^22.1.1",
     "lucide-react": "^1.48.0",

@@ -1,6 +1,6 @@
 # Database setup (MongoDB + Mongoose)
 
-Phase 6 provides a **server-only** connection layer. Phase 7 adds `AdminUser` and `AdminSession` models for admin auth only — see [admin-auth.md](./admin-auth.md). Builder design persistence is not implemented yet.
+Phase 6 provides a **server-only** connection layer. Phase 7 adds `AdminUser` and `AdminSession` models for admin auth only — see [admin-auth.md](./admin-auth.md). Phase 8A adds private Vercel Blob helpers only — see [storage.md](./storage.md). Builder design persistence is not implemented yet.
 
 ## Local development
 
