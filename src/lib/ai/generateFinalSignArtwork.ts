@@ -1,10 +1,13 @@
 import { toFile } from "openai";
-import { buildIllustrationPrompt, isAllowedStyleId } from "./illustrationPrompts";
 import { AiIllustrationError } from "./errors";
+import { buildFinalSignPrompt, isAllowedStyleId } from "./finalSignPrompts";
 import { getOpenAiClient } from "@/lib/openai/client";
 import { getOpenAiImageConfig } from "@/lib/openai/config";
+import type { TextPosition } from "@/types/signDesign";
 
-export type GenerateIllustrationResult = {
+const FINAL_SIGN_SIZE = "1536x1024" as const;
+
+export type GenerateFinalSignResult = {
   pngBuffer: Buffer;
   model: string;
   requestId?: string;
@@ -12,15 +15,18 @@ export type GenerateIllustrationResult = {
   durationMs: number;
 };
 
-export async function generateIllustrationFromPhoto(
-  imageBuffer: Buffer,
-  mime: string,
-  fileName: string,
+export async function generateFinalSignArtwork(
+  photoBuffer: Buffer,
+  photoMime: string,
+  photoFileName: string,
   styleId: string,
   backgroundBuffer: Buffer,
   backgroundMime: string,
   backgroundExt: string,
-): Promise<GenerateIllustrationResult> {
+  compositionBuffer: Buffer,
+  compositionMime: string,
+  textPosition: TextPosition,
+): Promise<GenerateFinalSignResult> {
   if (!isAllowedStyleId(styleId)) {
     throw new AiIllustrationError("INVALID_STYLE", "Invalid style", 400);
   }
@@ -34,25 +40,32 @@ export async function generateIllustrationFromPhoto(
     throw new AiIllustrationError("AI_DISABLED", "Disabled", 503);
   }
 
-  const prompt = buildIllustrationPrompt(styleId);
+  const prompt = buildFinalSignPrompt(styleId, textPosition);
   const started = Date.now();
 
   try {
-    const photoFile = await toFile(imageBuffer, fileName || "photo", { type: mime });
+    const photoFile = await toFile(photoBuffer, photoFileName || "photo", {
+      type: photoMime,
+    });
     const backgroundFile = await toFile(
       backgroundBuffer,
       `sign-background.${backgroundExt}`,
       { type: backgroundMime },
     );
+    const compositionFile = await toFile(
+      compositionBuffer,
+      "composition-reference.jpg",
+      { type: compositionMime },
+    );
 
     const response = await client.images.edit({
       model: config.model,
-      image: [photoFile, backgroundFile],
+      image: [photoFile, backgroundFile, compositionFile],
       prompt,
-      size: config.size as "1024x1024",
+      size: FINAL_SIGN_SIZE,
       quality: config.quality,
-      background: config.background,
-      output_format: config.outputFormat,
+      background: "opaque",
+      output_format: "png",
     });
 
     const durationMs = Date.now() - started;
@@ -71,9 +84,11 @@ export async function generateIllustrationFromPhoto(
         ? String((response as { _request_id?: string })._request_id)
         : undefined;
 
-    console.info("[ai-illustration]", {
+    console.info("[ai-final-sign]", {
       model: config.model,
       styleId,
+      textPosition,
+      size: FINAL_SIGN_SIZE,
       durationMs,
       requestId,
       usage: (response as { usage?: unknown }).usage,
@@ -93,7 +108,7 @@ export async function generateIllustrationFromPhoto(
     if (message.toLowerCase().includes("timeout")) {
       throw new AiIllustrationError("GENERATION_TIMEOUT", message, 504);
     }
-    console.error("[ai-illustration] provider error", err);
+    console.error("[ai-final-sign] provider error", err);
     throw new AiIllustrationError("PROVIDER_ERROR", message, 502);
   }
 }

@@ -1,28 +1,33 @@
-import type { BuilderStepId } from "@/types/builder";
+import type { BuilderState, BuilderStepId, BuilderUiState } from "@/types/builder";
 import type { SignDesignState } from "@/types/signDesign";
 
-export function canProceed(step: BuilderStepId, design: SignDesignState): boolean {
+export function hasValidFinalSignArtwork(ui: BuilderUiState): boolean {
+  const final = ui.finalSignArtwork;
+  return final.isValid && final.objectUrl !== null && final.status === "success";
+}
+
+export function canProceed(step: BuilderStepId, state: BuilderState): boolean {
+  const { design, ui } = state;
   switch (step) {
     case "start":
       return design.creationMode !== null;
+    case "background":
+      return design.backgroundId !== null;
     case "upload":
       return design.originalImage !== null;
     case "illustrationStyle":
       return canLeaveIllustrationStyleStep(design);
     case "design":
-      return isDesignWorkspaceComplete(design);
+      return canLeaveDesignStep(design, ui);
     case "review":
-      return isDesignComplete(design);
+      return isDesignComplete(design, ui);
     default:
       return false;
   }
 }
 
 export function canLeaveIllustrationStyleStep(design: SignDesignState): boolean {
-  if (!design.photoIllustrationStyleId) return false;
-  if (design.illustration?.source === "ai") return true;
-  if (design.illustration?.source === "mockAi") return true;
-  return false;
+  return design.photoIllustrationStyleId !== null;
 }
 
 export function isDesignWorkspaceComplete(design: SignDesignState): boolean {
@@ -32,38 +37,59 @@ export function isDesignWorkspaceComplete(design: SignDesignState): boolean {
   return true;
 }
 
-export function isDesignComplete(design: SignDesignState): boolean {
-  if (!design.creationMode || !design.originalImage || !design.illustration) {
-    return false;
+export function canLeaveDesignStep(design: SignDesignState, ui: BuilderUiState): boolean {
+  if (!isDesignWorkspaceComplete(design)) return false;
+  if (design.creationMode === "photo") {
+    if (ui.finalSignArtwork.status === "generating") return false;
+    return hasValidFinalSignArtwork(ui);
   }
+  return true;
+}
+
+export function isDesignComplete(design: SignDesignState, ui: BuilderUiState): boolean {
+  if (!design.creationMode || !design.originalImage) return false;
+
   if (design.creationMode === "photo") {
     if (!design.photoIllustrationStyleId) return false;
-    if (design.illustration.source !== "ai" && design.illustration.source !== "mockAi") {
-      return false;
-    }
+    return canLeaveDesignStep(design, ui);
   }
+
+  if (!design.illustration) return false;
   return isDesignWorkspaceComplete(design);
 }
 
 export function stepValidationHint(
   step: BuilderStepId,
-  design: SignDesignState,
+  state: BuilderState,
 ): string | null {
-  if (canProceed(step, design)) return null;
+  const { design, ui } = state;
+  if (canProceed(step, state)) return null;
   switch (step) {
     case "start":
       return "בחרו איך תרצו להתחיל.";
+    case "background":
+      return "בחרו רקע לשלט כדי להמשיך.";
     case "upload":
       return "העלו תמונה כדי להמשיך.";
     case "illustrationStyle":
-      return "בחרו סגנון, צרו איור, ואז המשיכו.";
+      return "בחרו סגנון איור כדי להמשיך.";
     case "design": {
       const missing: string[] = [];
       if (!design.backgroundId) missing.push("רקע");
       if (design.text.value.trim().length < 1) missing.push("טקסט");
       if (!design.material) missing.push("חומר");
-      if (missing.length === 0) return null;
-      return `השלימו: ${missing.join(" · ")}`;
+      if (missing.length > 0) {
+        return `השלימו: ${missing.join(" · ")}`;
+      }
+      if (design.creationMode === "photo") {
+        if (ui.finalSignArtwork.status === "generating") {
+          return "ממתינים לסיום יצירת השלט…";
+        }
+        if (!hasValidFinalSignArtwork(ui)) {
+          return "צרו את השלט שלי לפני המשך לסיכום.";
+        }
+      }
+      return null;
     }
     default:
       return null;

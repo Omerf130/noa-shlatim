@@ -34,6 +34,68 @@
   scroll-margin-bottom: 6rem;
 }
 
+.finalSignBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.finalSignIntro {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.finalSignActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.finalSignPrimaryBtn,
+.finalSignSecondaryBtn {
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.finalSignPrimaryBtn {
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-on-primary, #fff);
+}
+
+.finalSignPrimaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.finalSignSecondaryBtn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.finalSignHint,
+.finalSignSuccess {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.finalSignError {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-error, #b42318);
+}
+
 .range {
   width: 100%;
   min-height: 2.75rem;

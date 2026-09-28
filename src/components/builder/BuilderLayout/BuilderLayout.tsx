@@ -5,6 +5,7 @@ import navStyles from "@/components/builder/BuilderNavigation/BuilderNavigation.
 import { SignCompositionEditor } from "@/components/builder/SignPreview/SignCompositionEditor";
 import { SignPreview } from "@/components/builder/SignPreview/SignPreview";
 import { useBuilder } from "@/components/builder/BuilderContext";
+import { resolveSignPreviewArtworkConfig } from "@/lib/builder/signPreviewConfig";
 import type { BuilderStepId } from "@/types/builder";
 import type { ReactNode } from "react";
 import styles from "./BuilderLayout.module.scss";
@@ -22,6 +23,7 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
   const { design, ui } = state;
   const step = ui.currentStepId;
   const showMockDisclaimer = design.illustration?.source === "mockAi";
+  const integratedFinalPreview = resolveSignPreviewArtworkConfig(state);
   const isDesign = step === "design";
   const isReview = step === "review";
   const isCentered = !showsPreview(step);
@@ -43,6 +45,7 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
             design={design}
             size="hero"
             showMockDisclaimer={showMockDisclaimer}
+            integratedFinalPreview={integratedFinalPreview}
           />
         </div>
       )}

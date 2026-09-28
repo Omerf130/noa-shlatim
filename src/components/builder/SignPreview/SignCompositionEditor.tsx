@@ -2,6 +2,7 @@
 
 import { SignPreview } from "@/components/builder/SignPreview/SignPreview";
 import { useBuilder } from "@/components/builder/BuilderContext";
+import { resolveSignPreviewArtworkConfig } from "@/lib/builder/signPreviewConfig";
 import type { SignPreviewSize } from "@/components/builder/SignPreview/SignPreview";
 import type { DesignSelectedElement, DesignWorkspaceTab } from "@/types/builder";
 
@@ -21,6 +22,7 @@ export function SignCompositionEditor({
   const { state, dispatch } = useBuilder();
   const { design, ui } = state;
   const { activeTab, selectedElement } = ui.designWorkspace;
+  const integratedFinalPreview = resolveSignPreviewArtworkConfig(state);
 
   if (ui.currentStepId !== "design") {
     return (
@@ -30,6 +32,7 @@ export function SignCompositionEditor({
         ariaLabel={ariaLabel}
         showMockDisclaimer={showMockDisclaimer}
         className={className}
+        integratedFinalPreview={integratedFinalPreview}
       />
     );
   }
@@ -41,6 +44,7 @@ export function SignCompositionEditor({
       ariaLabel={ariaLabel}
       showMockDisclaimer={showMockDisclaimer}
       className={className}
+      integratedFinalPreview={integratedFinalPreview}
       compositionEditor={{
         activeTab,
         selectedElement,

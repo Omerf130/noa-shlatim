@@ -49,8 +49,17 @@ export function useIllustrationGeneration() {
 
   const generate = useCallback(async () => {
     const styleId = state.design.photoIllustrationStyleId;
+    const backgroundId = state.design.backgroundId;
     const file = getSourcePhotoFile();
     if (!styleId) return;
+    if (!backgroundId) {
+      dispatch({
+        type: "AI_GENERATION_ERROR",
+        errorCode: "MISSING_BACKGROUND",
+        userMessage: "בחרו רקע לפני יצירת האיור.",
+      });
+      return;
+    }
     if (!file) {
       dispatch({
         type: "AI_GENERATION_ERROR",
@@ -65,6 +74,7 @@ export function useIllustrationGeneration() {
     try {
       const form = new FormData();
       form.append("styleId", styleId);
+      form.append("backgroundId", backgroundId);
       form.append("image", file, file.name);
 
       const res = await fetch("/api/illustrations/generate", {
@@ -96,7 +106,12 @@ export function useIllustrationGeneration() {
         userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
       });
     }
-  }, [dispatch, getSourcePhotoFile, state.design.photoIllustrationStyleId]);
+  }, [
+    dispatch,
+    getSourcePhotoFile,
+    state.design.backgroundId,
+    state.design.photoIllustrationStyleId,
+  ]);
 
   const applyMockIllustration = useCallback(() => {
     dispatch({ type: "SET_MOCK_ILLUSTRATION" });

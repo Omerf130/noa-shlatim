@@ -27,7 +27,7 @@ import {
   defaultTextDesign,
   initialSignDesignState,
 } from "@/types/signDesign";
-import { initialBuilderUiState } from "@/types/builder";
+import { initialBuilderUiState, initialFinalSignArtworkUi } from "@/types/builder";
 import { getNextStep, getPrevStep } from "./steps";
 import { revokeObjectUrl } from "./objectUrl";
 import { revokeIllustrationIfNeeded } from "./revokeIllustrationUrl";
@@ -63,7 +63,12 @@ export type BuilderAction =
       patch: Partial<Pick<DecorationInstance, "x" | "y" | "scale" | "color">>;
     }
   | { type: "DELETE_DECORATION"; id: string }
-  | { type: "DUPLICATE_DECORATION"; id: string };
+  | { type: "DUPLICATE_DECORATION"; id: string }
+  | { type: "FINAL_SIGN_START" }
+  | { type: "FINAL_SIGN_SUCCESS"; objectUrl: string }
+  | { type: "FINAL_SIGN_ERROR"; errorCode: string; userMessage: string }
+  | { type: "FINAL_SIGN_SHOW_DRAFT" }
+  | { type: "FINAL_SIGN_SHOW_FINAL" };
 
 export const initialBuilderState: BuilderState = {
   design: initialSignDesignState,
@@ -90,6 +95,30 @@ function revokeDesignUrls(design: SignDesignState): void {
   urls.forEach(revokeObjectUrl);
 }
 
+function revokeFinalSignArtworkUrl(ui: BuilderState["ui"]): void {
+  revokeObjectUrl(ui.finalSignArtwork.objectUrl);
+}
+
+/** AI-affecting edits: drop cached final artwork (revoke blob URL). */
+function invalidateFinalSignArtworkUi(ui: BuilderState["ui"]): BuilderState["ui"] {
+  if (!ui.finalSignArtwork.isValid && !ui.finalSignArtwork.objectUrl) {
+    return ui;
+  }
+  revokeFinalSignArtworkUrl(ui);
+  return {
+    ...ui,
+    finalSignArtwork: { ...initialFinalSignArtworkUi },
+  };
+}
+
+function designWorkspaceForEnteringDesign(state: BuilderState): BuilderState["ui"]["designWorkspace"] {
+  const tab = state.design.creationMode === "photo" ? "image" : "background";
+  return {
+    activeTab: tab,
+    selectedElement: selectedElementForTab(tab, state.design),
+  };
+}
+
 function clearPhotoPathIllustration(state: BuilderState): SignDesignState {
   revokeIllustrationIfNeeded(
     state.design.illustration,
@@ -108,6 +137,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         return { ...state, design: { ...state.design, creationMode: action.mode } };
       }
       revokeDesignUrls(state.design);
+      revokeFinalSignArtworkUrl(state.ui);
       return {
         ...state,
         design: { ...resetAfterModeChange(), creationMode: action.mode },
@@ -117,6 +147,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
 
     case "SET_UPLOAD": {
       revokeDesignUrls(state.design);
+      revokeFinalSignArtworkUrl(state.ui);
       const mode = state.design.creationMode;
       let illustration = null;
       if (mode === "illustration") {
@@ -137,12 +168,14 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         ui: {
           ...state.ui,
           aiIllustration: { status: "idle" },
+          finalSignArtwork: { ...initialFinalSignArtworkUi },
         },
       };
     }
 
     case "CLEAR_UPLOAD": {
       revokeDesignUrls(state.design);
+      revokeFinalSignArtworkUrl(state.ui);
       return {
         ...state,
         design: {
@@ -154,6 +187,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         ui: {
           ...state.ui,
           aiIllustration: { status: "idle" },
+          finalSignArtwork: { ...initialFinalSignArtworkUi },
         },
       };
     }
@@ -162,14 +196,18 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       if (!state.design.originalImage) return state;
       const styleChanged = state.design.photoIllustrationStyleId !== action.styleId;
       let design = state.design;
+      let ui = state.ui;
       if (styleChanged) {
         design = clearPhotoPathIllustration(state);
         design = { ...design, photoIllustrationStyleId: action.styleId };
+        if (state.design.creationMode === "photo") {
+          ui = invalidateFinalSignArtworkUi(ui);
+        }
         return {
           ...state,
           design,
           ui: {
-            ...state.ui,
+            ...ui,
             aiIllustration: { status: "idle" },
           },
         };
@@ -250,11 +288,20 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         },
       };
 
-    case "SET_BACKGROUND":
+    case "SET_BACKGROUND": {
+      if (state.design.backgroundId === action.backgroundId) {
+        return state;
+      }
+      const ui =
+        state.design.creationMode === "photo"
+          ? invalidateFinalSignArtworkUi(state.ui)
+          : state.ui;
       return {
         ...state,
         design: { ...state.design, backgroundId: action.backgroundId },
+        ui,
       };
+    }
 
     case "SET_TEXT": {
       const { patch } = action;
@@ -277,17 +324,31 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       };
     }
 
-    case "SET_ILLUSTRATION_TRANSFORM":
+    case "SET_ILLUSTRATION_TRANSFORM": {
+      const nextTransform = {
+        ...state.design.illustrationTransform,
+        ...action.patch,
+      };
+      const t = state.design.illustrationTransform;
+      const transformUnchanged =
+        nextTransform.x === t.x &&
+        nextTransform.y === t.y &&
+        nextTransform.scale === t.scale;
+      const ui =
+        !transformUnchanged &&
+        state.design.creationMode === "photo" &&
+        state.ui.finalSignArtwork.isValid
+          ? invalidateFinalSignArtworkUi(state.ui)
+          : state.ui;
       return {
         ...state,
         design: {
           ...state.design,
-          illustrationTransform: {
-            ...state.design.illustrationTransform,
-            ...action.patch,
-          },
+          illustrationTransform: nextTransform,
         },
+        ui,
       };
+    }
 
     case "SET_MATERIAL":
       return {
@@ -431,15 +492,19 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case "GO_NEXT": {
       const next = getNextStep(state.design.creationMode, state.ui.currentStepId);
       if (!next) return state;
+      const designWorkspace =
+        next === "design"
+          ? designWorkspaceForEnteringDesign(state)
+          : {
+              ...state.ui.designWorkspace,
+              selectedElement: null,
+            };
       return {
         ...state,
         ui: {
           ...state.ui,
           currentStepId: next,
-          designWorkspace: {
-            ...state.ui.designWorkspace,
-            selectedElement: null,
-          },
+          designWorkspace,
         },
       };
     }
@@ -457,20 +522,102 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       };
     }
 
-    case "GO_TO_STEP":
+    case "GO_TO_STEP": {
+      const enteringDesign = action.stepId === "design";
       return {
         ...state,
         ui: {
           ...state.ui,
           currentStepId: action.stepId,
           checkoutMessageVisible: false,
+          ...(enteringDesign
+            ? {
+                designWorkspace: designWorkspaceForEnteringDesign(state),
+                finalSignArtwork: {
+                  ...state.ui.finalSignArtwork,
+                  previewMode: "draft" as const,
+                },
+              }
+            : {}),
         },
       };
+    }
 
     case "SHOW_CHECKOUT_MESSAGE":
       return {
         ...state,
         ui: { ...state.ui, checkoutMessageVisible: true },
+      };
+
+    case "FINAL_SIGN_START":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          finalSignArtwork: {
+            ...state.ui.finalSignArtwork,
+            status: "generating",
+            errorCode: undefined,
+            userMessage: undefined,
+          },
+        },
+      };
+
+    case "FINAL_SIGN_SUCCESS": {
+      revokeObjectUrl(state.ui.finalSignArtwork.objectUrl);
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          finalSignArtwork: {
+            status: "success",
+            objectUrl: action.objectUrl,
+            isValid: true,
+            previewMode: "final",
+          },
+        },
+      };
+    }
+
+    case "FINAL_SIGN_ERROR":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          finalSignArtwork: {
+            ...state.ui.finalSignArtwork,
+            status: "error",
+            errorCode: action.errorCode,
+            userMessage: action.userMessage,
+          },
+        },
+      };
+
+    case "FINAL_SIGN_SHOW_DRAFT":
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          finalSignArtwork: {
+            ...state.ui.finalSignArtwork,
+            previewMode: "draft",
+          },
+        },
+      };
+
+    case "FINAL_SIGN_SHOW_FINAL":
+      if (!state.ui.finalSignArtwork.isValid || !state.ui.finalSignArtwork.objectUrl) {
+        return state;
+      }
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          finalSignArtwork: {
+            ...state.ui.finalSignArtwork,
+            previewMode: "final",
+          },
+        },
       };
 
     default:

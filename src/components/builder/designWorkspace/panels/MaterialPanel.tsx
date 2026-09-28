@@ -1,5 +1,6 @@
 "use client";
 
+import { FinalSignCreatePanel } from "@/components/builder/designWorkspace/FinalSignCreatePanel";
 import { useBuilder } from "@/components/builder/BuilderContext";
 import type { Material } from "@/types/signDesign";
 import styles from "./panels.module.scss";
@@ -48,6 +49,8 @@ export function MaterialPanel() {
           );
         })}
       </div>
+
+      <FinalSignCreatePanel />
     </div>
   );
 }

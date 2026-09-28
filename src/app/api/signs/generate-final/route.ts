@@ -1,12 +1,24 @@
 import { checkDevGenerationGuard, clientKeyFromRequest } from "@/lib/ai/devGuard";
 import { AiIllustrationError, userMessageForCode } from "@/lib/ai/errors";
-import { generateIllustrationFromPhoto } from "@/lib/ai/generateIllustration";
+import { generateFinalSignArtwork } from "@/lib/ai/generateFinalSignArtwork";
 import { resolveBackgroundImage } from "@/lib/ai/resolveBackgroundImage";
 import { validateImageBuffer } from "@/lib/ai/validateUpload";
 import { getOpenAiImageConfig, isAiIllustrationOperational } from "@/lib/openai/config";
+import type { TextPosition } from "@/types/signDesign";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+
+const TEXT_POSITIONS: TextPosition[] = ["top", "center", "bottom"];
+
+function parseTextPosition(value: FormDataEntryValue | null): TextPosition {
+  if (typeof value !== "string") return "bottom";
+  const trimmed = value.trim();
+  if ((TEXT_POSITIONS as readonly string[]).includes(trimmed)) {
+    return trimmed as TextPosition;
+  }
+  return "bottom";
+}
 
 export async function POST(request: Request) {
   const config = getOpenAiImageConfig();
@@ -28,6 +40,8 @@ export async function POST(request: Request) {
     const styleId = form.get("styleId");
     const backgroundId = form.get("backgroundId");
     const imageEntry = form.get("image");
+    const compositionEntry = form.get("compositionReference");
+    const textPosition = parseTextPosition(form.get("textPosition"));
 
     if (typeof styleId !== "string" || !styleId.trim()) {
       return errorResponse("INVALID_STYLE", 400);
@@ -38,29 +52,40 @@ export async function POST(request: Request) {
     if (!(imageEntry instanceof File)) {
       return errorResponse("INVALID_IMAGE", 400);
     }
+    if (!(compositionEntry instanceof File)) {
+      return errorResponse("INVALID_IMAGE", 400);
+    }
 
-    const arrayBuffer = await imageEntry.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const { mime } = await validateImageBuffer(buffer, config.maxUploadBytes);
+    const photoBuffer = Buffer.from(await imageEntry.arrayBuffer());
+    const { mime: photoMime } = await validateImageBuffer(photoBuffer, config.maxUploadBytes);
+
+    const compositionBuffer = Buffer.from(await compositionEntry.arrayBuffer());
+    const { mime: compositionMime } = await validateImageBuffer(
+      compositionBuffer,
+      config.maxUploadBytes,
+    );
 
     const background = await resolveBackgroundImage(
       backgroundId.trim(),
       config.maxUploadBytes,
     );
 
-    const result = await generateIllustrationFromPhoto(
-      buffer,
-      mime,
+    const result = await generateFinalSignArtwork(
+      photoBuffer,
+      photoMime,
       imageEntry.name,
       styleId.trim(),
       background.buffer,
       background.mime,
       background.ext,
+      compositionBuffer,
+      compositionMime,
+      textPosition,
     );
 
     return NextResponse.json({
       ok: true,
-      illustration: {
+      artwork: {
         mimeType: "image/png",
         base64: result.pngBuffer.toString("base64"),
       },
@@ -80,7 +105,7 @@ export async function POST(request: Request) {
         { status: err.httpStatus },
       );
     }
-    console.error("[api/illustrations/generate]", err);
+    console.error("[api/signs/generate-final]", err);
     return errorResponse("GENERATION_FAILED", 500);
   }
 }

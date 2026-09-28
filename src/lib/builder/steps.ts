@@ -8,6 +8,7 @@ export type StepMeta = {
 
 const stepMetaMap: Record<BuilderStepId, StepMeta> = {
   start: { id: "start", progressLabel: "התחלה" },
+  background: { id: "background", progressLabel: "רקע" },
   upload: { id: "upload", progressLabel: "תמונה" },
   illustrationStyle: { id: "illustrationStyle", progressLabel: "סגנון" },
   design: { id: "design", progressLabel: "עיצוב" },
@@ -21,7 +22,7 @@ export function getStepMeta(id: BuilderStepId): StepMeta {
 export function getStepsForMode(mode: CreationMode | null): BuilderStepId[] {
   if (!mode) return ["start"];
   if (mode === "photo") {
-    return ["start", "upload", "illustrationStyle", "design", "review"];
+    return ["start", "background", "upload", "illustrationStyle", "design", "review"];
   }
   return ["start", "upload", "design", "review"];
 }

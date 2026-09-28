@@ -86,6 +86,7 @@ export function MobileIllustrationControls() {
           onChange={(e) => current.onChange(Number(e.target.value))}
         />
       </div>
+
     </div>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
+import { FinalSignCreatePanel } from "@/components/builder/designWorkspace/FinalSignCreatePanel";
 import { useBuilder } from "@/components/builder/BuilderContext";
 import type { Material } from "@/types/signDesign";
+import panelStyles from "@/components/builder/designWorkspace/panels/panels.module.scss";
 import styles from "./mobileEditor.module.scss";
 
 const options: {
@@ -18,28 +20,31 @@ export function MobileMaterialPicker() {
   const selected = state.design.material;
 
   return (
-    <div className={styles.materialRow} role="radiogroup" aria-label="חומר השלט">
-      {options.map((opt) => {
-        const isSelected = selected === opt.value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="radio"
-            aria-checked={isSelected}
-            className={[styles.materialCard, isSelected ? styles.materialSelected : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => dispatch({ type: "SET_MATERIAL", material: opt.value })}
-          >
-            <span
-              className={[styles.materialSample, opt.sampleClass].join(" ")}
-              aria-hidden
-            />
-            <span className={styles.materialTitle}>{opt.title}</span>
-          </button>
-        );
-      })}
+    <div className={panelStyles.panel}>
+      <div className={styles.materialRow} role="radiogroup" aria-label="חומר השלט">
+        {options.map((opt) => {
+          const isSelected = selected === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              className={[styles.materialCard, isSelected ? styles.materialSelected : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => dispatch({ type: "SET_MATERIAL", material: opt.value })}
+            >
+              <span
+                className={[styles.materialSample, opt.sampleClass].join(" ")}
+                aria-hidden
+              />
+              <span className={styles.materialTitle}>{opt.title}</span>
+            </button>
+          );
+        })}
+      </div>
+      <FinalSignCreatePanel />
     </div>
   );
 }

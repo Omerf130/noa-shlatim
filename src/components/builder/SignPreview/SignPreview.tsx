@@ -53,6 +53,13 @@ export type CompositionEditorConfig = {
   ) => void;
 };
 
+export type IntegratedFinalPreviewConfig = {
+  showFinalArtwork: boolean;
+  finalArtworkObjectUrl: string | null;
+  /** Photo path design step: show original upload instead of AI illustration layer. */
+  useOriginalPhotoAsSubject: boolean;
+};
+
 type SignPreviewProps = {
   design: SignDesignState;
   size?: SignPreviewSize;
@@ -60,6 +67,7 @@ type SignPreviewProps = {
   className?: string;
   ariaLabel?: string;
   compositionEditor?: CompositionEditorConfig;
+  integratedFinalPreview?: IntegratedFinalPreviewConfig;
 };
 
 export function SignPreview({
@@ -69,6 +77,7 @@ export function SignPreview({
   className,
   ariaLabel,
   compositionEditor,
+  integratedFinalPreview,
 }: SignPreviewProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -78,10 +87,25 @@ export function SignPreview({
 
   const background = getBackgroundById(design.backgroundId);
   const styleMeta = getIllustrationStyleById(design.illustration?.styleId ?? null);
-  const filterClass =
-    design.illustration?.source === "mockAi" && styleMeta
-      ? styles[styleMeta.previewFilter]
-      : "";
+  const showingIntegratedFinal =
+    Boolean(integratedFinalPreview?.showFinalArtwork) &&
+    Boolean(integratedFinalPreview?.finalArtworkObjectUrl);
+
+  const useOriginalPhoto =
+    Boolean(integratedFinalPreview?.useOriginalPhotoAsSubject) &&
+    Boolean(design.originalImage) &&
+    !showingIntegratedFinal;
+
+  const subjectObjectUrl = useOriginalPhoto
+    ? design.originalImage!.objectUrl
+    : design.illustration?.objectUrl;
+
+  const subjectUsesMockFilter =
+    !useOriginalPhoto &&
+    design.illustration?.source === "mockAi" &&
+    styleMeta;
+
+  const filterClass = subjectUsesMockFilter ? styles[styleMeta!.previewFilter] : "";
 
   const { x, y, scale } = design.illustrationTransform;
   const illustrationPlacement = getIllustrationPlacementStyle(x, y, scale);
@@ -229,13 +253,25 @@ export function SignPreview({
             .join(" ")}
           onCanvasPointerDown={editorEnabled ? handleCanvasPointerDown : undefined}
         >
-          {background ? (
+          {showingIntegratedFinal ? (
+            <div className={styles.integratedArtworkLayer}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={integratedFinalPreview!.finalArtworkObjectUrl!}
+                alt=""
+                aria-hidden="true"
+                className={styles.integratedArtworkImg}
+                draggable={false}
+                decoding="async"
+              />
+            </div>
+          ) : background ? (
             <SignBackgroundLayer background={background} />
           ) : (
             <div className={styles.emptyHint}>בחרו רקע כדי לראות תצוגה מלאה</div>
           )}
 
-          {design.illustration && (
+          {!showingIntegratedFinal && subjectObjectUrl && (
             <div className={styles.illustrationLayer}>
               <div
                 className={styles.illustrationAnchor}
@@ -243,7 +279,7 @@ export function SignPreview({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={design.illustration.objectUrl}
+                  src={subjectObjectUrl}
                   alt=""
                   aria-hidden="true"
                   draggable={false}

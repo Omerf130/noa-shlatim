@@ -10,7 +10,9 @@ export function ImagePanel() {
   return (
     <div className={styles.panel}>
       <p className={styles.panelIntro}>
-        התאימו את האיור על גבי השלט — גודל ומיקום.
+        {state.design.creationMode === "photo"
+          ? "התאימו את תמונת המקור על גבי השלט — גודל ומיקום (טיוטה לפני AI)."
+          : "התאימו את האיור על גבי השלט — גודל ומיקום."}
       </p>
 
       <div className={styles.field}>
@@ -75,6 +77,7 @@ export function ImagePanel() {
           }
         />
       </div>
+
     </div>
   );
 }

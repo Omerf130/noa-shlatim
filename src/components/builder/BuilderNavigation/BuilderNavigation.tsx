@@ -16,8 +16,8 @@ export function BuilderNavigation({ className }: BuilderNavigationProps) {
   const { state, dispatch } = useBuilder();
   const { design, ui } = state;
   const step = ui.currentStepId;
-  const canContinue = canProceed(step, design);
-  const hint = stepValidationHint(step, design);
+  const canContinue = canProceed(step, state);
+  const hint = stepValidationHint(step, state);
   const hasBack = getPrevStep(design.creationMode, step) !== null;
   const [continueAttemptStep, setContinueAttemptStep] = useState<BuilderStepId | null>(
     null,

@@ -2,6 +2,7 @@ import type { SignDesignState } from "./signDesign";
 
 export type BuilderStepId =
   | "start"
+  | "background"
   | "upload"
   | "illustrationStyle"
   | "design"
@@ -16,6 +17,17 @@ export type DesignSelectedElement =
   | { kind: "illustration" }
   | { kind: "decoration"; id: string };
 
+export type FinalSignPreviewMode = "draft" | "final";
+
+export type FinalSignArtworkUi = {
+  status: AiGenerationStatus;
+  objectUrl: string | null;
+  isValid: boolean;
+  previewMode: FinalSignPreviewMode;
+  errorCode?: string;
+  userMessage?: string;
+};
+
 export type BuilderUiState = {
   currentStepId: BuilderStepId;
   checkoutMessageVisible: boolean;
@@ -24,6 +36,7 @@ export type BuilderUiState = {
     errorCode?: string;
     userMessage?: string;
   };
+  finalSignArtwork: FinalSignArtworkUi;
   designWorkspace: {
     activeTab: DesignWorkspaceTab;
     selectedElement: DesignSelectedElement | null;
@@ -40,11 +53,19 @@ export const initialDesignWorkspaceUi = {
   selectedElement: null,
 };
 
+export const initialFinalSignArtworkUi: FinalSignArtworkUi = {
+  status: "idle",
+  objectUrl: null,
+  isValid: false,
+  previewMode: "draft",
+};
+
 export const initialBuilderUiState: BuilderUiState = {
   currentStepId: "start",
   checkoutMessageVisible: false,
   aiIllustration: {
     status: "idle",
   },
+  finalSignArtwork: { ...initialFinalSignArtworkUi },
   designWorkspace: { ...initialDesignWorkspaceUi },
 };

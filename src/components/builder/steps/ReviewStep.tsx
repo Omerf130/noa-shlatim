@@ -15,13 +15,9 @@ export function ReviewStep() {
   const styleName = getIllustrationStyleById(
     design.photoIllustrationStyleId ?? design.illustration?.styleId ?? null,
   )?.name;
-  const illustrationKind =
-    design.creationMode === "photo"
-      ? design.illustration?.source === "ai"
-        ? "איור AI"
-        : design.illustration?.source === "mockAi"
-          ? "דוגמה (QA)"
-          : null
+  const photoFinalKind =
+    design.creationMode === "photo" && state.ui.finalSignArtwork.isValid
+      ? "שלט מאויר משולב"
       : null;
   const bgName = getBackgroundById(design.backgroundId)?.name;
   const materialLabel =
@@ -44,7 +40,7 @@ export function ReviewStep() {
             <dt>סגנון איור</dt>
             <dd>
               {styleName}
-              {illustrationKind ? ` · ${illustrationKind}` : ""}
+              {photoFinalKind ? ` · ${photoFinalKind}` : ""}
             </dd>
           </div>
         )}

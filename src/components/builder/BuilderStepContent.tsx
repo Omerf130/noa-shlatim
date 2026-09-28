@@ -2,6 +2,7 @@
 
 import { DesignWorkspaceStep } from "@/components/builder/designWorkspace/DesignWorkspaceStep";
 import { useBuilder } from "@/components/builder/BuilderContext";
+import { BackgroundStep } from "@/components/builder/steps/BackgroundStep";
 import { IllustrationStyleStep } from "@/components/builder/steps/IllustrationStyleStep";
 import { ReviewStep } from "@/components/builder/steps/ReviewStep";
 import { StartStep } from "@/components/builder/steps/StartStep";
@@ -14,6 +15,8 @@ export function BuilderStepContent() {
   switch (step) {
     case "start":
       return <StartStep />;
+    case "background":
+      return <BackgroundStep />;
     case "upload":
       return <UploadStep />;
     case "illustrationStyle":
