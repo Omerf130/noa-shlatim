@@ -1,6 +1,7 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { getPrivateBlob } from "@/lib/storage/privateBlob";
+import { streamPrivateImageResponse } from "@/lib/storage/streamPrivateImageResponse";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -24,14 +25,7 @@ export async function GET(request: Request, context: RouteContext) {
       return new NextResponse(null, { status: 404 });
     }
 
-    return new Response(blob.stream, {
-      status: 200,
-      headers: {
-        "Content-Type": blob.contentType || "image/png",
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "private, no-store",
-      },
-    });
+    return streamPrivateImageResponse(blob, "image/png");
   } catch (err) {
     if (err instanceof OrderError) {
       const status = err.httpStatus === 401 ? 401 : 404;

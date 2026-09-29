@@ -9,7 +9,7 @@ export default function AdminDashboardPage() {
     <div className={styles.dashboard}>
       <h1 className={styles.heading}>דשבורד</h1>
       <p className={styles.lead}>
-        ברוכים הבאים לפאנל הניהול. בקרוב: עיצובים והזמנות.
+        ברוכים הבאים לפאנל הניהול. ניתן לצפות בהזמנות טיוטה בתפריט הזמנות.
       </p>
     </div>
   );

@@ -1,9 +1,6 @@
 import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
-import {
-  checkoutIntegratedFinalPreview,
-  photoOrderDesignToSignDesignState,
-} from "@/lib/checkout/orderDesignToSignPreview";
+import { buildPersistedSignPreviewProps } from "@/lib/orders/persistedOrderSignPreview";
 import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
@@ -51,8 +48,7 @@ export function buildCheckoutPageDto(params: {
     materialLabel,
     backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
     styleName: getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null,
-    design: photoOrderDesignToSignDesignState(design),
-    integratedFinalPreview: checkoutIntegratedFinalPreview(artworkUrl),
+    ...buildPersistedSignPreviewProps(design, artworkUrl),
     customer: {
       fullName: customer.fullName ?? "",
       phone: customer.phone ?? "",

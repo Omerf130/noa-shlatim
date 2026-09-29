@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { logoutAdmin } from "@/app/admin/(protected)/actions";
 import type { SafeAdmin } from "@/lib/auth/session";
 import styles from "./AdminShell.module.scss";
@@ -7,16 +8,6 @@ type AdminShellProps = {
   admin: SafeAdmin;
   children: React.ReactNode;
 };
-
-type NavItem =
-  | { label: string; kind: "link"; href: string; active?: boolean }
-  | { label: string; kind: "disabled" };
-
-const navItems: NavItem[] = [
-  { label: "דשבורד", kind: "link", href: "/admin", active: true },
-  { label: "עיצובים", kind: "disabled" },
-  { label: "הזמנות", kind: "disabled" },
-];
 
 export function AdminShell({ admin, children }: AdminShellProps) {
   return (
@@ -38,23 +29,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
 
       <div className={styles.body}>
         <nav className={styles.nav} aria-label="ניווט ניהול">
-          <ul className={styles.navList}>
-            {navItems.map((item) => (
-              <li key={item.label}>
-                {item.kind === "disabled" ? (
-                  <span className={styles.navItemDisabled}>{item.label}</span>
-                ) : (
-                  <a
-                    href={item.href}
-                    className={item.active ? styles.navItemActive : styles.navItem}
-                    aria-current={item.active ? "page" : undefined}
-                  >
-                    {item.label}
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
+          <AdminNav />
         </nav>
 
         <main className={styles.main}>{children}</main>

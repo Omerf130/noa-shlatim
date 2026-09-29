@@ -1,3 +1,4 @@
+import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import type { SignDesignState } from "@/types/signDesign";
 
@@ -21,10 +22,25 @@ export function photoOrderDesignToSignDesignState(
   };
 }
 
-export function checkoutIntegratedFinalPreview(artworkUrl: string) {
+export function persistedOrderIntegratedPreview(
+  artworkUrl: string,
+): IntegratedFinalPreviewConfig {
   return {
     showFinalArtwork: true,
     finalArtworkObjectUrl: artworkUrl,
     useOriginalPhotoAsSubject: false,
+  };
+}
+
+export function buildPersistedSignPreviewProps(
+  design: PhotoOrderDesignSnapshot,
+  artworkUrl: string,
+): {
+  design: SignDesignState;
+  integratedFinalPreview: IntegratedFinalPreviewConfig;
+} {
+  return {
+    design: photoOrderDesignToSignDesignState(design),
+    integratedFinalPreview: persistedOrderIntegratedPreview(artworkUrl),
   };
 }
