@@ -21,6 +21,8 @@ type BuilderContextValue = {
   dispatch: React.Dispatch<BuilderAction>;
   setSourcePhotoFile: (file: File | null) => void;
   getSourcePhotoFile: () => File | null;
+  setFinalArtworkBlob: (blob: Blob | null) => void;
+  getFinalArtworkBlob: () => Blob | null;
 };
 
 const BuilderContext = createContext<BuilderContextValue | null>(null);
@@ -28,6 +30,7 @@ const BuilderContext = createContext<BuilderContextValue | null>(null);
 export function BuilderProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(builderReducer, initialBuilderState);
   const sourcePhotoFileRef = useRef<File | null>(null);
+  const finalArtworkBlobRef = useRef<Blob | null>(null);
 
   const setSourcePhotoFile = useCallback((file: File | null) => {
     sourcePhotoFileRef.current = file;
@@ -35,14 +38,22 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
 
   const getSourcePhotoFile = useCallback(() => sourcePhotoFileRef.current, []);
 
+  const setFinalArtworkBlob = useCallback((blob: Blob | null) => {
+    finalArtworkBlobRef.current = blob;
+  }, []);
+
+  const getFinalArtworkBlob = useCallback(() => finalArtworkBlobRef.current, []);
+
   const value = useMemo(
     () => ({
       state,
       dispatch,
       setSourcePhotoFile,
       getSourcePhotoFile,
+      setFinalArtworkBlob,
+      getFinalArtworkBlob,
     }),
-    [state, setSourcePhotoFile, getSourcePhotoFile],
+    [state, setSourcePhotoFile, getSourcePhotoFile, setFinalArtworkBlob, getFinalArtworkBlob],
   );
 
   return (

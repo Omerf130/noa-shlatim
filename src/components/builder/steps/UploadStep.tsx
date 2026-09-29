@@ -5,7 +5,7 @@ import { useBuilder } from "@/components/builder/BuilderContext";
 import styles from "./stepShared.module.scss";
 
 export function UploadStep() {
-  const { state, dispatch, setSourcePhotoFile } = useBuilder();
+  const { state, dispatch, setSourcePhotoFile, setFinalArtworkBlob } = useBuilder();
   const isIllustrationPath = state.design.creationMode === "illustration";
 
   return (
@@ -23,6 +23,7 @@ export function UploadStep() {
         value={state.design.originalImage}
         onChange={(image, file) => {
           setSourcePhotoFile(file ?? null);
+          setFinalArtworkBlob(null);
           if (image) dispatch({ type: "SET_UPLOAD", image });
           else dispatch({ type: "CLEAR_UPLOAD" });
         }}

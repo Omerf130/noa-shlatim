@@ -15,7 +15,7 @@ type GenerateFinalResponse =
   | { ok: false; code: string; message: string };
 
 export function useFinalSignGeneration() {
-  const { state, dispatch, getSourcePhotoFile } = useBuilder();
+  const { state, dispatch, getSourcePhotoFile, setFinalArtworkBlob } = useBuilder();
   const finalArt = state.ui.finalSignArtwork;
 
   const generateFinalSign = useCallback(async () => {
@@ -94,6 +94,7 @@ export function useFinalSignGeneration() {
 
       const bytes = Uint8Array.from(atob(data.artwork.base64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: data.artwork.mimeType });
+      setFinalArtworkBlob(blob);
       const objectUrl = createObjectUrl(blob);
       dispatch({ type: "FINAL_SIGN_SUCCESS", objectUrl });
     } catch {
@@ -103,7 +104,7 @@ export function useFinalSignGeneration() {
         userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
       });
     }
-  }, [dispatch, getSourcePhotoFile, state]);
+  }, [dispatch, getSourcePhotoFile, setFinalArtworkBlob, state]);
 
   const showDraftPreview = useCallback(() => {
     dispatch({ type: "FINAL_SIGN_SHOW_DRAFT" });

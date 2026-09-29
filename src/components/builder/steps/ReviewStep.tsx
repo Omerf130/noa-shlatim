@@ -2,6 +2,7 @@
 
 import { useBuilder } from "@/components/builder/BuilderContext";
 import { Button } from "@/components/ui/Button/Button";
+import { useCreateDraftOrder } from "@/hooks/useCreateDraftOrder";
 import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import styles from "./ReviewStep.module.scss";
@@ -9,6 +10,8 @@ import styles from "./ReviewStep.module.scss";
 export function ReviewStep() {
   const { state, dispatch } = useBuilder();
   const { design, ui } = state;
+  const { submitDraftOrder, isSubmitting, errorMessage, canSubmitPhotoOrder } =
+    useCreateDraftOrder();
 
   const pathLabel =
     design.creationMode === "photo" ? "מתמונה רגילה" : "מאיור קיים";
@@ -16,12 +19,15 @@ export function ReviewStep() {
     design.photoIllustrationStyleId ?? design.illustration?.styleId ?? null,
   )?.name;
   const photoFinalKind =
-    design.creationMode === "photo" && state.ui.finalSignArtwork.isValid
+    design.creationMode === "photo" && ui.finalSignArtwork.isValid
       ? "שלט מאויר משולב"
       : null;
   const bgName = getBackgroundById(design.backgroundId)?.name;
   const materialLabel =
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
+
+  const isPhoto = design.creationMode === "photo";
+  const isIllustration = design.creationMode === "illustration";
 
   return (
     <div className={styles.review}>
@@ -35,7 +41,7 @@ export function ReviewStep() {
           <dt>דרך</dt>
           <dd>{pathLabel}</dd>
         </div>
-        {design.creationMode === "photo" && styleName && (
+        {isPhoto && styleName && (
           <div className={styles.summaryItem}>
             <dt>סגנון איור</dt>
             <dd>
@@ -61,20 +67,36 @@ export function ReviewStep() {
       <div className={styles.actions}>
         <Button
           variant="secondary"
+          disabled={isSubmitting}
           onClick={() => dispatch({ type: "GO_TO_STEP", stepId: "design" })}
         >
           חזרה לעריכה
         </Button>
-        <Button onClick={() => dispatch({ type: "SHOW_CHECKOUT_MESSAGE" })}>
-          להמשך להזמנה
-        </Button>
+        {isPhoto ? (
+          <Button
+            disabled={!canSubmitPhotoOrder || isSubmitting}
+            onClick={() => void submitDraftOrder()}
+          >
+            {isSubmitting ? "שומרים את ההזמנה…" : "להמשך להזמנה"}
+          </Button>
+        ) : (
+          <Button disabled title="שמירת הזמנה למסלול איור קיים — בקרוב">
+            להמשך להזמנה (בקרוב)
+          </Button>
+        )}
       </div>
 
-      {ui.checkoutMessageVisible && (
-        <p className={styles.checkoutMessage} role="status">
-          ההזמנה והתשלום יתווספו בשלב הבא.
+      {isIllustration && (
+        <p className={styles.checkoutMessage} role="note">
+          שמירת הזמנה למסלול איור קיים תתווסף לאחר בדיקה. ניתן לערוך את השלט בינתיים.
         </p>
       )}
+
+      {errorMessage ? (
+        <p className={styles.checkoutMessage} role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
     </div>
   );
 }
