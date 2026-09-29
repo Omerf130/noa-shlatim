@@ -1,108 +1,46 @@
-import { homeIllustrationShowcaseItems } from "@/data/homeIllustrationShowcase";
-import {
-  multicolorTextColor,
-  solidTextColor,
-} from "@/data/signTextColors";
-import type { IllustrationAsset, SignDesignState } from "@/types/signDesign";
+import { publicAssetPath } from "@/lib/home/publicAssetPath";
 
 export type HomeSignExampleItem = {
   id: string;
   title: string;
   caption: string;
-  design: SignDesignState;
   previewAriaLabel: string;
+  finishedSignImageSrc: string;
 };
 
-function illustrationForStyle(styleId: string): IllustrationAsset {
-  const showcase = homeIllustrationShowcaseItems.find(
-    (item) => item.styleId === styleId,
-  );
-  const objectUrl = showcase?.imageSrc;
-  if (!objectUrl) {
-    throw new Error(`Missing homepage example illustration for ${styleId}`);
-  }
-  return {
-    objectUrl,
-    source: "ai",
-    styleId,
-  };
-}
+/** Finished-sign marketing examples — explicit assets in public/examples/. */
+const finishedSignExamples = {
+  familyCourtyard: publicAssetPath(
+    "examples/ChatGPT Image Sep 29, 2026, 03_16_34 PM.png",
+  ),
+  familySunsetView: publicAssetPath(
+    "examples/ChatGPT Image Sep 29, 2026, 03_16_37 PM.png",
+  ),
+  familyEntry: publicAssetPath(
+    "examples/ChatGPT Image Sep 29, 2026, 03_16_48 PM.png",
+  ),
+} as const;
 
-/** Static homepage demos — not builder catalog options. */
 export const homeSignExamples: HomeSignExampleItem[] = [
   {
     id: "example-family",
     title: "שלט משפחתי",
     caption: "שם המשפחה בראש השלט, האיור במרכז — עץ חם לכניסה ביתית.",
-    previewAriaLabel: "דוגמת שלט משפחתי — משפחת לוי, סגנון קלאסי, רקע חצר",
-    design: {
-      creationMode: "photo",
-      originalImage: null,
-      photoIllustrationStyleId: "style-classic",
-      illustration: illustrationForStyle("style-classic"),
-      backgroundId: "bg-garden-courtyard",
-      text: {
-        value: "משפחת לוי",
-        color: solidTextColor("#2d4a3e"),
-        size: 28,
-        position: "top",
-        fontStyle: "soft",
-        offsetX: 0,
-        offsetY: 0,
-      },
-      illustrationTransform: { x: 0, y: 4, scale: 1 },
-      decorations: [],
-      material: "wood",
-    },
+    previewAriaLabel: "דוגמת שלט משפחתי — משפחת לוי, חצר ביתית, שלט עץ",
+    finishedSignImageSrc: finishedSignExamples.familyCourtyard,
   },
   {
     id: "example-view",
     title: "שלט עם נוף",
     caption: "רקע נוף פתוח, טקסט צבעוני למטה — מגנט עדין למרפסת או דלת פנים.",
-    previewAriaLabel: "דוגמת שלט עם נוף — כאן גרים באהבה, סגנון רך, מגנט",
-    design: {
-      creationMode: "photo",
-      originalImage: null,
-      photoIllustrationStyleId: "style-soft",
-      illustration: illustrationForStyle("style-soft"),
-      backgroundId: "bg-terrace-view",
-      text: {
-        value: "כאן גרים באהבה",
-        color: multicolorTextColor("ocean"),
-        size: 24,
-        position: "bottom",
-        fontStyle: "personal",
-        offsetX: 0,
-        offsetY: 0,
-      },
-      illustrationTransform: { x: 0, y: 3, scale: 1 },
-      decorations: [],
-      material: "magnet",
-    },
+    previewAriaLabel: "דוגמת שלט עם נוף — משפחת כהן, נוף שקיעה, שלט עץ",
+    finishedSignImageSrc: finishedSignExamples.familySunsetView,
   },
   {
     id: "example-welcome",
     title: "שלט לכניסה",
-    caption: "ברכת כניסה בולטת, איור שובב — עץ על רקע שקיעה.",
-    previewAriaLabel: "דוגמת שלט לכניסה — ברוכים הבאים, סגנון שובב, רקע שקיעה",
-    design: {
-      creationMode: "photo",
-      originalImage: null,
-      photoIllustrationStyleId: "style-playful",
-      illustration: illustrationForStyle("style-playful"),
-      backgroundId: "bg-sunset-balcony",
-      text: {
-        value: "ברוכים הבאים",
-        color: solidTextColor("#ffffff"),
-        size: 26,
-        position: "top",
-        fontStyle: "clean",
-        offsetX: 0,
-        offsetY: 0,
-      },
-      illustrationTransform: { x: 0, y: 5, scale: 1 },
-      decorations: [],
-      material: "wood",
-    },
+    caption: "ברכת כניסה בולטת, איור שובב — עץ חם על רקע כניסה ביתית.",
+    previewAriaLabel: "דוגמת שלט לכניסה — משפחת כהן, דלת כניסה, שלט עץ",
+    finishedSignImageSrc: finishedSignExamples.familyEntry,
   },
 ];

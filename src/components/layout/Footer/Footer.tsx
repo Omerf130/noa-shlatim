@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
+import { WEBLIO_CREDIT } from "@/data/siteCredits";
 import { homeNavLinks, homePrimaryCta } from "@/data/homeNav";
 import { Container } from "@/components/layout/Container/Container";
 import { Button } from "@/components/ui/Button/Button";
@@ -33,9 +34,22 @@ export function Footer() {
           </nav>
         </div>
 
-        <p className={styles.copy}>
-          © {new Date().getFullYear()} נועה · שלטים לדלת
-        </p>
+        <div className={styles.bottomBar}>
+          <p className={styles.copy}>
+            © {new Date().getFullYear()} נועה · שלטים לדלת
+          </p>
+          <p className={styles.credit}>
+            {WEBLIO_CREDIT.linePrefix}{" "}
+            <a
+              href={WEBLIO_CREDIT.href}
+              className={styles.creditLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {WEBLIO_CREDIT.label}
+            </a>
+          </p>
+        </div>
       </Container>
     </footer>
   );

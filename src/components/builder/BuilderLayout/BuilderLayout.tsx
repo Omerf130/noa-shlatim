@@ -2,6 +2,7 @@
 
 import { BuilderNavigation } from "@/components/builder/BuilderNavigation/BuilderNavigation";
 import navStyles from "@/components/builder/BuilderNavigation/BuilderNavigation.module.scss";
+import { DraftEditReassurance } from "@/components/builder/designWorkspace/DraftEditReassurance";
 import { SignCompositionEditor } from "@/components/builder/SignPreview/SignCompositionEditor";
 import { SignPreview } from "@/components/builder/SignPreview/SignPreview";
 import { useBuilder } from "@/components/builder/BuilderContext";
@@ -57,6 +58,7 @@ export function BuilderLayout({ children }: BuilderLayoutProps) {
               size="workspace"
               showMockDisclaimer={showMockDisclaimer}
             />
+            <DraftEditReassurance />
           </aside>
         )}
 

@@ -6,6 +6,7 @@ import { MobileBackgroundRail } from "@/components/builder/designWorkspace/mobil
 import { MobileIllustrationControls } from "@/components/builder/designWorkspace/mobile/MobileIllustrationControls";
 import { MobileMaterialPicker } from "@/components/builder/designWorkspace/mobile/MobileMaterialPicker";
 import { MobileTextControls } from "@/components/builder/designWorkspace/mobile/MobileTextControls";
+import { DraftEditReassurance } from "@/components/builder/designWorkspace/DraftEditReassurance";
 import styles from "./mobileEditor.module.scss";
 
 type MobileDesignTab = "background" | "text" | "image" | "material";
@@ -30,6 +31,8 @@ export function MobileDesignEditor() {
           <SignCompositionEditor size="mobileStage" ariaLabel="תצוגת השלט" />
         </div>
       </div>
+
+      <DraftEditReassurance />
 
       <div className={styles.console}>
         <div className={styles.toolbar} role="tablist" aria-label="כלי עיצוב">

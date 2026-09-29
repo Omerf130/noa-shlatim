@@ -24,7 +24,8 @@ export function FinalSignCreatePanel() {
   }
 
   const prerequisitesMet = isDesignWorkspaceComplete(state.design);
-  const showingFinal = hasValidFinal && finalArt.previewMode === "final";
+  const showingFinal =
+    hasValidFinal && finalArt.previewMode === "final" && !isGenerating;
 
   return (
     <div className={styles.finalSignBlock}>
@@ -54,9 +55,9 @@ export function FinalSignCreatePanel() {
             disabled={isGenerating || !prerequisitesMet}
             onClick={() => void generateFinalSign()}
           >
-            {isGenerating ? "יוצר שלט…" : "צור את השלט שלי"}
+            {isGenerating ? "יוצרים את השלט שלכם…" : "✨ צור את השלט שלי"}
           </button>
-          {hasValidFinal && (
+          {hasValidFinal && !isGenerating && (
             <button
               type="button"
               className={styles.finalSignSecondaryBtn}

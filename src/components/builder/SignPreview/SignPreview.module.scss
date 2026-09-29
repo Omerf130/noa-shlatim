@@ -1,4 +1,5 @@
 .root {
+  position: relative;
   width: 100%;
 }
 
@@ -76,6 +77,22 @@
   height: 100%;
   object-fit: cover;
   user-select: none;
+  animation: finalArtworkFadeIn 0.35s ease-out;
+}
+
+@keyframes finalArtworkFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .integratedArtworkImg {
+    animation: none;
+  }
 }
 
 .illustrationLayer {

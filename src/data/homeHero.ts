@@ -1,15 +1,13 @@
 import { publicAssetPath } from "@/lib/home/publicAssetPath";
 
-/**
- * Homepage hero scene image — swap `imageSrc` / `objectPosition` when the final asset is ready.
- * (Temporary: garden background until dedicated entrance + sign hero PNG exists.)
- */
-export const homeHeroMedia = {
+/** Dedicated homepage Hero — full entrance scene with mounted sign. */
+export const homeHeroScene = {
   imageSrc: publicAssetPath(
-    "backgrounds/ChatGPT Image Sep 24, 2026, 10_47_58 PM.png",
+    "backgrounds/ChatGPT Image Sep 29, 2026, 01_59_26 PM.png",
   ),
-  imageAlt: "אווירת בית חם — רקע זמני לשלט דלת מותאם אישית",
-  objectPosition: "50% 42%",
+  imageAlt: "שלט לדלת בעיצוב אישי עם איור משפחתי בכניסה לבית",
+  /** Keeps mounted sign + door visible in cover crop (physical left-weighted). */
+  objectPosition: "38% 46%",
 } as const;
 
 export const homeHeroAccentLine = "הבית שלכם, הסיפור שלכם";

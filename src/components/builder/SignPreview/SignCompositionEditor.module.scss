@@ -1,0 +1,22 @@
+.previewShell {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.previewShell > :first-child {
+  grid-area: 1 / 1;
+}
+
+.previewShell > :last-child {
+  grid-area: 1 / 1;
+  align-self: stretch;
+  justify-self: stretch;
+  min-height: 0;
+}
+
+.previewGenerating {
+  pointer-events: none;
+  user-select: none;
+}

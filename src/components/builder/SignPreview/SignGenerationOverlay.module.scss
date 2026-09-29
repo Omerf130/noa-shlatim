@@ -1,0 +1,111 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(251, 248, 243, 0.58);
+  overflow: hidden;
+}
+
+.glowRing {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(196, 105, 83, 0.35),
+    0 0 24px rgba(122, 158, 126, 0.25);
+  animation: heroGlowPulse 2.8s ease-in-out infinite;
+}
+
+.glowRing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSweep 3.2s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  max-width: 16rem;
+  padding: var(--space-4) var(--space-5);
+  text-align: center;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-brand-green);
+}
+
+.supporting {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  min-height: 1.5em;
+}
+
+.reducedMotion .glowRing {
+  animation: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(196, 105, 83, 0.45),
+    0 0 0 1px rgba(122, 158, 126, 0.2);
+}
+
+.reducedMotion .glowRing::after {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes heroGlowPulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(196, 105, 83, 0.3),
+      0 0 18px rgba(122, 158, 126, 0.2);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px rgba(196, 105, 83, 0.5),
+      0 0 32px rgba(122, 158, 126, 0.35);
+  }
+}
+
+@keyframes shimmerSweep {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -20% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glowRing {
+    animation: none !important;
+  }
+
+  .glowRing::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

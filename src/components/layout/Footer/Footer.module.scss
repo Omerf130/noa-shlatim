@@ -9,11 +9,12 @@
 
 .grid {
   display: grid;
-  gap: var(--space-10);
+  gap: var(--space-8);
 
   @media (min-width: 768px) {
     grid-template-columns: 1fr auto;
     align-items: start;
+    gap: var(--space-10);
   }
 }
 
@@ -44,6 +45,12 @@
   }
 }
 
+.linksNav {
+  @media (min-width: 768px) {
+    padding-block-start: var(--space-1);
+  }
+}
+
 .linksList {
   margin: 0;
   padding: 0;
@@ -62,12 +69,56 @@
   &:hover {
     color: #fff;
   }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.bottomBar {
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-8);
+  }
 }
 
 .copy {
-  margin: var(--space-10) 0 0;
-  padding-top: var(--space-6);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 0;
   font-size: 0.8125rem;
   color: rgba(255, 255, 255, 0.65);
+}
+
+.credit {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+.creditLink {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
 }

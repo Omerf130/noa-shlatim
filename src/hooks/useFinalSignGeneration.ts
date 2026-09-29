@@ -19,6 +19,10 @@ export function useFinalSignGeneration() {
   const finalArt = state.ui.finalSignArtwork;
 
   const generateFinalSign = useCallback(async () => {
+    if (state.ui.finalSignArtwork.status === "generating") {
+      return;
+    }
+
     const { design } = state;
     const styleId = design.photoIllustrationStyleId;
     const backgroundId = design.backgroundId;
