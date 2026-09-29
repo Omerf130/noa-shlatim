@@ -57,7 +57,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       orderId: result.orderId,
-      reused: result.reused,
+      ...(result.checkoutToken ? { checkoutToken: result.checkoutToken } : {}),
+      ...(result.reused ? { reused: true } : {}),
     });
   } catch (err) {
     if (err instanceof OrderError) {

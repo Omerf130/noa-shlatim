@@ -7,8 +7,15 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 type DraftOrderResponse =
-  | { ok: true; orderId: string }
+  | { ok: true; orderId: string; checkoutToken?: string }
   | { ok: false; code: string; message: string };
+
+function checkoutRedirectPath(orderId: string, checkoutToken?: string): string {
+  if (checkoutToken) {
+    return `/checkout/${orderId}?access=${encodeURIComponent(checkoutToken)}`;
+  }
+  return `/checkout/${orderId}`;
+}
 
 export function useCreateDraftOrder() {
   const router = useRouter();
@@ -70,7 +77,9 @@ export function useCreateDraftOrder() {
           const retry = await fetch("/api/orders/draft", { method: "POST", body: form });
           const retryData = (await retry.json()) as DraftOrderResponse;
           if (retryData.ok) {
-            router.push(`/checkout/${retryData.orderId}`);
+            router.push(
+              checkoutRedirectPath(retryData.orderId, retryData.checkoutToken),
+            );
             return;
           }
           setErrorMessage(retryData.message);
@@ -80,7 +89,7 @@ export function useCreateDraftOrder() {
         return;
       }
 
-      router.push(`/checkout/${data.orderId}`);
+      router.push(checkoutRedirectPath(data.orderId, data.checkoutToken));
     } catch {
       setErrorMessage("לא הצלחנו לשמור את ההזמנה. בדקו חיבור ונסו שוב.");
     } finally {

@@ -7,6 +7,10 @@ import {
   validateFinalArtworkPngBuffer,
   validateOriginalImageBuffer,
 } from "@/lib/orders/validateOrderAssets";
+import {
+  generateCheckoutAccessToken,
+  hashCheckoutAccessToken,
+} from "@/lib/checkout/checkoutAccessToken";
 import { deletePrivateBlob, putPrivateBlob } from "@/lib/storage/privateBlob";
 import { Order, type OrderStoredAsset } from "@/models/Order";
 
@@ -104,6 +108,8 @@ export type CreateDraftOrderInput = {
 export type CreateDraftOrderResult = {
   orderId: string;
   reused: boolean;
+  /** Present only when a new draft was finalized with a freshly issued token. */
+  checkoutToken?: string;
 };
 
 export async function createDraftPhotoOrder(
@@ -159,6 +165,9 @@ export async function createDraftPhotoOrder(
       sizeBytes: input.finalArtworkBuffer.length,
     };
 
+    const checkoutToken = generateCheckoutAccessToken();
+    const checkoutAccessTokenHash = hashCheckoutAccessToken(checkoutToken);
+
     const updated = await Order.findOneAndUpdate(
       { _id: orderId, status: "creating" },
       {
@@ -168,6 +177,7 @@ export async function createDraftPhotoOrder(
             originalImage: originalAsset,
             finalArtwork: finalAsset,
           },
+          checkoutAccessTokenHash,
         },
       },
       { new: true },
@@ -177,7 +187,7 @@ export async function createDraftPhotoOrder(
       throw new OrderError("ORDER_PERSIST_FAILED", "Finalize failed", 500);
     }
 
-    return { orderId, reused: false };
+    return { orderId, reused: false, checkoutToken };
   } catch (err) {
     await deleteUploaded(uploadedPathnames);
     try {

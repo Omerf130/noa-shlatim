@@ -34,6 +34,13 @@ const orderSchema = new Schema(
       originalImage: { type: storedAssetSchema, required: false },
       finalArtwork: { type: storedAssetSchema, required: false },
     },
+    checkoutAccessTokenHash: { type: String, required: false },
+    customer: {
+      fullName: { type: String, required: false },
+      phone: { type: String, required: false },
+      email: { type: String, required: false },
+    },
+    notes: { type: String, required: false, default: "" },
   },
   {
     timestamps: true,
