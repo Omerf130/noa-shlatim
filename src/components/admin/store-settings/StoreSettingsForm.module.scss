@@ -1,0 +1,221 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 40rem;
+}
+
+.banner {
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md, 8px);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border: 1px solid var(--color-border, #eaecf0);
+  font-weight: 600;
+}
+
+.readiness {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: 0.875rem;
+}
+
+.ready {
+  color: var(--color-success, #067647);
+  font-weight: 600;
+}
+
+.notReady {
+  color: var(--color-text-muted, #667085);
+}
+
+.updated {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #667085);
+}
+
+.section {
+  padding: var(--space-6);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #eaecf0);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.sectionLead {
+  margin: var(--space-2) 0 var(--space-5);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #667085);
+  line-height: 1.55;
+}
+
+.pricingGrid {
+  display: grid;
+  gap: var(--space-4);
+
+  @media (min-width: 36rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #667085);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border, #d0d5dd);
+  border-radius: var(--radius-md, 8px);
+  font: inherit;
+  background: var(--color-surface, #fff);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 3rem;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.emptyShipping {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #667085);
+}
+
+.shippingList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.shippingCard {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border, #eaecf0);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-bg-muted, #f9fafb);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardIndex {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #667085);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.iconBtn,
+.secondaryBtn,
+.dangerBtn,
+.submit {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-md, 8px);
+}
+
+.iconBtn {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border, #d0d5dd);
+  background: var(--color-surface, #fff);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.secondaryBtn {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border, #d0d5dd);
+  background: var(--color-surface, #fff);
+}
+
+.dangerBtn {
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border, #d0d5dd);
+  background: var(--color-surface, #fff);
+  color: var(--color-danger, #b42318);
+}
+
+.submit {
+  align-self: flex-start;
+  padding: var(--space-3) var(--space-6);
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primary);
+  border: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.success {
+  margin: 0;
+  color: var(--color-success, #067647);
+  font-weight: 600;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger, #b42318);
+  font-weight: 600;
+}

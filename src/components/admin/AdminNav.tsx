@@ -12,6 +12,12 @@ const navItems: NavItem[] = [
   { label: "דשבורד", kind: "link", href: "/admin", match: "exact" },
   { label: "עיצובים", kind: "disabled" },
   { label: "הזמנות", kind: "link", href: "/admin/orders", match: "prefix" },
+  {
+    label: "הגדרות חנות",
+    kind: "link",
+    href: "/admin/store-settings",
+    match: "prefix",
+  },
 ];
 
 function isNavActive(pathname: string, item: Extract<NavItem, { kind: "link" }>): boolean {
