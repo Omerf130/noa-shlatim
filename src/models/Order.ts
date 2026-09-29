@@ -41,6 +41,9 @@ const orderSchema = new Schema(
       email: { type: String, required: false },
     },
     notes: { type: String, required: false, default: "" },
+    checkoutSelection: {
+      shippingMethodId: { type: String, required: false },
+    },
   },
   {
     timestamps: true,

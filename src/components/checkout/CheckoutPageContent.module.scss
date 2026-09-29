@@ -76,3 +76,13 @@
 .summaryItem dd {
   margin: 0;
 }
+
+.previewUnavailable {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-muted, #6d5a4a);
+  background: var(--color-bg-muted, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}

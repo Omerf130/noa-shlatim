@@ -22,6 +22,7 @@ export type AuthorizedCheckoutOrder = {
     };
     customer?: { fullName?: string; phone?: string; email?: string };
     notes?: string;
+    checkoutSelection?: { shippingMethodId?: string };
   };
 };
 
@@ -105,6 +106,7 @@ export async function authorizeCheckoutAccess(
       assets: order.assets,
       customer: order.customer,
       notes: order.notes,
+      checkoutSelection: order.checkoutSelection,
     },
   };
 }

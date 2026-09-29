@@ -66,6 +66,17 @@ export function formatMinorToIlsDisplay(minor: number): string {
   return `₪${input}`;
 }
 
+/** Checkout/customer-facing line item. Explicit zero only — never for missing config. */
+export function formatMinorForCheckoutDisplay(minor: number): string {
+  if (!Number.isInteger(minor) || minor < 0) {
+    return "—";
+  }
+  if (minor === 0) {
+    return "חינם";
+  }
+  return formatMinorToIlsDisplay(minor);
+}
+
 export function parseIlsErrorMessage(code: Exclude<ParseIlsResult, { ok: true }>["code"]): string {
   switch (code) {
     case "EMPTY":

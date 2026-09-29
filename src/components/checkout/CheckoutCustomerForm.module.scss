@@ -1,7 +1,18 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
+}
+
+.unavailable {
+  margin: 0;
+  padding: var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-muted, #6d5a4a);
+  background: var(--color-bg-muted, #f9fafb);
+  border: 1px solid var(--color-border, #e8e0d6);
+  border-radius: var(--radius-md, 8px);
 }
 
 .formTitle {

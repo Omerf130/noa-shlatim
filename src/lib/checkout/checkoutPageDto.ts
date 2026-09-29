@@ -1,5 +1,6 @@
 import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
+import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
 import { buildPersistedSignPreviewProps } from "@/lib/orders/persistedOrderSignPreview";
 import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
@@ -14,14 +15,17 @@ export type CheckoutCustomerDto = {
 
 export type CheckoutPageDto = {
   orderId: string;
+  hasValidDesign: boolean;
   material: Material;
   materialLabel: string;
   backgroundName: string;
   styleName: string | null;
-  design: SignDesignState;
-  integratedFinalPreview: IntegratedFinalPreviewConfig;
+  design: SignDesignState | null;
+  integratedFinalPreview: IntegratedFinalPreviewConfig | null;
   customer: CheckoutCustomerDto;
   notes: string;
+  commercial: CheckoutCommercialDto;
+  canSaveCommercialCheckout: boolean;
 };
 
 export function buildCheckoutPageDto(params: {
@@ -29,8 +33,9 @@ export function buildCheckoutPageDto(params: {
   design: PhotoOrderDesignSnapshot;
   customer?: CheckoutCustomerDto | null;
   notes?: string | null;
+  commercial: CheckoutCommercialDto;
 }): CheckoutPageDto {
-  const { orderId, design } = params;
+  const { orderId, design, commercial } = params;
   const artworkUrl = `/api/orders/${orderId}/artwork`;
 
   const customer = params.customer ?? {
@@ -42,19 +47,57 @@ export function buildCheckoutPageDto(params: {
   const materialLabel =
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
 
+  const previewProps = buildPersistedSignPreviewProps(design, artworkUrl);
+
   return {
     orderId,
+    hasValidDesign: true,
     material: design.material,
     materialLabel,
     backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
     styleName: getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null,
-    ...buildPersistedSignPreviewProps(design, artworkUrl),
+    design: previewProps.design,
+    integratedFinalPreview: previewProps.integratedFinalPreview,
     customer: {
       fullName: customer.fullName ?? "",
       phone: customer.phone ?? "",
       email: customer.email ?? "",
     },
     notes: params.notes ?? "",
+    commercial,
+    canSaveCommercialCheckout: commercial.available,
+  };
+}
+
+export function buildCheckoutPageDtoWithoutDesign(params: {
+  orderId: string;
+  customer?: CheckoutCustomerDto | null;
+  notes?: string | null;
+  commercial: CheckoutCommercialDto;
+}): CheckoutPageDto {
+  const customer = params.customer ?? {
+    fullName: "",
+    phone: "",
+    email: "",
+  };
+
+  return {
+    orderId: params.orderId,
+    hasValidDesign: false,
+    material: "wood",
+    materialLabel: "—",
+    backgroundName: "—",
+    styleName: null,
+    design: null,
+    integratedFinalPreview: null,
+    customer: {
+      fullName: customer.fullName ?? "",
+      phone: customer.phone ?? "",
+      email: customer.email ?? "",
+    },
+    notes: params.notes ?? "",
+    commercial: params.commercial,
+    canSaveCommercialCheckout: false,
   };
 }
 
@@ -62,19 +105,21 @@ export type CheckoutSaveResponseDto = {
   ok: true;
   customer: CheckoutCustomerDto;
   notes: string;
+  selectedShippingMethodId: string;
+  commercial: Extract<CheckoutCommercialDto, { available: true }>;
 };
 
-export function buildCheckoutSaveResponseDto(order: {
-  customer?: CheckoutCustomerDto | null;
-  notes?: string | null;
+export function buildCheckoutSaveResponseDto(params: {
+  customer: CheckoutCustomerDto;
+  notes: string;
+  selectedShippingMethodId: string;
+  commercial: Extract<CheckoutCommercialDto, { available: true }>;
 }): CheckoutSaveResponseDto {
   return {
     ok: true,
-    customer: {
-      fullName: order.customer?.fullName ?? "",
-      phone: order.customer?.phone ?? "",
-      email: order.customer?.email ?? "",
-    },
-    notes: order.notes ?? "",
+    customer: params.customer,
+    notes: params.notes,
+    selectedShippingMethodId: params.selectedShippingMethodId,
+    commercial: params.commercial,
   };
 }

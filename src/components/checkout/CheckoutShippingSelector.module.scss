@@ -1,0 +1,90 @@
+.fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legend {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-size: 1.125rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.stale {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6d5a4a);
+  background: var(--color-bg-muted, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+  line-height: 1.5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border, #e8e0d6);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  background: var(--color-surface, #fff);
+
+  &:has(.radio:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.optionSelected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.radio {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-primary);
+}
+
+.optionBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.optionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.optionName {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.optionPrice {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.instructions {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6d5a4a);
+  line-height: 1.45;
+}

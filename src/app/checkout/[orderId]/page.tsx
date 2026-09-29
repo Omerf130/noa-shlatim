@@ -1,7 +1,11 @@
 import { CheckoutPageContent } from "@/components/checkout/CheckoutPageContent";
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
-import { buildCheckoutPageDto } from "@/lib/checkout/checkoutPageDto";
-import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import { buildCheckoutCommercialView } from "@/lib/checkout/buildCheckoutCommercialView";
+import {
+  buildCheckoutPageDto,
+  buildCheckoutPageDtoWithoutDesign,
+} from "@/lib/checkout/checkoutPageDto";
+import { photoOrderDesignSchema } from "@/lib/orders/orderDesignSchema";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { redirect, notFound } from "next/navigation";
 
@@ -34,20 +38,36 @@ export default async function CheckoutPage({
   let dto;
   try {
     const { order } = await authorizeCheckoutAccess(orderId);
-    const design = order.design as PhotoOrderDesignSnapshot;
-
-    dto = buildCheckoutPageDto({
-      orderId,
-      design,
-      customer: order.customer
-        ? {
-            fullName: order.customer.fullName ?? "",
-            phone: order.customer.phone ?? "",
-            email: order.customer.email ?? "",
-          }
-        : null,
-      notes: order.notes,
+    const commercial = await buildCheckoutCommercialView({
+      design: order.design,
+      savedShippingMethodId: order.checkoutSelection?.shippingMethodId,
     });
+
+    const customer = order.customer
+      ? {
+          fullName: order.customer.fullName ?? "",
+          phone: order.customer.phone ?? "",
+          email: order.customer.email ?? "",
+        }
+      : null;
+
+    const designParsed = photoOrderDesignSchema.safeParse(order.design);
+    if (designParsed.success) {
+      dto = buildCheckoutPageDto({
+        orderId,
+        design: designParsed.data,
+        customer,
+        notes: order.notes,
+        commercial,
+      });
+    } else {
+      dto = buildCheckoutPageDtoWithoutDesign({
+        orderId,
+        customer,
+        notes: order.notes,
+        commercial,
+      });
+    }
   } catch {
     notFound();
   }

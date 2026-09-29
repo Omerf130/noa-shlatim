@@ -1,9 +1,21 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
 import {
-  checkoutCustomerSchema,
-  formatCheckoutValidationError,
-} from "@/lib/checkout/customerSchema";
-import { buildCheckoutSaveResponseDto } from "@/lib/checkout/checkoutPageDto";
+  buildCheckoutCommercialView,
+  buildCommercialSummaryForSelection,
+  resolveSelectedShippingMethod,
+} from "@/lib/checkout/buildCheckoutCommercialView";
+import {
+  buildCheckoutSaveResponseDto,
+} from "@/lib/checkout/checkoutPageDto";
+import {
+  formatCheckoutPatchError,
+  parseCheckoutPatchBody,
+} from "@/lib/checkout/checkoutPatchSchema";
+import {
+  CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
+  CHECKOUT_STALE_SHIPPING_MESSAGE,
+} from "@/lib/checkout/formatCheckoutUnavailableMessage";
+import { resolveStoreConfigurationForCheckout } from "@/lib/store/resolveStoreConfigurationForCheckout";
 import { connectDb } from "@/lib/db/connect";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { Order } from "@/models/Order";
@@ -19,22 +31,38 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { orderId } = await context.params;
 
   try {
-    await authorizeCheckoutAccess(orderId, request);
+    const { order } = await authorizeCheckoutAccess(orderId, request);
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      return checkoutJsonError("INVALID_DESIGN", 400);
+      return checkoutJsonError("INVALID_DESIGN", 400, "נתונים לא תקינים.");
     }
 
-    const parsed = checkoutCustomerSchema.safeParse(body);
-    if (!parsed.success) {
-      const message = formatCheckoutValidationError(parsed.error.issues[0]!);
-      return NextResponse.json(
-        { ok: false, code: "INVALID_DESIGN", message },
-        { status: 400 },
+    const parsed = parseCheckoutPatchBody(body);
+    if (!parsed) {
+      return checkoutJsonError(
+        "INVALID_DESIGN",
+        400,
+        formatCheckoutPatchError(body),
       );
+    }
+
+    const storeConfig = await resolveStoreConfigurationForCheckout();
+    if (!storeConfig.ok) {
+      return checkoutJsonError(
+        "INVALID_DESIGN",
+        400,
+        CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
+      );
+    }
+
+    const method = storeConfig.shippingMethods.find(
+      (m) => m.methodId === parsed.selectedShippingMethodId,
+    );
+    if (!method) {
+      return checkoutJsonError("INVALID_DESIGN", 400, CHECKOUT_STALE_SHIPPING_MESSAGE);
     }
 
     await connectDb();
@@ -46,8 +74,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       },
       {
         $set: {
-          customer: parsed.data.customer,
-          notes: parsed.data.notes,
+          customer: parsed.customer,
+          notes: parsed.notes,
+          checkoutSelection: {
+            shippingMethodId: parsed.selectedShippingMethodId,
+          },
         },
       },
       { new: true },
@@ -57,7 +88,47 @@ export async function PATCH(request: Request, context: RouteContext) {
       return checkoutJsonError("ORDER_PERSIST_FAILED", 404);
     }
 
-    return NextResponse.json(buildCheckoutSaveResponseDto(updated));
+    const commercial = await buildCheckoutCommercialView({
+      design: order.design,
+      savedShippingMethodId: parsed.selectedShippingMethodId,
+    });
+
+    if (!commercial.available) {
+      return checkoutJsonError(
+        "ORDER_PERSIST_FAILED",
+        500,
+        CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
+      );
+    }
+
+    const selected = resolveSelectedShippingMethod(
+      commercial,
+      parsed.selectedShippingMethodId,
+    );
+    if (!selected) {
+      return checkoutJsonError("INVALID_DESIGN", 400, CHECKOUT_STALE_SHIPPING_MESSAGE);
+    }
+
+    const commercialWithSummary = {
+      ...commercial,
+      selectedShippingMethodId: parsed.selectedShippingMethodId,
+      selectionValid: true,
+      staleSelectionMessage: null,
+      summary: buildCommercialSummaryForSelection(commercial, selected),
+    };
+
+    return NextResponse.json(
+      buildCheckoutSaveResponseDto({
+        customer: {
+          fullName: parsed.customer.fullName,
+          phone: parsed.customer.phone,
+          email: parsed.customer.email,
+        },
+        notes: parsed.notes,
+        selectedShippingMethodId: parsed.selectedShippingMethodId,
+        commercial: commercialWithSummary,
+      }),
+    );
   } catch (err) {
     if (err instanceof OrderError) {
       const status = err.httpStatus === 401 ? 401 : err.httpStatus;
@@ -78,12 +149,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 function checkoutJsonError(
   code: Parameters<typeof userMessageForOrderCode>[0],
   status: number,
+  message?: string,
 ) {
   return NextResponse.json(
     {
       ok: false,
       code,
-      message: userMessageForOrderCode(code),
+      message: message ?? userMessageForOrderCode(code),
     },
     { status },
   );
