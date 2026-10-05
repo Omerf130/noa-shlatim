@@ -60,33 +60,64 @@ const decorationSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 });
 
-export const photoOrderDesignSchema = z.object({
-  creationMode: z.literal("photo"),
+const persistedSignDesignBaseSchema = z.object({
   backgroundId: z.string().trim().min(1),
-  photoIllustrationStyleId: z.string().trim().min(1),
   material: z.enum(["wood", "magnet"]),
   text: textDesignSchema,
   illustrationTransform: illustrationTransformSchema,
   decorations: z.array(decorationSchema).max(24),
 });
 
-export type PhotoOrderDesignSnapshot = z.infer<typeof photoOrderDesignSchema>;
+export const photoOrderDesignSchema = persistedSignDesignBaseSchema.extend({
+  creationMode: z.literal("photo"),
+  photoIllustrationStyleId: z.string().trim().min(1),
+});
 
-export function parseAndValidatePhotoOrderDesign(raw: unknown): PhotoOrderDesignSnapshot {
-  const parsed = photoOrderDesignSchema.safeParse(raw);
+export const illustrationOrderDesignSchema = persistedSignDesignBaseSchema.extend({
+  creationMode: z.literal("illustration"),
+});
+
+export const orderDesignSchema = z.discriminatedUnion("creationMode", [
+  photoOrderDesignSchema,
+  illustrationOrderDesignSchema,
+]);
+
+export type PhotoOrderDesignSnapshot = z.infer<typeof photoOrderDesignSchema>;
+export type IllustrationOrderDesignSnapshot = z.infer<
+  typeof illustrationOrderDesignSchema
+>;
+export type OrderDesignSnapshot = z.infer<typeof orderDesignSchema>;
+
+function validatePersistedBackground(backgroundId: string): void {
+  const background = getBackgroundById(backgroundId);
+  if (!background?.active) {
+    throw new OrderError("INVALID_DESIGN", "Invalid background", 400);
+  }
+}
+
+export function parseAndValidateOrderDesign(raw: unknown): OrderDesignSnapshot {
+  const parsed = orderDesignSchema.safeParse(raw);
   if (!parsed.success) {
     throw new OrderError("INVALID_DESIGN", "Invalid design snapshot", 400);
   }
 
   const design = parsed.data;
-  const background = getBackgroundById(design.backgroundId);
-  if (!background?.active) {
-    throw new OrderError("INVALID_DESIGN", "Invalid background", 400);
-  }
-  if (!isAllowedStyleId(design.photoIllustrationStyleId)) {
-    throw new OrderError("INVALID_DESIGN", "Invalid style", 400);
+  validatePersistedBackground(design.backgroundId);
+
+  if (design.creationMode === "photo") {
+    if (!isAllowedStyleId(design.photoIllustrationStyleId)) {
+      throw new OrderError("INVALID_DESIGN", "Invalid style", 400);
+    }
   }
 
+  return design;
+}
+
+export function parseAndValidatePhotoOrderDesign(raw: unknown): PhotoOrderDesignSnapshot {
+  const design = parseAndValidateOrderDesign(raw);
+  if (design.creationMode !== "photo") {
+    throw new OrderError("INVALID_DESIGN", "Invalid design snapshot", 400);
+  }
   return design;
 }
 

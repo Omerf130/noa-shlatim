@@ -1,5 +1,9 @@
+import type {
+  IllustrationOrderDesignSnapshot,
+  OrderDesignSnapshot,
+  PhotoOrderDesignSnapshot,
+} from "@/lib/orders/orderDesignSchema";
 import type { SignDesignState } from "@/types/signDesign";
-import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 
 export function buildPhotoOrderDesignPayload(
   design: SignDesignState,
@@ -22,4 +26,38 @@ export function buildPhotoOrderDesignPayload(
     illustrationTransform: design.illustrationTransform,
     decorations: design.decorations,
   };
+}
+
+export function buildIllustrationOrderDesignPayload(
+  design: SignDesignState,
+): IllustrationOrderDesignSnapshot | null {
+  if (
+    design.creationMode !== "illustration" ||
+    !design.backgroundId ||
+    !design.material ||
+    !design.illustration
+  ) {
+    return null;
+  }
+
+  return {
+    creationMode: "illustration",
+    backgroundId: design.backgroundId,
+    material: design.material,
+    text: design.text,
+    illustrationTransform: design.illustrationTransform,
+    decorations: design.decorations,
+  };
+}
+
+export function buildOrderDesignPayload(
+  design: SignDesignState,
+): OrderDesignSnapshot | null {
+  if (design.creationMode === "photo") {
+    return buildPhotoOrderDesignPayload(design);
+  }
+  if (design.creationMode === "illustration") {
+    return buildIllustrationOrderDesignPayload(design);
+  }
+  return null;
 }

@@ -10,8 +10,13 @@ import styles from "./ReviewStep.module.scss";
 export function ReviewStep() {
   const { state, dispatch } = useBuilder();
   const { design, ui } = state;
-  const { submitDraftOrder, isSubmitting, errorMessage, canSubmitPhotoOrder } =
-    useCreateDraftOrder();
+  const {
+    submitDraftOrder,
+    isSubmitting,
+    errorMessage,
+    savedDraftOrder,
+    canSubmitDraftOrder,
+  } = useCreateDraftOrder();
 
   const pathLabel =
     design.creationMode === "photo" ? "מתמונה רגילה" : "מאיור קיים";
@@ -53,6 +58,12 @@ export function ReviewStep() {
             </dd>
           </div>
         )}
+        {isIllustration && integratedFinalKind && (
+          <div className={styles.summaryItem}>
+            <dt>סוג שלט</dt>
+            <dd>{integratedFinalKind}</dd>
+          </div>
+        )}
         <div className={styles.summaryItem}>
           <dt>רקע</dt>
           <dd>{bgName ?? "—"}</dd>
@@ -75,25 +86,22 @@ export function ReviewStep() {
         >
           חזרה לעריכה
         </Button>
-        {isPhoto ? (
-          <Button
-            disabled={!canSubmitPhotoOrder || isSubmitting}
-            onClick={() => void submitDraftOrder()}
-          >
-            {isSubmitting ? "שומרים את ההזמנה…" : "להמשך להזמנה"}
-          </Button>
-        ) : (
-          <Button disabled title="שמירת הזמנה למסלול איור קיים — בקרוב">
-            להמשך להזמנה (בקרוב)
-          </Button>
-        )}
+        <Button
+          disabled={!canSubmitDraftOrder || isSubmitting || Boolean(savedDraftOrder)}
+          onClick={() => void submitDraftOrder()}
+        >
+          {isSubmitting ? "שומרים את ההזמנה…" : "להמשך להזמנה"}
+        </Button>
       </div>
 
-      {isIllustration && (
-        <p className={styles.checkoutMessage} role="note">
-          שמירת הזמנה למסלול איור קיים תתווסף לאחר בדיקה. ניתן לערוך את השלט בינתיים.
+      {savedDraftOrder && isIllustration ? (
+        <p className={styles.checkoutMessage} role="status">
+          ההזמנה נשמרה בהצלחה (מזהה: {savedDraftOrder.orderId.slice(-8)}).
+          {savedDraftOrder.reused ? " השתמשנו בהזמנה שכבר נשמרה." : ""}{" "}
+          המשך לתשלום ייפתח בשלב הבא — כרגע אפשר לערוך את השלט או לסגור את
+          הדפדפן; ההזמנה נשמרה במערכת.
         </p>
-      )}
+      ) : null}
 
       {errorMessage ? (
         <p className={styles.checkoutMessage} role="alert">

@@ -18,7 +18,7 @@ const orderSchema = new Schema(
     },
     creationMode: {
       type: String,
-      enum: ["photo"],
+      enum: ["photo", "illustration"],
       required: true,
     },
     draftIdempotencyKey: {

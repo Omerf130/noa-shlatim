@@ -1,8 +1,8 @@
 import {
   draftIdempotencyKeySchema,
-  parseAndValidatePhotoOrderDesign,
+  parseAndValidateOrderDesign,
 } from "@/lib/orders/orderDesignSchema";
-import { createDraftPhotoOrder } from "@/lib/orders/createDraftOrder";
+import { createDraftOrder } from "@/lib/orders/createDraftOrder";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { getOpenAiImageConfig } from "@/lib/openai/config";
 import { NextResponse } from "next/server";
@@ -28,10 +28,7 @@ export async function POST(request: Request) {
       return orderErrorResponse("INVALID_DESIGN", 400);
     }
 
-    const design = parseAndValidatePhotoOrderDesign(designJson);
-    if (design.creationMode !== "photo") {
-      return orderErrorResponse("UNSUPPORTED_CREATION_MODE", 400);
-    }
+    const design = parseAndValidateOrderDesign(designJson);
 
     const idempotencyParsed = draftIdempotencyKeySchema.safeParse(idempotencyKeyRaw);
     if (!idempotencyParsed.success) {
@@ -46,7 +43,7 @@ export async function POST(request: Request) {
     const finalArtworkBuffer = Buffer.from(await artworkEntry.arrayBuffer());
     const maxAssetBytes = getOpenAiImageConfig().maxUploadBytes;
 
-    const result = await createDraftPhotoOrder({
+    const result = await createDraftOrder({
       draftIdempotencyKey: idempotencyParsed.data,
       design,
       originalBuffer,
@@ -57,6 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       orderId: result.orderId,
+      creationMode: design.creationMode,
       ...(result.checkoutToken ? { checkoutToken: result.checkoutToken } : {}),
       ...(result.reused ? { reused: true } : {}),
     });

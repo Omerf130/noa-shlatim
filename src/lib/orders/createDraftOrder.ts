@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { connectDb } from "@/lib/db/connect";
-import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import { OrderError } from "@/lib/orders/errors";
 import { orderArtworkPath, orderOriginalPath } from "@/lib/orders/orderBlobPaths";
 import {
@@ -66,7 +66,7 @@ async function resolveExistingIdempotency(
 
 async function claimOrderCreation(params: {
   draftIdempotencyKey: string;
-  design: PhotoOrderDesignSnapshot;
+  design: OrderDesignSnapshot;
 }): Promise<{ orderId: string; reused: boolean }> {
   const orderId = new mongoose.Types.ObjectId();
 
@@ -74,7 +74,7 @@ async function claimOrderCreation(params: {
     await Order.create({
       _id: orderId,
       status: "creating",
-      creationMode: "photo",
+      creationMode: params.design.creationMode,
       draftIdempotencyKey: params.draftIdempotencyKey,
       design: params.design,
       assets: {},
@@ -99,7 +99,7 @@ async function claimOrderCreation(params: {
 
 export type CreateDraftOrderInput = {
   draftIdempotencyKey: string;
-  design: PhotoOrderDesignSnapshot;
+  design: OrderDesignSnapshot;
   originalBuffer: Buffer;
   finalArtworkBuffer: Buffer;
   maxAssetBytes: number;
@@ -112,7 +112,7 @@ export type CreateDraftOrderResult = {
   checkoutToken?: string;
 };
 
-export async function createDraftPhotoOrder(
+export async function createDraftOrder(
   input: CreateDraftOrderInput,
 ): Promise<CreateDraftOrderResult> {
   await connectDb();
@@ -203,3 +203,6 @@ export async function createDraftPhotoOrder(
     throw new OrderError("STORAGE_FAILED", "Storage failed", 500);
   }
 }
+
+/** @deprecated Use createDraftOrder — kept for call-site clarity during migration. */
+export const createDraftPhotoOrder = createDraftOrder;

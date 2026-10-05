@@ -1,13 +1,20 @@
 "use client";
 
 import { useBuilder } from "@/components/builder/BuilderContext";
-import { buildPhotoOrderDesignPayload } from "@/lib/orders/buildDesignPayload";
+import { buildOrderDesignPayload } from "@/lib/orders/buildDesignPayload";
 import { hasValidFinalSignArtwork } from "@/lib/builder/validation";
+import type { CreationMode } from "@/types/signDesign";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 type DraftOrderResponse =
-  | { ok: true; orderId: string; checkoutToken?: string }
+  | {
+      ok: true;
+      orderId: string;
+      creationMode?: CreationMode;
+      checkoutToken?: string;
+      reused?: boolean;
+    }
   | { ok: false; code: string; message: string };
 
 function checkoutRedirectPath(orderId: string, checkoutToken?: string): string {
@@ -17,11 +24,19 @@ function checkoutRedirectPath(orderId: string, checkoutToken?: string): string {
   return `/checkout/${orderId}`;
 }
 
+export type DraftOrderSuccessInfo = {
+  orderId: string;
+  reused: boolean;
+};
+
 export function useCreateDraftOrder() {
   const router = useRouter();
   const { state, getSourcePhotoFile, getFinalArtworkBlob } = useBuilder();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [savedDraftOrder, setSavedDraftOrder] = useState<DraftOrderSuccessInfo | null>(
+    null,
+  );
   const idempotencyKeyRef = useRef<string | null>(null);
 
   const ensureIdempotencyKey = useCallback(() => {
@@ -33,9 +48,10 @@ export function useCreateDraftOrder() {
 
   const submitDraftOrder = useCallback(async () => {
     const { design, ui } = state;
+    const creationMode = design.creationMode;
 
-    if (design.creationMode !== "photo") {
-      setErrorMessage("שמירת הזמנה זמינה כרגע רק למסלול תמונה.");
+    if (creationMode !== "photo" && creationMode !== "illustration") {
+      setErrorMessage("לא ניתן לשמור הזמנה — בחרו מסלול יצירה.");
       return;
     }
 
@@ -46,7 +62,7 @@ export function useCreateDraftOrder() {
 
     const originalFile = getSourcePhotoFile();
     const finalBlob = getFinalArtworkBlob();
-    const designPayload = buildPhotoOrderDesignPayload(design);
+    const designPayload = buildOrderDesignPayload(design);
 
     if (!originalFile || !finalBlob || !designPayload) {
       setErrorMessage("חסרים נתונים לשמירת ההזמנה. חזרו לעריכה ונסו שוב.");
@@ -55,6 +71,7 @@ export function useCreateDraftOrder() {
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setSavedDraftOrder(null);
 
     const idempotencyKey = ensureIdempotencyKey();
 
@@ -65,31 +82,36 @@ export function useCreateDraftOrder() {
       form.append("originalImage", originalFile, originalFile.name || "original");
       form.append("finalArtwork", finalBlob, "artwork.png");
 
-      const res = await fetch("/api/orders/draft", {
-        method: "POST",
-        body: form,
-      });
-      const data = (await res.json()) as DraftOrderResponse;
+      const postDraft = () =>
+        fetch("/api/orders/draft", {
+          method: "POST",
+          body: form,
+        });
+
+      let res = await postDraft();
+      let data = (await res.json()) as DraftOrderResponse;
 
       if (!data.ok) {
         if (data.code === "ORDER_IN_PROGRESS") {
           await new Promise((r) => setTimeout(r, 800));
-          const retry = await fetch("/api/orders/draft", { method: "POST", body: form });
-          const retryData = (await retry.json()) as DraftOrderResponse;
-          if (retryData.ok) {
-            router.push(
-              checkoutRedirectPath(retryData.orderId, retryData.checkoutToken),
-            );
-            return;
-          }
-          setErrorMessage(retryData.message);
+          res = await postDraft();
+          data = (await res.json()) as DraftOrderResponse;
+        }
+        if (!data.ok) {
+          setErrorMessage(data.message);
           return;
         }
-        setErrorMessage(data.message);
+      }
+
+      const success = data as Extract<DraftOrderResponse, { ok: true }>;
+      const reused = Boolean(success.reused);
+
+      if (creationMode === "photo") {
+        router.push(checkoutRedirectPath(success.orderId, success.checkoutToken));
         return;
       }
 
-      router.push(checkoutRedirectPath(data.orderId, data.checkoutToken));
+      setSavedDraftOrder({ orderId: success.orderId, reused });
     } catch {
       setErrorMessage("לא הצלחנו לשמור את ההזמנה. בדקו חיבור ונסו שוב.");
     } finally {
@@ -103,10 +125,18 @@ export function useCreateDraftOrder() {
     state,
   ]);
 
+  const canSubmitDraftOrder =
+    (state.design.creationMode === "photo" ||
+      state.design.creationMode === "illustration") &&
+    hasValidFinalSignArtwork(state.ui);
+
   return {
     submitDraftOrder,
     isSubmitting,
     errorMessage,
+    savedDraftOrder,
+    canSubmitDraftOrder,
+    /** @deprecated Use canSubmitDraftOrder */
     canSubmitPhotoOrder:
       state.design.creationMode === "photo" && hasValidFinalSignArtwork(state.ui),
   };
