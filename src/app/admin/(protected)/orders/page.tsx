@@ -20,7 +20,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.heading}>הזמנות</h1>
-        <p className={styles.lead}>טיוטות הזמנה ממסלול תמונה — לקריאה בלבד.</p>
+        <p className={styles.lead}>טיוטות הזמנה מהסטודיו — לקריאה בלבד.</p>
       </header>
 
       {list.items.length === 0 ? (

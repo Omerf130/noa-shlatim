@@ -5,7 +5,7 @@ import {
   CHECKOUT_STALE_SHIPPING_MESSAGE,
 } from "@/lib/checkout/formatCheckoutUnavailableMessage";
 import { formatMinorForCheckoutDisplay } from "@/lib/money/ils";
-import { photoOrderDesignSchema } from "@/lib/orders/orderDesignSchema";
+import { orderDesignSchema } from "@/lib/orders/orderDesignSchema";
 import {
   resolveMaterialPriceMinor,
   resolveStoreConfigurationForCheckout,
@@ -104,7 +104,7 @@ export async function buildCheckoutCommercialView(params: {
   design: unknown;
   savedShippingMethodId?: string | null;
 }): Promise<CheckoutCommercialDto> {
-  const designParsed = photoOrderDesignSchema.safeParse(params.design);
+  const designParsed = orderDesignSchema.safeParse(params.design);
   if (!designParsed.success) {
     return {
       available: false,

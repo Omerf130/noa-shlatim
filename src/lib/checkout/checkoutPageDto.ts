@@ -2,7 +2,7 @@ import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
 import { buildPersistedSignPreviewProps } from "@/lib/orders/persistedOrderSignPreview";
-import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
 import type { Material } from "@/types/signDesign";
@@ -28,9 +28,16 @@ export type CheckoutPageDto = {
   canSaveCommercialCheckout: boolean;
 };
 
+function styleNameFromOrderDesign(design: OrderDesignSnapshot): string | null {
+  if (design.creationMode !== "photo") {
+    return null;
+  }
+  return getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null;
+}
+
 export function buildCheckoutPageDto(params: {
   orderId: string;
-  design: PhotoOrderDesignSnapshot;
+  design: OrderDesignSnapshot;
   customer?: CheckoutCustomerDto | null;
   notes?: string | null;
   commercial: CheckoutCommercialDto;
@@ -55,7 +62,7 @@ export function buildCheckoutPageDto(params: {
     material: design.material,
     materialLabel,
     backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
-    styleName: getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null,
+    styleName: styleNameFromOrderDesign(design),
     design: previewProps.design,
     integratedFinalPreview: previewProps.integratedFinalPreview,
     customer: {

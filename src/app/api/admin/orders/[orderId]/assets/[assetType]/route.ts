@@ -39,7 +39,12 @@ export async function GET(_request: Request, context: RouteContext) {
 
   await connectDb();
   const order = await Order.findById(orderId).lean();
-  if (!order || order.status !== "draft" || order.creationMode !== "photo") {
+  const mode = order?.creationMode;
+  if (
+    !order ||
+    order.status !== "draft" ||
+    (mode !== "photo" && mode !== "illustration")
+  ) {
     return new NextResponse(null, { status: 404 });
   }
 

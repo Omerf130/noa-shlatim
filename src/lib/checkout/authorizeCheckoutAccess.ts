@@ -6,7 +6,7 @@ import {
 import { verifyCheckoutAccessToken } from "@/lib/checkout/checkoutAccessToken";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { OrderError } from "@/lib/orders/errors";
-import type { PhotoOrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import { Order } from "@/models/Order";
 import { cookies } from "next/headers";
 
@@ -16,7 +16,7 @@ export type AuthorizedCheckoutOrder = {
     status: string;
     creationMode: string;
     checkoutAccessTokenHash?: string | null;
-    design: PhotoOrderDesignSnapshot;
+    design: OrderDesignSnapshot;
     assets?: {
       finalArtwork?: { pathname: string; contentType: string; sizeBytes: number };
     };
@@ -65,7 +65,11 @@ async function loadCheckoutOrder(orderId: string) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  if (order.creationMode !== "photo" || order.status !== "draft") {
+  const mode = order.creationMode;
+  if (
+    order.status !== "draft" ||
+    (mode !== "photo" && mode !== "illustration")
+  ) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
@@ -102,7 +106,7 @@ export async function authorizeCheckoutAccess(
       status: order.status,
       creationMode: order.creationMode,
       checkoutAccessTokenHash: order.checkoutAccessTokenHash,
-      design: order.design as PhotoOrderDesignSnapshot,
+      design: order.design as OrderDesignSnapshot,
       assets: order.assets,
       customer: order.customer,
       notes: order.notes,

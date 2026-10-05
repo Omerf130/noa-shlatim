@@ -13,6 +13,15 @@ function fieldValue(value: string | null): string {
 }
 
 export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
+  const isPhoto = dto.creationMode === "photo";
+  const originalAssetCaption = isPhoto ? "תמונת מקור" : "איור מקור";
+  const originalAssetAlt = isPhoto
+    ? "תמונת מקור של הלקוח"
+    : "איור מקור של הלקוח";
+  const originalAssetMissing = isPhoto
+    ? "תמונת מקור אינה זמינה."
+    : "איור מקור אינו זמין.";
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -34,6 +43,10 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
             <dd className={styles.mono} dir="ltr">
               {dto.orderId}
             </dd>
+          </div>
+          <div>
+            <dt>סוג יצירה</dt>
+            <dd>{dto.creationModeLabel}</dd>
           </div>
         </dl>
       </header>
@@ -120,16 +133,16 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
         <div className={styles.assetsGrid}>
           {dto.productionAssets.originalImageUrl ? (
             <figure className={styles.assetFigure}>
-              <figcaption>תמונה מקורית של הלקוח</figcaption>
+              <figcaption>{originalAssetCaption}</figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={dto.productionAssets.originalImageUrl}
-                alt="תמונה מקורית של הלקוח"
+                alt={originalAssetAlt}
                 className={styles.assetImg}
               />
             </figure>
           ) : (
-            <p className={styles.missingAsset}>תמונה מקורית אינה זמינה.</p>
+            <p className={styles.missingAsset}>{originalAssetMissing}</p>
           )}
           {dto.productionAssets.artworkUrl ? (
             <figure className={styles.assetFigure}>

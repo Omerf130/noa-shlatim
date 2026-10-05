@@ -70,7 +70,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       {
         _id: orderId,
         status: "draft",
-        creationMode: "photo",
+        creationMode: { $in: ["photo", "illustration"] },
       },
       {
         $set: {

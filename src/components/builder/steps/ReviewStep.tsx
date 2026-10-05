@@ -14,7 +14,6 @@ export function ReviewStep() {
     submitDraftOrder,
     isSubmitting,
     errorMessage,
-    savedDraftOrder,
     canSubmitDraftOrder,
   } = useCreateDraftOrder();
 
@@ -35,8 +34,6 @@ export function ReviewStep() {
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
 
   const isPhoto = design.creationMode === "photo";
-  const isIllustration = design.creationMode === "illustration";
-
   return (
     <div className={styles.review}>
       <header className={styles.header}>
@@ -58,7 +55,7 @@ export function ReviewStep() {
             </dd>
           </div>
         )}
-        {isIllustration && integratedFinalKind && (
+        {!isPhoto && integratedFinalKind && (
           <div className={styles.summaryItem}>
             <dt>סוג שלט</dt>
             <dd>{integratedFinalKind}</dd>
@@ -87,21 +84,12 @@ export function ReviewStep() {
           חזרה לעריכה
         </Button>
         <Button
-          disabled={!canSubmitDraftOrder || isSubmitting || Boolean(savedDraftOrder)}
+          disabled={!canSubmitDraftOrder || isSubmitting}
           onClick={() => void submitDraftOrder()}
         >
           {isSubmitting ? "שומרים את ההזמנה…" : "להמשך להזמנה"}
         </Button>
       </div>
-
-      {savedDraftOrder && isIllustration ? (
-        <p className={styles.checkoutMessage} role="status">
-          ההזמנה נשמרה בהצלחה (מזהה: {savedDraftOrder.orderId.slice(-8)}).
-          {savedDraftOrder.reused ? " השתמשנו בהזמנה שכבר נשמרה." : ""}{" "}
-          המשך לתשלום ייפתח בשלב הבא — כרגע אפשר לערוך את השלט או לסגור את
-          הדפדפן; ההזמנה נשמרה במערכת.
-        </p>
-      ) : null}
 
       {errorMessage ? (
         <p className={styles.checkoutMessage} role="alert">

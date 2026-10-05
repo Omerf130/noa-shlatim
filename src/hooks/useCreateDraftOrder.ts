@@ -24,19 +24,11 @@ function checkoutRedirectPath(orderId: string, checkoutToken?: string): string {
   return `/checkout/${orderId}`;
 }
 
-export type DraftOrderSuccessInfo = {
-  orderId: string;
-  reused: boolean;
-};
-
 export function useCreateDraftOrder() {
   const router = useRouter();
   const { state, getSourcePhotoFile, getFinalArtworkBlob } = useBuilder();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [savedDraftOrder, setSavedDraftOrder] = useState<DraftOrderSuccessInfo | null>(
-    null,
-  );
   const idempotencyKeyRef = useRef<string | null>(null);
 
   const ensureIdempotencyKey = useCallback(() => {
@@ -71,7 +63,6 @@ export function useCreateDraftOrder() {
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    setSavedDraftOrder(null);
 
     const idempotencyKey = ensureIdempotencyKey();
 
@@ -104,14 +95,7 @@ export function useCreateDraftOrder() {
       }
 
       const success = data as Extract<DraftOrderResponse, { ok: true }>;
-      const reused = Boolean(success.reused);
-
-      if (creationMode === "photo") {
-        router.push(checkoutRedirectPath(success.orderId, success.checkoutToken));
-        return;
-      }
-
-      setSavedDraftOrder({ orderId: success.orderId, reused });
+      router.push(checkoutRedirectPath(success.orderId, success.checkoutToken));
     } catch {
       setErrorMessage("לא הצלחנו לשמור את ההזמנה. בדקו חיבור ונסו שוב.");
     } finally {
@@ -134,7 +118,6 @@ export function useCreateDraftOrder() {
     submitDraftOrder,
     isSubmitting,
     errorMessage,
-    savedDraftOrder,
     canSubmitDraftOrder,
     /** @deprecated Use canSubmitDraftOrder */
     canSubmitPhotoOrder:

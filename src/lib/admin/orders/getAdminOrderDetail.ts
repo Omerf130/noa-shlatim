@@ -16,7 +16,11 @@ export async function getAdminOrderDetail(orderId: string) {
     return null;
   }
 
-  if (order.status !== "draft" || order.creationMode !== "photo") {
+  const mode = order.creationMode;
+  if (
+    order.status !== "draft" ||
+    (mode !== "photo" && mode !== "illustration")
+  ) {
     return null;
   }
 

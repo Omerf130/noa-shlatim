@@ -14,7 +14,10 @@ export async function listAdminOrders(params: {
 
   await connectDb();
 
-  const filter = { status: "draft" as const, creationMode: "photo" as const };
+  const filter = {
+    status: "draft" as const,
+    creationMode: { $in: ["photo", "illustration"] as const },
+  };
 
   const [totalItems, orders] = await Promise.all([
     Order.countDocuments(filter),

@@ -5,7 +5,12 @@ import {
   buildCheckoutPageDto,
   buildCheckoutPageDtoWithoutDesign,
 } from "@/lib/checkout/checkoutPageDto";
-import { photoOrderDesignSchema } from "@/lib/orders/orderDesignSchema";
+import { getBackgroundById } from "@/data/signBackgrounds";
+import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
+import {
+  orderDesignSchema,
+  type OrderDesignSnapshot,
+} from "@/lib/orders/orderDesignSchema";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { redirect, notFound } from "next/navigation";
 
@@ -51,11 +56,11 @@ export default async function CheckoutPage({
         }
       : null;
 
-    const designParsed = photoOrderDesignSchema.safeParse(order.design);
-    if (designParsed.success) {
+    const designParsed = parseCheckoutDesignSnapshot(order.design);
+    if (designParsed) {
       dto = buildCheckoutPageDto({
         orderId,
-        design: designParsed.data,
+        design: designParsed,
         customer,
         notes: order.notes,
         commercial,
@@ -73,4 +78,23 @@ export default async function CheckoutPage({
   }
 
   return <CheckoutPageContent dto={dto!} />;
+}
+
+function parseCheckoutDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
+  const parsed = orderDesignSchema.safeParse(raw);
+  if (!parsed.success) {
+    return null;
+  }
+  const design = parsed.data;
+  const background = getBackgroundById(design.backgroundId);
+  if (!background?.active) {
+    return null;
+  }
+  if (
+    design.creationMode === "photo" &&
+    !isAllowedStyleId(design.photoIllustrationStyleId)
+  ) {
+    return null;
+  }
+  return design;
 }

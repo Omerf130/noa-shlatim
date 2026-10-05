@@ -11,9 +11,10 @@ import {
 import {
   buildPersistedSignPreviewProps,
 } from "@/lib/orders/persistedOrderSignPreview";
+import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
 import {
-  photoOrderDesignSchema,
-  type PhotoOrderDesignSnapshot,
+  orderDesignSchema,
+  type OrderDesignSnapshot,
 } from "@/lib/orders/orderDesignSchema";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
@@ -50,9 +51,17 @@ export type AdminOrderDesignPreviewDto = {
   decorationSummary: string;
 };
 
+export type AdminCreationMode = "photo" | "illustration";
+
+export function adminCreationModeLabel(mode: AdminCreationMode): string {
+  return mode === "photo" ? "תמונה" : "איור קיים";
+}
+
 export type AdminOrderDetailDto = {
   orderId: string;
   orderReference: string;
+  creationMode: AdminCreationMode;
+  creationModeLabel: string;
   statusLabel: "טיוטה";
   createdAtLabel: string;
   updatedAtLabel: string;
@@ -85,8 +94,8 @@ type OrderLeanForAdmin = {
   updatedAt?: Date;
 };
 
-function parseDesignSnapshot(raw: unknown): PhotoOrderDesignSnapshot | null {
-  const parsed = photoOrderDesignSchema.safeParse(raw);
+function parseDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
+  const parsed = orderDesignSchema.safeParse(raw);
   if (!parsed.success) {
     return null;
   }
@@ -95,13 +104,30 @@ function parseDesignSnapshot(raw: unknown): PhotoOrderDesignSnapshot | null {
   if (!background?.active) {
     return null;
   }
+  if (
+    design.creationMode === "photo" &&
+    !isAllowedStyleId(design.photoIllustrationStyleId)
+  ) {
+    return null;
+  }
   return design;
+}
+
+function styleNameFromOrderDesign(design: OrderDesignSnapshot): string | null {
+  if (design.creationMode !== "photo") {
+    return null;
+  }
+  return getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null;
 }
 
 export function buildAdminOrderListItemDto(
   order: OrderLeanForAdmin,
 ): AdminOrderListItemDto | null {
-  if (order.status !== "draft" || order.creationMode !== "photo") {
+  const mode = order.creationMode;
+  if (
+    order.status !== "draft" ||
+    (mode !== "photo" && mode !== "illustration")
+  ) {
     return null;
   }
 
@@ -122,6 +148,7 @@ export function buildAdminOrderListItemDto(
 
 export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDetailDto {
   const orderId = order._id.toString();
+  const creationMode = order.creationMode as AdminCreationMode;
   const design = parseDesignSnapshot(order.design);
   const artworkUrl = adminOrderAssetApiPath(orderId, "artwork");
   const originalUrl = order.assets?.originalImage
@@ -137,8 +164,7 @@ export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDe
       ...previewProps,
       materialLabel: materialLabelFromSnapshot(design.material),
       backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
-      styleName:
-        getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null,
+      styleName: styleNameFromOrderDesign(design),
       signText: design.text.value,
       decorationSummary: formatDecorationSummary(design.decorations),
     };
@@ -149,6 +175,8 @@ export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDe
   return {
     orderId,
     orderReference: formatOrderReference(orderId),
+    creationMode,
+    creationModeLabel: adminCreationModeLabel(creationMode),
     statusLabel: "טיוטה",
     createdAtLabel: formatAdminDateTime(order.createdAt),
     updatedAtLabel: formatAdminDateTime(order.updatedAt),
