@@ -1,0 +1,73 @@
+import {
+  siteTermsCustomerService,
+  siteTermsSections,
+} from "@/data/siteTermsContent";
+import {
+  TERMS_GENDER_NOTE,
+  TERMS_LAST_UPDATED_LABEL,
+  TERMS_PAGE_TITLE,
+} from "@/lib/legal/terms";
+import styles from "./TermsDocument.module.scss";
+
+export function TermsDocument() {
+  return (
+    <article className={styles.document}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>{TERMS_PAGE_TITLE}</h1>
+        <p className={styles.updated}>{TERMS_LAST_UPDATED_LABEL}</p>
+        <p className={styles.intro}>{TERMS_GENDER_NOTE}</p>
+      </header>
+
+      {siteTermsSections.map((section) => (
+        <section
+          key={section.number}
+          className={styles.section}
+          aria-labelledby={`terms-section-${section.number}`}
+        >
+          <h2 id={`terms-section-${section.number}`} className={styles.sectionTitle}>
+            {section.number}. {section.title}
+          </h2>
+          {section.subsections.map((subsection) => (
+            <div key={subsection.id} className={styles.subsection}>
+              <h3 className={styles.subsectionTitle}>{subsection.id}</h3>
+              {subsection.paragraphs.map((paragraph, index) => (
+                <p key={index} className={styles.paragraph}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          ))}
+        </section>
+      ))}
+
+      <section
+        className={styles.section}
+        aria-labelledby="terms-section-13"
+      >
+        <h2 id="terms-section-13" className={styles.sectionTitle}>
+          13. שירות לקוחות
+        </h2>
+        <p className={styles.paragraph}>
+          טלפון:{" "}
+          <a
+            href={`tel:${siteTermsCustomerService.phone}`}
+            className={styles.contactLink}
+            dir="ltr"
+          >
+            {siteTermsCustomerService.phone}
+          </a>
+        </p>
+        <p className={styles.paragraph}>
+          מייל:{" "}
+          <a
+            href={`mailto:${siteTermsCustomerService.email}`}
+            className={styles.contactLink}
+            dir="ltr"
+          >
+            {siteTermsCustomerService.email}
+          </a>
+        </p>
+      </section>
+    </article>
+  );
+}

@@ -5,6 +5,11 @@ import { CheckoutShippingSelector } from "@/components/checkout/CheckoutShipping
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
 import type { CheckoutCustomerDto } from "@/lib/checkout/checkoutPageDto";
 import { CHECKOUT_SHIPPING_REQUIRED_MESSAGE } from "@/lib/checkout/formatCheckoutUnavailableMessage";
+import {
+  CHECKOUT_TERMS_REQUIRED_MESSAGE,
+  TERMS_VERSION,
+} from "@/lib/legal/terms";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 import styles from "./CheckoutCustomerForm.module.scss";
 
@@ -46,6 +51,7 @@ export function CheckoutCustomerForm({
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<
     string | null
   >(initialSelectedShippingMethodId);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
@@ -60,6 +66,12 @@ export function CheckoutCustomerForm({
 
       if (!selectedShippingMethodId) {
         setFieldError(CHECKOUT_SHIPPING_REQUIRED_MESSAGE);
+        setSaveState("error");
+        return;
+      }
+
+      if (!termsAccepted) {
+        setFieldError(CHECKOUT_TERMS_REQUIRED_MESSAGE);
         setSaveState("error");
         return;
       }
@@ -105,6 +117,7 @@ export function CheckoutCustomerForm({
       orderId,
       phone,
       selectedShippingMethodId,
+      termsAccepted,
       onShippingSelectionChange,
     ],
   );
@@ -203,6 +216,37 @@ export function CheckoutCustomerForm({
           disabled={formDisabled}
         />
       )}
+
+      <div className={styles.termsField}>
+        <input
+          id="checkout-terms-accepted"
+          className={styles.termsCheckbox}
+          type="checkbox"
+          name="termsAccepted"
+          checked={termsAccepted}
+          disabled={formDisabled}
+          data-terms-version={TERMS_VERSION}
+          onChange={(e) => {
+            setTermsAccepted(e.target.checked);
+            if (saveState === "success") setSaveState("idle");
+            if (fieldError === CHECKOUT_TERMS_REQUIRED_MESSAGE) {
+              setFieldError(null);
+            }
+          }}
+        />
+        <label htmlFor="checkout-terms-accepted" className={styles.termsLabel}>
+          <span>אני מסכים/ה ל</span>{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.termsLink}
+            onClick={(e) => e.stopPropagation()}
+          >
+            תקנון
+          </Link>
+        </label>
+      </div>
 
       {fieldError && (
         <p className={styles.error} role="alert">
