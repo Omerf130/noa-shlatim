@@ -1,15 +1,18 @@
 import { checkDevGenerationGuard, clientKeyFromRequest } from "@/lib/ai/devGuard";
 import { AiIllustrationError, userMessageForCode } from "@/lib/ai/errors";
 import { generateFinalSignArtwork } from "@/lib/ai/generateFinalSignArtwork";
+import { isAllowedStyleId } from "@/lib/ai/finalSignPrompts";
 import { resolveBackgroundImage } from "@/lib/ai/resolveBackgroundImage";
 import { validateImageBuffer } from "@/lib/ai/validateUpload";
 import { getOpenAiImageConfig, isAiIllustrationOperational } from "@/lib/openai/config";
-import type { TextPosition } from "@/types/signDesign";
+import type { CreationMode, TextPosition } from "@/types/signDesign";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 const TEXT_POSITIONS: TextPosition[] = ["top", "center", "bottom"];
+
+const CREATION_MODES: CreationMode[] = ["photo", "illustration"];
 
 function parseTextPosition(value: FormDataEntryValue | null): TextPosition {
   if (typeof value !== "string") return "bottom";
@@ -18,6 +21,15 @@ function parseTextPosition(value: FormDataEntryValue | null): TextPosition {
     return trimmed as TextPosition;
   }
   return "bottom";
+}
+
+function parseCreationMode(value: FormDataEntryValue | null): CreationMode | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if ((CREATION_MODES as readonly string[]).includes(trimmed)) {
+    return trimmed as CreationMode;
+  }
+  return null;
 }
 
 export async function POST(request: Request) {
@@ -37,15 +49,30 @@ export async function POST(request: Request) {
 
   try {
     const form = await request.formData();
-    const styleId = form.get("styleId");
+    const creationMode = parseCreationMode(form.get("creationMode"));
+    const styleIdRaw = form.get("styleId");
     const backgroundId = form.get("backgroundId");
     const imageEntry = form.get("image");
     const compositionEntry = form.get("compositionReference");
     const textPosition = parseTextPosition(form.get("textPosition"));
 
-    if (typeof styleId !== "string" || !styleId.trim()) {
-      return errorResponse("INVALID_STYLE", 400);
+    if (!creationMode) {
+      return errorResponse("INVALID_CREATION_MODE", 400);
     }
+
+    const styleId =
+      typeof styleIdRaw === "string" && styleIdRaw.trim()
+        ? styleIdRaw.trim()
+        : null;
+
+    if (creationMode === "photo") {
+      if (!styleId || !isAllowedStyleId(styleId)) {
+        return errorResponse("INVALID_STYLE", 400);
+      }
+    } else if (styleId) {
+      return errorResponse("INVALID_CREATION_MODE", 400);
+    }
+
     if (typeof backgroundId !== "string" || !backgroundId.trim()) {
       return errorResponse("INVALID_BACKGROUND", 400);
     }
@@ -56,8 +83,11 @@ export async function POST(request: Request) {
       return errorResponse("INVALID_IMAGE", 400);
     }
 
-    const photoBuffer = Buffer.from(await imageEntry.arrayBuffer());
-    const { mime: photoMime } = await validateImageBuffer(photoBuffer, config.maxUploadBytes);
+    const sourceBuffer = Buffer.from(await imageEntry.arrayBuffer());
+    const { mime: sourceMime } = await validateImageBuffer(
+      sourceBuffer,
+      config.maxUploadBytes,
+    );
 
     const compositionBuffer = Buffer.from(await compositionEntry.arrayBuffer());
     const { mime: compositionMime } = await validateImageBuffer(
@@ -70,18 +100,19 @@ export async function POST(request: Request) {
       config.maxUploadBytes,
     );
 
-    const result = await generateFinalSignArtwork(
-      photoBuffer,
-      photoMime,
-      imageEntry.name,
-      styleId.trim(),
-      background.buffer,
-      background.mime,
-      background.ext,
+    const result = await generateFinalSignArtwork({
+      creationMode,
+      sourceBuffer,
+      sourceMime,
+      sourceFileName: imageEntry.name,
+      styleId,
+      backgroundBuffer: background.buffer,
+      backgroundMime: background.mime,
+      backgroundExt: background.ext,
       compositionBuffer,
       compositionMime,
       textPosition,
-    );
+    });
 
     return NextResponse.json({
       ok: true,
@@ -90,7 +121,8 @@ export async function POST(request: Request) {
         base64: result.pngBuffer.toString("base64"),
       },
       meta: {
-        styleId: styleId.trim(),
+        creationMode,
+        styleId: styleId ?? undefined,
         model: result.model,
       },
     });

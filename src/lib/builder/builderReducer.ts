@@ -99,6 +99,10 @@ function revokeFinalSignArtworkUrl(ui: BuilderState["ui"]): void {
   revokeObjectUrl(ui.finalSignArtwork.objectUrl);
 }
 
+function creationModeUsesFinalSignArtwork(mode: CreationMode | null): boolean {
+  return mode === "photo" || mode === "illustration";
+}
+
 /** AI-affecting edits: drop cached final artwork (revoke blob URL). */
 function invalidateFinalSignArtworkUi(ui: BuilderState["ui"]): BuilderState["ui"] {
   if (!ui.finalSignArtwork.isValid && !ui.finalSignArtwork.objectUrl) {
@@ -292,10 +296,9 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       if (state.design.backgroundId === action.backgroundId) {
         return state;
       }
-      const ui =
-        state.design.creationMode === "photo"
-          ? invalidateFinalSignArtworkUi(state.ui)
-          : state.ui;
+      const ui = creationModeUsesFinalSignArtwork(state.design.creationMode)
+        ? invalidateFinalSignArtworkUi(state.ui)
+        : state.ui;
       return {
         ...state,
         design: { ...state.design, backgroundId: action.backgroundId },
@@ -336,7 +339,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         nextTransform.scale === t.scale;
       const ui =
         !transformUnchanged &&
-        state.design.creationMode === "photo" &&
+        creationModeUsesFinalSignArtwork(state.design.creationMode) &&
         state.ui.finalSignArtwork.isValid
           ? invalidateFinalSignArtworkUi(state.ui)
           : state.ui;

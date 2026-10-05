@@ -18,16 +18,16 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export type BuildCompositionReferenceParams = {
   backgroundImageSrc: string;
   backgroundObjectPosition: string;
-  photoObjectUrl: string;
+  subjectObjectUrl: string;
   transform: IllustrationTransform;
 };
 
 export async function buildCompositionReferenceBlob(
   params: BuildCompositionReferenceParams,
 ): Promise<Blob> {
-  const [backgroundImg, photoImg] = await Promise.all([
+  const [backgroundImg, subjectImg] = await Promise.all([
     loadImage(params.backgroundImageSrc),
-    loadImage(params.photoObjectUrl),
+    loadImage(params.subjectObjectUrl),
   ]);
 
   const canvas = document.createElement("canvas");
@@ -50,12 +50,12 @@ export async function buildCompositionReferenceBlob(
   const subjectRect = computeSubjectDrawRect(
     COMPOSITION_REF_WIDTH,
     COMPOSITION_REF_HEIGHT,
-    photoImg.naturalWidth,
-    photoImg.naturalHeight,
+    subjectImg.naturalWidth,
+    subjectImg.naturalHeight,
     params.transform,
   );
   ctx.drawImage(
-    photoImg,
+    subjectImg,
     subjectRect.x,
     subjectRect.y,
     subjectRect.w,

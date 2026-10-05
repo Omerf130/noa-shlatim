@@ -1,14 +1,22 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import type { CreationMode } from "@/types/signDesign";
 import styles from "./SignGenerationOverlay.module.scss";
 
 const PRIMARY_MESSAGE = "יוצרים את השלט שלכם...";
 
-const ROTATING_MESSAGES = [
+const PHOTO_ROTATING_MESSAGES = [
   "מכינים את האיור שלכם...",
   "מחברים את המשפחה לרקע...",
   "מתאימים את הסגנון שבחרתם...",
+  "עוד רגע השלט שלכם מוכן ✨",
+] as const;
+
+const ILLUSTRATION_ROTATING_MESSAGES = [
+  "מכינים את האיור שלכם...",
+  "משלבים את האיור ברקע...",
+  "מחברים את הדמויות לסביבה...",
   "עוד רגע השלט שלכם מוכן ✨",
 ] as const;
 
@@ -28,11 +36,23 @@ function getReducedMotionServerSnapshot() {
   return false;
 }
 
+function rotatingMessagesForMode(mode: CreationMode | null): readonly string[] {
+  if (mode === "illustration") {
+    return ILLUSTRATION_ROTATING_MESSAGES;
+  }
+  return PHOTO_ROTATING_MESSAGES;
+}
+
 type SignGenerationOverlayProps = {
   active: boolean;
+  creationMode?: CreationMode | null;
 };
 
-export function SignGenerationOverlay({ active }: SignGenerationOverlayProps) {
+export function SignGenerationOverlay({
+  active,
+  creationMode = "photo",
+}: SignGenerationOverlayProps) {
+  const messages = rotatingMessagesForMode(creationMode);
   const [rotateIndex, setRotateIndex] = useState(0);
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
@@ -45,18 +65,18 @@ export function SignGenerationOverlay({ active }: SignGenerationOverlayProps) {
       return;
     }
     const id = window.setInterval(() => {
-      setRotateIndex((i) => (i + 1) % ROTATING_MESSAGES.length);
+      setRotateIndex((i) => (i + 1) % messages.length);
     }, ROTATE_MS);
     return () => window.clearInterval(id);
-  }, [active, reducedMotion]);
+  }, [active, reducedMotion, messages.length]);
 
   if (!active) {
     return null;
   }
 
   const supporting = reducedMotion
-    ? ROTATING_MESSAGES[0]
-    : ROTATING_MESSAGES[rotateIndex];
+    ? messages[0]
+    : messages[rotateIndex % messages.length];
 
   return (
     <div

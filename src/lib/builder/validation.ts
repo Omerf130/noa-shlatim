@@ -39,7 +39,7 @@ export function isDesignWorkspaceComplete(design: SignDesignState): boolean {
 
 export function canLeaveDesignStep(design: SignDesignState, ui: BuilderUiState): boolean {
   if (!isDesignWorkspaceComplete(design)) return false;
-  if (design.creationMode === "photo") {
+  if (design.creationMode === "photo" || design.creationMode === "illustration") {
     if (ui.finalSignArtwork.status === "generating") return false;
     return hasValidFinalSignArtwork(ui);
   }
@@ -55,7 +55,7 @@ export function isDesignComplete(design: SignDesignState, ui: BuilderUiState): b
   }
 
   if (!design.illustration) return false;
-  return isDesignWorkspaceComplete(design);
+  return canLeaveDesignStep(design, ui);
 }
 
 export function stepValidationHint(
@@ -81,7 +81,7 @@ export function stepValidationHint(
       if (missing.length > 0) {
         return `השלימו: ${missing.join(" · ")}`;
       }
-      if (design.creationMode === "photo") {
+      if (design.creationMode === "photo" || design.creationMode === "illustration") {
         if (ui.finalSignArtwork.status === "generating") {
           return "ממתינים לסיום יצירת השלט…";
         }

@@ -63,4 +63,46 @@ export function buildFinalSignPrompt(
   return `${SHARED_RULES}\n${placement}\n\n${STYLE_BLOCKS[styleId]}`;
 }
 
+const EXISTING_ILLUSTRATION_RULES = `
+You receive THREE input images for images.edit.
+
+IMAGE 1 — Customer-supplied illustration (ALREADY ILLUSTRATED):
+The customer uploaded a finished or semi-finished illustration. Preserve it as faithfully as practical.
+Keep the same people and pets, the same count, recognizable faces and features, hairstyles, clothing where practical, and the existing illustration style and character identity.
+Do NOT redesign, re-cartoonify, or re-illustrate the characters unless minimal edge integration requires it.
+Do NOT add, remove, or replace family members or pets. Do NOT change identities.
+
+If IMAGE 1 has transparency: preserve clean character edges; integrate naturally; avoid white halos; do not invent a rectangular backdrop behind them.
+
+If IMAGE 1 has its own white, colored, or photographic backdrop: treat that backdrop as discardable source material — extract the illustrated subjects and integrate them into IMAGE 2. Do NOT preserve a rectangular pasted-card boundary in the output.
+
+IMAGE 2 — Selected sign background (SCENE / WORLD):
+Use as the actual environment and world of the finished artwork. Preserve recognizable scene identity (setting, mood, palette direction).
+
+IMAGE 3 — Composition reference (LAYOUT ONLY):
+Use ONLY for approximate subject position, scale, and grouping on the sign canvas.
+Do NOT reproduce low-quality pixels from IMAGE 3 as the final subject appearance — identity and detail come from IMAGE 1.
+
+OUTPUT — ONE cohesive full-scene artwork:
+Integrate the subjects from IMAGE 1 naturally into the world of IMAGE 2 using coherent lighting, shadows, depth, environmental interaction, foreground/background occlusion, natural ground contact, and palette harmonization where appropriate.
+
+The result must NOT look like a separate rectangular image pasted onto a background.
+
+Fill the entire output canvas edge to edge with opaque artwork (not a separate cutout layer).
+
+Absolutely NO text, letters, Hebrew, typography, watermarks, generated signs, UI elements, or decorative captions.
+
+Leave reasonable visual breathing room where app-rendered text will be placed (see TEXT PLACEMENT below). Do NOT render placeholder text.
+
+TEXT PLACEMENT (metadata only — do not render text):
+The customer will overlay real typography separately. Prefer a visually quieter region in the band appropriate for:
+`.trim();
+
+export function buildExistingIllustrationFinalSignPrompt(
+  textPosition: TextPosition,
+): string {
+  const placement = TEXT_PLACEMENT_HINT[textPosition];
+  return `${EXISTING_ILLUSTRATION_RULES}\n${placement}`;
+}
+
 export { isAllowedStyleId };

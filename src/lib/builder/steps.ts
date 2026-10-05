@@ -24,7 +24,7 @@ export function getStepsForMode(mode: CreationMode | null): BuilderStepId[] {
   if (mode === "photo") {
     return ["start", "background", "upload", "illustrationStyle", "design", "review"];
   }
-  return ["start", "upload", "design", "review"];
+  return ["start", "background", "upload", "design", "review"];
 }
 
 export function getNextStep(

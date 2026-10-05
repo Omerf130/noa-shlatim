@@ -2,6 +2,7 @@ export type AiErrorCode =
   | "AI_NOT_CONFIGURED"
   | "AI_DISABLED"
   | "INVALID_STYLE"
+  | "INVALID_CREATION_MODE"
   | "INVALID_BACKGROUND"
   | "INVALID_IMAGE"
   | "IMAGE_TOO_LARGE"
@@ -25,6 +26,7 @@ const USER_MESSAGES: Record<AiErrorCode, string> = {
   AI_NOT_CONFIGURED: "יצירת איור ב-AI אינה מוגדרת בשרת.",
   AI_DISABLED: "יצירת איור ב-AI אינה פעילה כרגע.",
   INVALID_STYLE: "סגנון האיור שנבחר אינו תקין.",
+  INVALID_CREATION_MODE: "בקשת יצירת השלט אינה תקינה.",
   INVALID_BACKGROUND: "הרקע שנבחר אינו תקין. בחרו רקע ונסו שוב.",
   INVALID_IMAGE: "קובץ התמונה אינו תקין. נא להעלות JPG, PNG או WEBP.",
   IMAGE_TOO_LARGE: "קובץ התמונה גדול מדי.",

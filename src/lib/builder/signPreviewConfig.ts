@@ -1,5 +1,10 @@
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { BuilderState } from "@/types/builder";
+import type { CreationMode } from "@/types/signDesign";
+
+function supportsIntegratedFinalArtwork(mode: CreationMode | null): mode is CreationMode {
+  return mode === "photo" || mode === "illustration";
+}
 
 export function resolveSignPreviewArtworkConfig(
   state: BuilderState,
@@ -8,7 +13,7 @@ export function resolveSignPreviewArtworkConfig(
   const finalArt = ui.finalSignArtwork;
   const step = ui.currentStepId;
 
-  if (design.creationMode !== "photo") {
+  if (!supportsIntegratedFinalArtwork(design.creationMode)) {
     return {
       showFinalArtwork: false,
       finalArtworkObjectUrl: null,
@@ -23,6 +28,7 @@ export function resolveSignPreviewArtworkConfig(
   return {
     showFinalArtwork: showFinal,
     finalArtworkObjectUrl: hasValidFinal ? finalArt.objectUrl : null,
-    useOriginalPhotoAsSubject: !showFinal && Boolean(design.originalImage),
+    useOriginalPhotoAsSubject:
+      design.creationMode === "photo" && !showFinal && Boolean(design.originalImage),
   };
 }

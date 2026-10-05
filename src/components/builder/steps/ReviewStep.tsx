@@ -18,9 +18,12 @@ export function ReviewStep() {
   const styleName = getIllustrationStyleById(
     design.photoIllustrationStyleId ?? design.illustration?.styleId ?? null,
   )?.name;
-  const photoFinalKind =
-    design.creationMode === "photo" && ui.finalSignArtwork.isValid
-      ? "שלט מאויר משולב"
+  const integratedFinalKind =
+    (design.creationMode === "photo" || design.creationMode === "illustration") &&
+    ui.finalSignArtwork.isValid
+      ? design.creationMode === "photo"
+        ? "שלט מאויר משולב"
+        : "שלט משולב"
       : null;
   const bgName = getBackgroundById(design.backgroundId)?.name;
   const materialLabel =
@@ -46,7 +49,7 @@ export function ReviewStep() {
             <dt>סגנון איור</dt>
             <dd>
               {styleName}
-              {photoFinalKind ? ` · ${photoFinalKind}` : ""}
+              {integratedFinalKind ? ` · ${integratedFinalKind}` : ""}
             </dd>
           </div>
         )}

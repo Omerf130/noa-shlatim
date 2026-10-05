@@ -1,9 +1,14 @@
 import { toFile } from "openai";
 import { AiIllustrationError } from "./errors";
-import { buildFinalSignPrompt, isAllowedStyleId } from "./finalSignPrompts";
+import {
+  buildExistingIllustrationFinalSignPrompt,
+  buildFinalSignPrompt,
+  isAllowedStyleId,
+} from "./finalSignPrompts";
+import type { ServerStyleId } from "./illustrationPrompts";
 import { getOpenAiClient } from "@/lib/openai/client";
 import { getOpenAiImageConfig } from "@/lib/openai/config";
-import type { TextPosition } from "@/types/signDesign";
+import type { CreationMode, TextPosition } from "@/types/signDesign";
 
 const FINAL_SIGN_SIZE = "1536x1024" as const;
 
@@ -15,20 +20,39 @@ export type GenerateFinalSignResult = {
   durationMs: number;
 };
 
+export type GenerateFinalSignArtworkParams = {
+  creationMode: CreationMode;
+  sourceBuffer: Buffer;
+  sourceMime: string;
+  sourceFileName: string;
+  styleId: string | null;
+  backgroundBuffer: Buffer;
+  backgroundMime: string;
+  backgroundExt: string;
+  compositionBuffer: Buffer;
+  compositionMime: string;
+  textPosition: TextPosition;
+};
+
 export async function generateFinalSignArtwork(
-  photoBuffer: Buffer,
-  photoMime: string,
-  photoFileName: string,
-  styleId: string,
-  backgroundBuffer: Buffer,
-  backgroundMime: string,
-  backgroundExt: string,
-  compositionBuffer: Buffer,
-  compositionMime: string,
-  textPosition: TextPosition,
+  params: GenerateFinalSignArtworkParams,
 ): Promise<GenerateFinalSignResult> {
-  if (!isAllowedStyleId(styleId)) {
-    throw new AiIllustrationError("INVALID_STYLE", "Invalid style", 400);
+  const { creationMode, styleId } = params;
+
+  if (creationMode === "photo") {
+    if (!styleId || !isAllowedStyleId(styleId)) {
+      throw new AiIllustrationError("INVALID_STYLE", "Invalid style", 400);
+    }
+  } else if (creationMode === "illustration") {
+    if (styleId) {
+      throw new AiIllustrationError(
+        "INVALID_CREATION_MODE",
+        "styleId not allowed for illustration mode",
+        400,
+      );
+    }
+  } else {
+    throw new AiIllustrationError("INVALID_CREATION_MODE", "Invalid mode", 400);
   }
 
   const config = getOpenAiImageConfig();
@@ -40,27 +64,33 @@ export async function generateFinalSignArtwork(
     throw new AiIllustrationError("AI_DISABLED", "Disabled", 503);
   }
 
-  const prompt = buildFinalSignPrompt(styleId, textPosition);
+  const prompt =
+    creationMode === "photo"
+      ? buildFinalSignPrompt(styleId as ServerStyleId, params.textPosition)
+      : buildExistingIllustrationFinalSignPrompt(params.textPosition);
+
   const started = Date.now();
 
   try {
-    const photoFile = await toFile(photoBuffer, photoFileName || "photo", {
-      type: photoMime,
-    });
+    const sourceFile = await toFile(
+      params.sourceBuffer,
+      params.sourceFileName || "source",
+      { type: params.sourceMime },
+    );
     const backgroundFile = await toFile(
-      backgroundBuffer,
-      `sign-background.${backgroundExt}`,
-      { type: backgroundMime },
+      params.backgroundBuffer,
+      `sign-background.${params.backgroundExt}`,
+      { type: params.backgroundMime },
     );
     const compositionFile = await toFile(
-      compositionBuffer,
+      params.compositionBuffer,
       "composition-reference.jpg",
-      { type: compositionMime },
+      { type: params.compositionMime },
     );
 
     const response = await client.images.edit({
       model: config.model,
-      image: [photoFile, backgroundFile, compositionFile],
+      image: [sourceFile, backgroundFile, compositionFile],
       prompt,
       size: FINAL_SIGN_SIZE,
       quality: config.quality,
@@ -86,8 +116,9 @@ export async function generateFinalSignArtwork(
 
     console.info("[ai-final-sign]", {
       model: config.model,
-      styleId,
-      textPosition,
+      creationMode,
+      styleId: styleId ?? undefined,
+      textPosition: params.textPosition,
       size: FINAL_SIGN_SIZE,
       durationMs,
       requestId,

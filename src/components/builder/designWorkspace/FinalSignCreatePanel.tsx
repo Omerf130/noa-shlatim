@@ -7,6 +7,7 @@ import styles from "./panels/panels.module.scss";
 
 export function FinalSignCreatePanel() {
   const { state } = useBuilder();
+  const mode = state.design.creationMode;
   const {
     finalArt,
     generateFinalSign,
@@ -16,7 +17,7 @@ export function FinalSignCreatePanel() {
     hasValidFinal,
   } = useFinalSignGeneration();
 
-  if (state.design.creationMode !== "photo") {
+  if (mode !== "photo" && mode !== "illustration") {
     return null;
   }
   if (state.ui.currentStepId !== "design") {
@@ -27,12 +28,14 @@ export function FinalSignCreatePanel() {
   const showingFinal =
     hasValidFinal && finalArt.previewMode === "final" && !isGenerating;
 
+  const introCopy =
+    mode === "photo"
+      ? "לאחר שסיימתם לעצב — יוצרים את השלט המאויר המשולב (רקע + דמויות) בקריאה אחת."
+      : "לאחר שסיימתם לעצב — משלבים את האיור שלכם עם הרקע שבחרתם בקריאה אחת.";
+
   return (
     <div className={styles.finalSignBlock}>
-      <p className={styles.finalSignIntro}>
-        לאחר שסיימתם לעצב — יוצרים את השלט המאויר המשולב (רקע + דמויות) בקריאה
-        אחת.
-      </p>
+      <p className={styles.finalSignIntro}>{introCopy}</p>
 
       {showingFinal ? (
         <div className={styles.finalSignActions}>

@@ -83,7 +83,10 @@ export function SignCompositionEditor({
         integratedFinalPreview={integratedFinalPreview}
         compositionEditor={compositionEditor}
       />
-      <SignGenerationOverlay active={isGenerating} />
+      <SignGenerationOverlay
+        active={isGenerating}
+        creationMode={design.creationMode}
+      />
     </div>
   );
 }

@@ -24,13 +24,17 @@ export function useFinalSignGeneration() {
     }
 
     const { design } = state;
+    const creationMode = design.creationMode;
     const styleId = design.photoIllustrationStyleId;
     const backgroundId = design.backgroundId;
     const file = getSourcePhotoFile();
     const background = backgroundId ? getBackgroundById(backgroundId) : null;
-    const photoUrl = design.originalImage?.objectUrl;
+    const subjectUrl = design.originalImage?.objectUrl;
 
-    if (design.creationMode !== "photo") return;
+    if (creationMode !== "photo" && creationMode !== "illustration") {
+      return;
+    }
+
     if (!isDesignWorkspaceComplete(design)) {
       dispatch({
         type: "FINAL_SIGN_ERROR",
@@ -39,14 +43,25 @@ export function useFinalSignGeneration() {
       });
       return;
     }
-    if (!styleId) {
+
+    if (creationMode === "photo") {
+      if (!styleId) {
+        dispatch({
+          type: "FINAL_SIGN_ERROR",
+          errorCode: "MISSING_STYLE",
+          userMessage: "בחרו סגנון איור לפני יצירת השלט.",
+        });
+        return;
+      }
+    } else if (!design.illustration) {
       dispatch({
         type: "FINAL_SIGN_ERROR",
-        errorCode: "MISSING_STYLE",
-        userMessage: "בחרו סגנון איור לפני יצירת השלט.",
+        errorCode: "MISSING_FILE",
+        userMessage: "לא נמצא קובץ האיור. העלו את האיור מחדש.",
       });
       return;
     }
+
     if (!backgroundId || !background) {
       dispatch({
         type: "FINAL_SIGN_ERROR",
@@ -55,11 +70,14 @@ export function useFinalSignGeneration() {
       });
       return;
     }
-    if (!file || !photoUrl) {
+    if (!file || !subjectUrl) {
       dispatch({
         type: "FINAL_SIGN_ERROR",
         errorCode: "MISSING_FILE",
-        userMessage: "לא נמצא קובץ המקור. העלו את התמונה מחדש.",
+        userMessage:
+          creationMode === "photo"
+            ? "לא נמצא קובץ המקור. העלו את התמונה מחדש."
+            : "לא נמצא קובץ האיור. העלו את האיור מחדש.",
       });
       return;
     }
@@ -70,12 +88,15 @@ export function useFinalSignGeneration() {
       const compositionBlob = await buildCompositionReferenceBlob({
         backgroundImageSrc: background.imageSrc,
         backgroundObjectPosition: background.objectPosition ?? "50% 50%",
-        photoObjectUrl: photoUrl,
+        subjectObjectUrl: subjectUrl,
         transform: design.illustrationTransform,
       });
 
       const form = new FormData();
-      form.append("styleId", styleId);
+      form.append("creationMode", creationMode);
+      if (creationMode === "photo" && styleId) {
+        form.append("styleId", styleId);
+      }
       form.append("backgroundId", backgroundId);
       form.append("textPosition", design.text.position);
       form.append("image", file, file.name);
