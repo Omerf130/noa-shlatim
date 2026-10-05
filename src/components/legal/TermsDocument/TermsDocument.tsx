@@ -1,7 +1,5 @@
-import {
-  siteTermsCustomerService,
-  siteTermsSections,
-} from "@/data/siteTermsContent";
+import { BUSINESS_DETAILS } from "@/data/businessDetails";
+import { siteTermsSections } from "@/data/siteTermsContent";
 import {
   TERMS_GENDER_NOTE,
   TERMS_LAST_UPDATED_LABEL,
@@ -47,24 +45,25 @@ export function TermsDocument() {
         <h2 id="terms-section-13" className={styles.sectionTitle}>
           13. שירות לקוחות
         </h2>
+        <p className={styles.paragraph}>כתובת: {BUSINESS_DETAILS.address}</p>
         <p className={styles.paragraph}>
           טלפון:{" "}
           <a
-            href={`tel:${siteTermsCustomerService.phone}`}
+            href={BUSINESS_DETAILS.telHref}
             className={styles.contactLink}
             dir="ltr"
           >
-            {siteTermsCustomerService.phone}
+            {BUSINESS_DETAILS.phone}
           </a>
         </p>
         <p className={styles.paragraph}>
           מייל:{" "}
           <a
-            href={`mailto:${siteTermsCustomerService.email}`}
+            href={BUSINESS_DETAILS.mailtoHref}
             className={styles.contactLink}
             dir="ltr"
           >
-            {siteTermsCustomerService.email}
+            {BUSINESS_DETAILS.email}
           </a>
         </p>
       </section>

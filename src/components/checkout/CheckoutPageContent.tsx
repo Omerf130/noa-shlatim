@@ -1,6 +1,7 @@
 "use client";
 
 import { SignPreview } from "@/components/builder/SignPreview/SignPreview";
+import { CheckoutBusinessInfo } from "@/components/checkout/CheckoutBusinessInfo";
 import { CheckoutCustomerForm } from "@/components/checkout/CheckoutCustomerForm";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
 import type { CheckoutPageDto } from "@/lib/checkout/checkoutPageDto";
@@ -80,6 +81,7 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
           </section>
 
           <section className={styles.formSection} aria-label="פרטי הזמנה">
+            <CheckoutBusinessInfo />
             <CheckoutCustomerForm
               orderId={dto.orderId}
               initialCustomer={dto.customer}

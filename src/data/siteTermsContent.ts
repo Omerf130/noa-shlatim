@@ -9,11 +9,6 @@ export type TermsSection = {
   subsections: TermsSubsection[];
 };
 
-export type TermsContactBlock = {
-  phone: string;
-  email: string;
-};
-
 /** Full site Terms — legal meaning must not be paraphrased. */
 export const siteTermsSections: TermsSection[] = [
   {
@@ -425,8 +420,3 @@ export const siteTermsSections: TermsSection[] = [
     ],
   },
 ];
-
-export const siteTermsCustomerService: TermsContactBlock = {
-  phone: "0512552601",
-  email: "avdala.gal@gmail.com",
-};

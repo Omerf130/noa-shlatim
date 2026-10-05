@@ -1,0 +1,46 @@
+.block {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-muted, #6d5a4a);
+  background: var(--color-bg-muted, #f9fafb);
+  border: 1px solid var(--color-border, #e8e0d6);
+  border-radius: var(--radius-md, 8px);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text, #1f1b18);
+}
+
+.name {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  color: var(--color-text, #1f1b18);
+}
+
+.line {
+  margin: 0 0 var(--space-1);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.link {
+  color: var(--color-accent, #c45c3e);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    border-radius: var(--radius-sm, 4px);
+  }
+}

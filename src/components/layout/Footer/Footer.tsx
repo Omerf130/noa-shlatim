@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
+import { BUSINESS_DETAILS } from "@/data/businessDetails";
 import { WEBLIO_CREDIT } from "@/data/siteCredits";
 import { homeNavLinks, homePrimaryCta } from "@/data/homeNav";
 import { Container } from "@/components/layout/Container/Container";
@@ -19,6 +20,37 @@ export function Footer() {
             <Button href={homePrimaryCta.href} variant="secondary" className={styles.footerCta}>
               {homePrimaryCta.label}
             </Button>
+          </div>
+
+          <div className={styles.businessBlock}>
+            <p className={styles.businessLine}>
+              כתובת: {BUSINESS_DETAILS.address}
+            </p>
+            <p className={styles.businessLine}>
+              טלפון:{" "}
+              <a
+                href={BUSINESS_DETAILS.telHref}
+                className={styles.footerLink}
+                dir="ltr"
+              >
+                {BUSINESS_DETAILS.phone}
+              </a>
+            </p>
+            <p className={styles.businessLine}>
+              מייל:{" "}
+              <a
+                href={BUSINESS_DETAILS.mailtoHref}
+                className={styles.footerLink}
+                dir="ltr"
+              >
+                {BUSINESS_DETAILS.email}
+              </a>
+            </p>
+            <p className={styles.legalLine}>
+              <Link href="/terms" className={styles.footerLink}>
+                תקנון
+              </Link>
+            </p>
           </div>
 
           <nav className={styles.linksNav} aria-label="קישורי תחתית">
