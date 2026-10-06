@@ -14,11 +14,12 @@ import { ORDER_STATUSES, type OrderStatus } from "@/models/Order";
 import { Order } from "@/models/Order";
 import { cookies } from "next/headers";
 
-export type CheckoutAccessMode = "edit" | "view";
+export type CheckoutAccessMode = "edit" | "view" | "payment_init";
 
 const CHECKOUT_ACCESS_BY_MODE: Record<CheckoutAccessMode, readonly OrderStatus[]> = {
   edit: ["draft"],
   view: ["draft", "payment_pending", "paid"],
+  payment_init: ["draft", "payment_pending"],
 };
 
 export type AuthorizedCheckoutOrder = {

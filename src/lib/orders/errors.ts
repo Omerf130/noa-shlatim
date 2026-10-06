@@ -8,7 +8,8 @@ export type OrderErrorCode =
   | "DATABASE_UNAVAILABLE"
   | "PAYMENT_IN_PROGRESS"
   | "PAYMENT_INVALID_STATE"
-  | "PAYMENT_NOT_READY";
+  | "PAYMENT_NOT_READY"
+  | "PAYPLUS_LINK_FAILED";
 
 export class OrderError extends Error {
   readonly code: OrderErrorCode;
@@ -32,6 +33,8 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
   PAYMENT_IN_PROGRESS: "תשלום כבר בתהליך. נסו שוב בעוד רגע.",
   PAYMENT_INVALID_STATE: "לא ניתן להמשיך לתשלום עבור הזמנה זו.",
   PAYMENT_NOT_READY: "יש להשלים את פרטי ההזמנה לפני תשלום.",
+  PAYPLUS_LINK_FAILED:
+    "לא הצלחנו לפתוח את דף התשלום. נסו שוב בעוד רגע.",
 };
 
 export function userMessageForOrderCode(code: OrderErrorCode): string {

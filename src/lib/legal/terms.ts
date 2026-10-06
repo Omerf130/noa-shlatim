@@ -1,5 +1,5 @@
 /** Current published Terms version — use at future order submission/payment boundary. */
-export const TERMS_VERSION = "2026-10" as const;
+export const TERMS_VERSION = "2026-10-v2" as const;
 
 export type TermsVersion = typeof TERMS_VERSION;
 

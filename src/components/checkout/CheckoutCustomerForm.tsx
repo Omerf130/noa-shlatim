@@ -14,6 +14,7 @@ import { useCallback, useState } from "react";
 import styles from "./CheckoutCustomerForm.module.scss";
 
 type SaveState = "idle" | "submitting" | "success" | "error";
+type PaymentState = "idle" | "processing";
 
 type CheckoutCustomerFormProps = {
   orderId: string;
@@ -35,6 +36,10 @@ type SaveResponse =
     }
   | { ok: false; code: string; message: string };
 
+type PaymentInitResponse =
+  | { ok: true; paymentPageLink: string }
+  | { ok: false; code: string; message: string };
+
 export function CheckoutCustomerForm({
   orderId,
   initialCustomer,
@@ -54,21 +59,44 @@ export function CheckoutCustomerForm({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [paymentState, setPaymentState] = useState<PaymentState>("idle");
+
+  const persistCheckoutDetails = useCallback(async (): Promise<
+    SaveResponse | { ok: false; message: string }
+  > => {
+    if (!canSaveCommercialCheckout || !commercial.available) {
+      return { ok: false, message: "לא ניתן לשמור את ההזמנה כרגע." };
+    }
+
+    if (!selectedShippingMethodId) {
+      return { ok: false, message: CHECKOUT_SHIPPING_REQUIRED_MESSAGE };
+    }
+
+    const res = await fetch(`/api/orders/${orderId}/checkout`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer: { fullName, phone, email },
+        notes,
+        selectedShippingMethodId,
+      }),
+    });
+    return (await res.json()) as SaveResponse;
+  }, [
+    canSaveCommercialCheckout,
+    commercial.available,
+    email,
+    fullName,
+    notes,
+    orderId,
+    phone,
+    selectedShippingMethodId,
+  ]);
 
   const onSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setFieldError(null);
-
-      if (!canSaveCommercialCheckout || !commercial.available) {
-        return;
-      }
-
-      if (!selectedShippingMethodId) {
-        setFieldError(CHECKOUT_SHIPPING_REQUIRED_MESSAGE);
-        setSaveState("error");
-        return;
-      }
 
       if (!termsAccepted) {
         setFieldError(CHECKOUT_TERMS_REQUIRED_MESSAGE);
@@ -79,17 +107,7 @@ export function CheckoutCustomerForm({
       setSaveState("submitting");
 
       try {
-        const res = await fetch(`/api/orders/${orderId}/checkout`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer: { fullName, phone, email },
-            notes,
-            selectedShippingMethodId,
-          }),
-        });
-        const data = (await res.json()) as SaveResponse;
-
+        const data = await persistCheckoutDetails();
         if (!data.ok) {
           setFieldError(data.message);
           setSaveState("error");
@@ -108,21 +126,73 @@ export function CheckoutCustomerForm({
         setSaveState("error");
       }
     },
-    [
-      canSaveCommercialCheckout,
-      commercial.available,
-      email,
-      fullName,
-      notes,
-      orderId,
-      phone,
-      selectedShippingMethodId,
-      termsAccepted,
-      onShippingSelectionChange,
-    ],
+    [onShippingSelectionChange, persistCheckoutDetails, termsAccepted],
   );
 
+  const onSecurePayment = useCallback(async () => {
+    setFieldError(null);
+
+    if (!canSaveCommercialCheckout || !commercial.available) {
+      return;
+    }
+
+    if (!selectedShippingMethodId) {
+      setFieldError(CHECKOUT_SHIPPING_REQUIRED_MESSAGE);
+      return;
+    }
+
+    if (!termsAccepted) {
+      setFieldError(CHECKOUT_TERMS_REQUIRED_MESSAGE);
+      return;
+    }
+
+    setPaymentState("processing");
+
+    try {
+      const saveData = await persistCheckoutDetails();
+      if (!saveData.ok) {
+        setFieldError(saveData.message);
+        return;
+      }
+
+      setFullName(saveData.customer.fullName);
+      setPhone(saveData.customer.phone);
+      setEmail(saveData.customer.email);
+      setNotes(saveData.notes);
+      setSelectedShippingMethodId(saveData.selectedShippingMethodId);
+      onShippingSelectionChange?.(saveData.selectedShippingMethodId);
+      setSaveState("success");
+
+      const initRes = await fetch(`/api/orders/${orderId}/payment/init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ termsAccepted: true }),
+      });
+      const initData = (await initRes.json()) as PaymentInitResponse;
+
+      if (!initData.ok) {
+        setFieldError(initData.message);
+        return;
+      }
+
+      window.location.assign(initData.paymentPageLink);
+    } catch {
+      setFieldError("לא הצלחנו לפתוח את דף התשלום. נסו שוב.");
+    } finally {
+      setPaymentState("idle");
+    }
+  }, [
+    canSaveCommercialCheckout,
+    commercial.available,
+    onShippingSelectionChange,
+    orderId,
+    persistCheckoutDetails,
+    selectedShippingMethodId,
+    termsAccepted,
+  ]);
+
   const formDisabled = !canSaveCommercialCheckout;
+  const paymentBusy = paymentState === "processing" || saveState === "submitting";
 
   return (
     <form className={styles.form} onSubmit={(e) => void onSubmit(e)} noValidate>
@@ -142,7 +212,7 @@ export function CheckoutCustomerForm({
           name="fullName"
           autoComplete="name"
           required
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
           value={fullName}
           onChange={(e) => {
             setFullName(e.target.value);
@@ -160,7 +230,7 @@ export function CheckoutCustomerForm({
           autoComplete="tel"
           inputMode="tel"
           required
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
           dir="ltr"
           value={phone}
           onChange={(e) => {
@@ -178,7 +248,7 @@ export function CheckoutCustomerForm({
           name="email"
           autoComplete="email"
           required
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
           dir="ltr"
           value={email}
           onChange={(e) => {
@@ -195,7 +265,7 @@ export function CheckoutCustomerForm({
           name="notes"
           rows={3}
           maxLength={500}
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
           value={notes}
           onChange={(e) => {
             setNotes(e.target.value);
@@ -213,7 +283,7 @@ export function CheckoutCustomerForm({
             onShippingSelectionChange?.(id);
             if (saveState === "success") setSaveState("idle");
           }}
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
         />
       )}
 
@@ -224,7 +294,7 @@ export function CheckoutCustomerForm({
           type="checkbox"
           name="termsAccepted"
           checked={termsAccepted}
-          disabled={formDisabled}
+          disabled={formDisabled || paymentBusy}
           data-terms-version={TERMS_VERSION}
           onChange={(e) => {
             setTermsAccepted(e.target.checked);
@@ -262,10 +332,19 @@ export function CheckoutCustomerForm({
 
       <Button
         type="submit"
-        disabled={saveState === "submitting" || formDisabled}
+        disabled={paymentBusy || formDisabled}
         className={styles.submit}
       >
         {saveState === "submitting" ? "שומרים…" : "שמירת פרטים ומשלוח"}
+      </Button>
+
+      <Button
+        type="button"
+        disabled={paymentBusy || formDisabled}
+        className={styles.payButton}
+        onClick={() => void onSecurePayment()}
+      >
+        {paymentState === "processing" ? "פותחים תשלום מאובטח…" : "מעבר לתשלום מאובטח"}
       </Button>
     </form>
   );

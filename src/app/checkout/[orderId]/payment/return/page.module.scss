@@ -1,0 +1,25 @@
+.main {
+  min-height: 50vh;
+  padding: var(--space-8) var(--space-4);
+}
+
+.inner {
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.lead {
+  margin: 0 0 var(--space-4);
+  line-height: 1.6;
+}
+
+.status {
+  margin: 0 0 var(--space-6);
+  font-size: 0.9375rem;
+}
