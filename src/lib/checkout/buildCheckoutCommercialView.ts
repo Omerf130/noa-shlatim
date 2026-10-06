@@ -5,6 +5,7 @@ import {
   CHECKOUT_STALE_SHIPPING_MESSAGE,
 } from "@/lib/checkout/formatCheckoutUnavailableMessage";
 import { formatMinorForCheckoutDisplay } from "@/lib/money/ils";
+import { computeDraftOrderCommercialAmounts } from "@/lib/orders/computeOrderCommercial";
 import { orderDesignSchema } from "@/lib/orders/orderDesignSchema";
 import {
   resolveMaterialPriceMinor,
@@ -160,11 +161,37 @@ export async function buildCheckoutCommercialView(params: {
     ? methodById.get(selectedShippingMethodId) ?? null
     : null;
 
+  const materialLabelText = materialLabel(material);
+  let summary = buildSummary({
+    materialLabel: materialLabelText,
+    productAmountMinor,
+    selectedMethod,
+  });
+
+  if (selectionValid && selectedShippingMethodId) {
+    const computed = await computeDraftOrderCommercialAmounts({
+      design: params.design,
+      shippingMethodId: selectedShippingMethodId,
+    });
+    if (computed.ok) {
+      const { amounts } = computed;
+      summary = {
+        productLabel: materialLabelText,
+        productDisplay: formatMinorForCheckoutDisplay(amounts.productAmountMinor),
+        shippingDisplay: formatMinorForCheckoutDisplay(amounts.shippingAmountMinor),
+        totalDisplay: formatMinorForCheckoutDisplay(amounts.totalAmountMinor),
+        productAmountMinor: amounts.productAmountMinor,
+        shippingAmountMinor: amounts.shippingAmountMinor,
+        totalAmountMinor: amounts.totalAmountMinor,
+      };
+    }
+  }
+
   return {
     available: true,
     product: {
       material,
-      materialLabel: materialLabel(material),
+      materialLabel: materialLabelText,
       amountMinor: productAmountMinor,
       displayAmount: formatMinorForCheckoutDisplay(productAmountMinor),
     },
@@ -172,11 +199,7 @@ export async function buildCheckoutCommercialView(params: {
     selectedShippingMethodId,
     selectionValid,
     staleSelectionMessage,
-    summary: buildSummary({
-      materialLabel: materialLabel(material),
-      productAmountMinor,
-      selectedMethod,
-    }),
+    summary,
   };
 }
 

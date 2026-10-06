@@ -5,7 +5,10 @@ export type OrderErrorCode =
   | "ORDER_IN_PROGRESS"
   | "STORAGE_FAILED"
   | "ORDER_PERSIST_FAILED"
-  | "DATABASE_UNAVAILABLE";
+  | "DATABASE_UNAVAILABLE"
+  | "PAYMENT_IN_PROGRESS"
+  | "PAYMENT_INVALID_STATE"
+  | "PAYMENT_NOT_READY";
 
 export class OrderError extends Error {
   readonly code: OrderErrorCode;
@@ -26,6 +29,9 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
   STORAGE_FAILED: "לא הצלחנו לשמור את הקבצים. נסו שוב.",
   ORDER_PERSIST_FAILED: "לא הצלחנו לשמור את ההזמנה. נסו שוב.",
   DATABASE_UNAVAILABLE: "שירות ההזמנות אינו זמין כרגע.",
+  PAYMENT_IN_PROGRESS: "תשלום כבר בתהליך. נסו שוב בעוד רגע.",
+  PAYMENT_INVALID_STATE: "לא ניתן להמשיך לתשלום עבור הזמנה זו.",
+  PAYMENT_NOT_READY: "יש להשלים את פרטי ההזמנה לפני תשלום.",
 };
 
 export function userMessageForOrderCode(code: OrderErrorCode): string {

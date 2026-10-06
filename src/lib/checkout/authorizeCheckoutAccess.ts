@@ -5,15 +5,27 @@ import {
 } from "@/lib/checkout/constants";
 import { verifyCheckoutAccessToken } from "@/lib/checkout/checkoutAccessToken";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
+import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
+import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
+import type { OrderTermsAcceptance } from "@/lib/orders/termsAcceptance";
 import { OrderError } from "@/lib/orders/errors";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import { ORDER_STATUSES, type OrderStatus } from "@/models/Order";
 import { Order } from "@/models/Order";
 import { cookies } from "next/headers";
 
+export type CheckoutAccessMode = "edit" | "view";
+
+const CHECKOUT_ACCESS_BY_MODE: Record<CheckoutAccessMode, readonly OrderStatus[]> = {
+  edit: ["draft"],
+  view: ["draft", "payment_pending", "paid"],
+};
+
 export type AuthorizedCheckoutOrder = {
   orderId: string;
+  accessMode: CheckoutAccessMode;
   order: {
-    status: string;
+    status: OrderStatus;
     creationMode: string;
     checkoutAccessTokenHash?: string | null;
     design: OrderDesignSnapshot;
@@ -23,6 +35,12 @@ export type AuthorizedCheckoutOrder = {
     customer?: { fullName?: string; phone?: string; email?: string };
     notes?: string;
     checkoutSelection?: { shippingMethodId?: string };
+    commercialSnapshot?: OrderCommercialSnapshot | null;
+    termsAcceptance?: OrderTermsAcceptance | null;
+    payment?: {
+      activeAttemptId?: string | null;
+      attempts?: PaymentAttemptRecord[];
+    } | null;
   };
 };
 
@@ -58,18 +76,32 @@ export async function extractCheckoutToken(
   return parsed.token;
 }
 
-async function loadCheckoutOrder(orderId: string) {
+function isOrderStatus(value: string): value is OrderStatus {
+  return (ORDER_STATUSES as readonly string[]).includes(value);
+}
+
+async function loadCheckoutOrder(orderId: string, mode: CheckoutAccessMode) {
   await connectDb();
   const order = await Order.findById(orderId).lean();
   if (!order) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  const mode = order.creationMode;
+  const creationMode = order.creationMode;
   if (
-    order.status !== "draft" ||
-    (mode !== "photo" && mode !== "illustration")
+    creationMode !== "photo" &&
+    creationMode !== "illustration"
   ) {
+    throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
+  }
+
+  const statusRaw = order.status;
+  if (!isOrderStatus(statusRaw)) {
+    throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
+  }
+
+  const allowedStatuses = CHECKOUT_ACCESS_BY_MODE[mode];
+  if (!allowedStatuses.includes(statusRaw)) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
@@ -84,17 +116,24 @@ async function loadCheckoutOrder(orderId: string) {
   return order;
 }
 
+export type AuthorizeCheckoutAccessOptions = {
+  mode?: CheckoutAccessMode;
+};
+
 export async function authorizeCheckoutAccess(
   orderId: string,
   request?: Request,
+  options?: AuthorizeCheckoutAccessOptions,
 ): Promise<AuthorizedCheckoutOrder> {
+  const mode = options?.mode ?? "edit";
+
   try {
     assertValidOrderId(orderId);
   } catch {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  const order = await loadCheckoutOrder(orderId);
+  const order = await loadCheckoutOrder(orderId, mode);
   const token = await extractCheckoutToken(orderId, request);
   if (!token || !verifyCheckoutAccessToken(token, order.checkoutAccessTokenHash)) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Unauthorized", 401);
@@ -102,8 +141,9 @@ export async function authorizeCheckoutAccess(
 
   return {
     orderId,
+    accessMode: mode,
     order: {
-      status: order.status,
+      status: order.status as OrderStatus,
       creationMode: order.creationMode,
       checkoutAccessTokenHash: order.checkoutAccessTokenHash,
       design: order.design as OrderDesignSnapshot,
@@ -111,6 +151,9 @@ export async function authorizeCheckoutAccess(
       customer: order.customer,
       notes: order.notes,
       checkoutSelection: order.checkoutSelection,
+      commercialSnapshot: order.commercialSnapshot ?? null,
+      termsAcceptance: order.termsAcceptance ?? null,
+      payment: order.payment ?? null,
     },
   };
 }
@@ -126,7 +169,7 @@ export async function verifyCheckoutAccessBootstrap(
     return false;
   }
 
-  const order = await loadCheckoutOrder(orderId).catch(() => null);
+  const order = await loadCheckoutOrder(orderId, "edit").catch(() => null);
   if (!order) {
     return false;
   }
