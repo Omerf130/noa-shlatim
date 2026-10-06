@@ -1,16 +1,13 @@
-import styles from "./page.module.scss";
+import { AdminDashboardView } from "@/components/admin/dashboard/AdminDashboardView";
+import { getAdminDashboardData } from "@/lib/admin/dashboard/getAdminDashboardData";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "דשבורד | פאנל ניהול",
 };
 
-export default function AdminDashboardPage() {
-  return (
-    <div className={styles.dashboard}>
-      <h1 className={styles.heading}>דשבורד</h1>
-      <p className={styles.lead}>
-        ברוכים הבאים לפאנל הניהול. ניתן לצפות בהזמנות טיוטה בתפריט הזמנות.
-      </p>
-    </div>
-  );
+export default async function AdminDashboardPage() {
+  const data = await getAdminDashboardData();
+  return <AdminDashboardView data={data} />;
 }

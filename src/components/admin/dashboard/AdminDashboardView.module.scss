@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.topCluster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.midRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  align-items: stretch;
+
+  @media (min-width: 64rem) {
+    grid-template-columns: minmax(0, 1fr) minmax(13.5rem, 26%);
+    gap: var(--space-3);
+  }
+}

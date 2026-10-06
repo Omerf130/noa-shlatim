@@ -1,0 +1,29 @@
+.badge {
+  display: inline-block;
+  padding: 1px var(--space-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  border-radius: var(--radius-pill, 999px);
+  white-space: nowrap;
+}
+
+.draft {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.payment_pending {
+  background: color-mix(in srgb, #b54708 14%, transparent);
+  color: #b54708;
+}
+
+.paid {
+  background: color-mix(in srgb, var(--color-success, #5f8f65) 18%, transparent);
+  color: var(--color-success, #5f8f65);
+}
+
+.creating {
+  background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  color: var(--color-text-muted);
+}

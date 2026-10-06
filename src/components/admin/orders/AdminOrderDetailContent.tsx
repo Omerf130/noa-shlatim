@@ -1,6 +1,7 @@
 "use client";
 
 import { AdminOrderPreview } from "@/components/admin/orders/AdminOrderPreview";
+import { AdminStatusBadge } from "@/components/admin/ui/AdminStatusBadge";
 import type { AdminOrderDetailDto } from "@/lib/admin/orders/adminOrderDtos";
 import styles from "./AdminOrderDetailContent.module.scss";
 
@@ -27,11 +28,7 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
       <header className={styles.header}>
         <div className={styles.headerMain}>
           <h1 className={styles.title}>הזמנה {dto.orderReference}</h1>
-          <span
-            className={`${styles.statusBadge} ${styles[`status_${dto.statusKey}`] ?? ""}`}
-          >
-            {dto.statusLabel}
-          </span>
+          <AdminStatusBadge statusKey={dto.statusKey} label={dto.statusLabel} />
         </div>
         <dl className={styles.meta}>
           <div>

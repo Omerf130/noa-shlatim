@@ -1,0 +1,207 @@
+.panel {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  border-radius: 1.0625rem;
+  box-shadow: 0 1px 4px rgba(31, 27, 24, 0.05);
+  padding: var(--space-3);
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelHead {
+  flex-shrink: 0;
+  margin-bottom: var(--space-2);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.bellWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bellIcon {
+  color: var(--color-primary);
+}
+
+.countBadge {
+  position: absolute;
+  top: -0.35rem;
+  inset-inline-start: -0.35rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: #d92d20;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-surface);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-1);
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--color-accent);
+  opacity: 0.85;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.feedItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.55rem 0;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  transition: background 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-surface-muted) 35%, transparent);
+  }
+}
+
+.feed li:last-child .feedItem {
+  border-bottom: none;
+}
+
+.thumbFrame {
+  display: block;
+  width: 3rem;
+  aspect-ratio: 3 / 2;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 10%, var(--color-border));
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface-muted) 65%, var(--color-surface));
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.thumbEmpty {
+  width: 3rem;
+  aspect-ratio: 3 / 2;
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 10%, var(--color-border));
+  flex-shrink: 0;
+}
+
+.feedBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feedRef {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.feedIssue {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.feedDate {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--radius-pill);
+  background: #d92d20;
+  flex-shrink: 0;
+}
+
+.footerCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding: 0.55rem var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-primary-soft) 55%, var(--color-surface));
+  transition: background 0.18s ease;
+  flex-shrink: 0;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary-soft) 85%, var(--color-surface));
+  }
+}

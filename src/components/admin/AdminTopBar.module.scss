@@ -1,0 +1,105 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+  min-height: 3.25rem;
+
+  @media (min-width: 64rem) {
+    justify-content: flex-end;
+    padding: var(--space-2) clamp(var(--space-5), 2.5vw, var(--space-8)) var(--space-1);
+    border-bottom: none;
+    background: transparent;
+    min-height: auto;
+  }
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.18s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    background: var(--color-surface-muted);
+  }
+
+  @media (min-width: 64rem) {
+    display: none;
+  }
+}
+
+.spacer {
+  flex: 1;
+
+  @media (min-width: 64rem) {
+    display: none;
+  }
+}
+
+.avatar {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+
+  @media (min-width: 48rem) {
+    display: inline-flex;
+  }
+}
+
+.email {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (min-width: 48rem) {
+    max-width: 16rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.logout {
+  padding: var(--space-1) var(--space-3);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    background: var(--color-surface-muted);
+  }
+}

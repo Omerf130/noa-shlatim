@@ -3,6 +3,7 @@ import {
   clampListPageParams,
   type AdminOrderListPageDto,
 } from "@/lib/admin/orders/adminOrderDtos";
+import { ADMIN_VISIBLE_ORDER_FILTER } from "@/lib/admin/orders/adminOrderQueryFilter";
 import { connectDb } from "@/lib/db/connect";
 import { Order } from "@/models/Order";
 
@@ -14,10 +15,7 @@ export async function listAdminOrders(params: {
 
   await connectDb();
 
-  const filter = {
-    status: { $in: ["draft", "payment_pending", "paid", "creating"] as const },
-    creationMode: { $in: ["photo", "illustration"] as const },
-  };
+  const filter = ADMIN_VISIBLE_ORDER_FILTER;
 
   const [totalItems, orders] = await Promise.all([
     Order.countDocuments(filter),

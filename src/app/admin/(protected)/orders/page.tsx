@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminStatusBadge } from "@/components/admin/ui/AdminStatusBadge";
 import { listAdminOrders } from "@/lib/admin/orders/listAdminOrders";
 import styles from "./page.module.scss";
 
@@ -59,11 +60,10 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                     <td>{item.materialLabel}</td>
                     <td dir="ltr">{item.totalLabel ?? "—"}</td>
                     <td>
-                      <span
-                        className={`${styles.statusBadge} ${styles[`status_${item.statusKey}`] ?? ""}`}
-                      >
-                        {item.statusLabel}
-                      </span>
+                      <AdminStatusBadge
+                        statusKey={item.statusKey}
+                        label={item.statusLabel}
+                      />
                     </td>
                     <td>
                       <Link href={item.detailHref} className={styles.openLink}>
@@ -83,11 +83,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   <span className={styles.mono} dir="ltr">
                     {item.orderReference}
                   </span>
-                  <span
-                    className={`${styles.statusBadge} ${styles[`status_${item.statusKey}`] ?? ""}`}
-                  >
-                    {item.statusLabel}
-                  </span>
+                  <AdminStatusBadge statusKey={item.statusKey} label={item.statusLabel} />
                 </div>
                 <dl className={styles.cardMeta}>
                   <div>

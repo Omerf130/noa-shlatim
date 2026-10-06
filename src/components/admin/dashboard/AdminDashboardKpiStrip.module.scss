@@ -1,0 +1,218 @@
+.strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  align-items: stretch;
+
+  @media (min-width: 64rem) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+.kpi {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "icon content";
+  align-items: center;
+  column-gap: 0.875rem;
+  padding: 1.125rem 1.25rem;
+  min-height: 6.75rem;
+  max-height: 7.5rem;
+  border-radius: 17px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  box-shadow: 0 2px 6px rgba(31, 27, 24, 0.045);
+  transition:
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(31, 27, 24, 0.07);
+  }
+
+  @media (min-width: 64rem) {
+    padding: 1.125rem 1.375rem;
+    min-height: 7rem;
+  }
+}
+
+.body {
+  grid-area: content;
+  direction: rtl;
+  text-align: right;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.iconZone {
+  grid-area: icon;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline-end: 0.125rem;
+}
+
+.iconRing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.375rem;
+  height: 3.375rem;
+  border-radius: var(--radius-pill);
+
+  @media (min-width: 64rem) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+.value {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+
+  @media (min-width: 64rem) {
+    font-size: 2rem;
+  }
+}
+
+.valueMoney {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
+  width: 100%;
+}
+
+.label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.support {
+  margin: 0.125rem 0 0;
+}
+
+.supportMuted {
+  margin: 0.125rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--color-text-muted) 90%, transparent);
+}
+
+.trend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2rem 0.25rem;
+  margin: 0.125rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.trendStrong {
+  font-weight: 700;
+}
+
+.trendSuffix {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-text-muted) 88%, transparent);
+}
+
+.trendIcon {
+  flex-shrink: 0;
+}
+
+.trend_positive {
+  color: var(--color-success);
+
+  .trendStrong {
+    color: var(--color-success);
+  }
+}
+
+.trend_negative {
+  color: var(--color-primary);
+
+  .trendStrong {
+    color: var(--color-primary);
+  }
+}
+
+.trend_neutral {
+  color: color-mix(in srgb, var(--color-text-muted) 92%, transparent);
+}
+
+.pendingLink {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.kpiSage {
+  background: color-mix(in srgb, var(--color-accent-soft) 26%, var(--color-surface));
+
+  .iconRing {
+    color: #3d6b4f;
+    background: color-mix(in srgb, var(--color-accent-soft) 62%, #ffffff);
+  }
+}
+
+.kpiSagePaid {
+  background: color-mix(in srgb, var(--color-accent-soft) 22%, var(--color-surface));
+
+  .iconRing {
+    color: #4a7c59;
+    background: color-mix(in srgb, var(--color-accent-soft) 55%, #ffffff);
+  }
+}
+
+.kpiWarm {
+  background: color-mix(in srgb, var(--color-primary-soft) 20%, var(--color-surface));
+
+  .iconRing {
+    color: #a85542;
+    background: color-mix(in srgb, var(--color-primary-soft) 52%, #ffffff);
+  }
+}
+
+.kpiForest {
+  background: color-mix(in srgb, var(--color-brand-green-soft) 30%, var(--color-surface));
+
+  .iconRing {
+    color: #2d5a42;
+    background: color-mix(in srgb, var(--color-accent-soft) 58%, #ffffff);
+  }
+}
+
+@media (max-width: 23.99rem) {
+  .kpi {
+    min-height: 0;
+    max-height: none;
+  }
+
+  .value {
+    font-size: 1.625rem;
+  }
+}

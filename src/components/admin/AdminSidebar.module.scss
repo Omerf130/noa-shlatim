@@ -1,0 +1,88 @@
+.sidebar {
+  display: none;
+  flex-direction: column;
+  direction: rtl;
+  padding: var(--space-4) var(--space-3);
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-bg));
+  border-left: 1px solid color-mix(in srgb, var(--color-border) 86%, transparent);
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  align-self: start;
+
+  @media (min-width: 64rem) {
+    display: flex;
+  }
+}
+
+.brand {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+}
+
+.logo {
+  margin-bottom: var(--space-1);
+}
+
+.brandTagline {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.helpCard {
+  margin-top: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary-soft) 35%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.helpIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.helpTitle {
+  margin: 0 0 var(--space-1);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.helpText {
+  margin: 0 0 var(--space-2);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.helpBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: background 0.18s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    background: var(--color-primary-hover);
+  }
+}
