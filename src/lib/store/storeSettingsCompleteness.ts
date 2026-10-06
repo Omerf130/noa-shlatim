@@ -7,20 +7,16 @@ export type StoreSettingsReadiness = {
   checkoutReady: boolean;
 };
 
-type PricingLike = {
+export type PricingLike = {
   woodPriceMinor?: number | null;
   magnetPriceMinor?: number | null;
+  woodEnabled?: boolean | null;
+  magnetEnabled?: boolean | null;
 };
 
-export function isPricingReady(pricing: PricingLike | undefined | null): boolean {
-  if (!pricing) return false;
-  return (
-    pricing.woodPriceMinor != null &&
-    pricing.magnetPriceMinor != null &&
-    Number.isInteger(pricing.woodPriceMinor) &&
-    Number.isInteger(pricing.magnetPriceMinor)
-  );
-}
+import { isPricingReady } from "@/lib/store/materialAvailability";
+
+export { isPricingReady };
 
 export function isShippingMethodCustomerReady(method: StoreShippingMethod): boolean {
   if (!method.enabled) return false;

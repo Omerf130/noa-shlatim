@@ -3,7 +3,6 @@ import { EmotionalCtaSection } from "@/components/home/EmotionalCtaSection/Emoti
 import { HeroSection } from "@/components/home/HeroSection/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection/HowItWorksSection";
 import { IllustrationStylesSection } from "@/components/home/IllustrationStylesSection/IllustrationStylesSection";
-import { MaterialsSection } from "@/components/home/MaterialsSection/MaterialsSection";
 import { CustomerExamplesSection } from "@/components/home/CustomerExamplesSection/CustomerExamplesSection";
 import { SignExamplesSection } from "@/components/home/SignExamplesSection/SignExamplesSection";
 import { Footer } from "@/components/layout/Footer/Footer";
@@ -22,7 +21,6 @@ export default function HomePage() {
         <IllustrationStylesSection />
         <SignExamplesSection />
         <CustomerExamplesSection />
-        <MaterialsSection />
         <EmotionalCtaSection />
         <BenefitsStrip />
       </main>

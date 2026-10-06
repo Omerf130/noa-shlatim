@@ -44,7 +44,7 @@ export type BuilderAction =
   | { type: "SET_BACKGROUND"; backgroundId: string }
   | { type: "SET_TEXT"; patch: Partial<TextDesign> }
   | { type: "SET_ILLUSTRATION_TRANSFORM"; patch: Partial<IllustrationTransform> }
-  | { type: "SET_MATERIAL"; material: Material }
+  | { type: "SET_MATERIAL"; material: Material | null }
   | { type: "GO_NEXT" }
   | { type: "GO_BACK" }
   | { type: "GO_TO_STEP"; stepId: BuilderStepId }

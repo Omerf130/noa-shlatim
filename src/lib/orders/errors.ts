@@ -9,7 +9,8 @@ export type OrderErrorCode =
   | "PAYMENT_IN_PROGRESS"
   | "PAYMENT_INVALID_STATE"
   | "PAYMENT_NOT_READY"
-  | "PAYPLUS_LINK_FAILED";
+  | "PAYPLUS_LINK_FAILED"
+  | "MATERIAL_UNAVAILABLE";
 
 export class OrderError extends Error {
   readonly code: OrderErrorCode;
@@ -35,6 +36,8 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
   PAYMENT_NOT_READY: "יש להשלים את פרטי ההזמנה לפני תשלום.",
   PAYPLUS_LINK_FAILED:
     "לא הצלחנו לפתוח את דף התשלום. נסו שוב בעוד רגע.",
+  MATERIAL_UNAVAILABLE:
+    "החומר שבחרתם אינו זמין כרגע. בחרו חומר אחר והמשיכו.",
 };
 
 export function userMessageForOrderCode(code: OrderErrorCode): string {

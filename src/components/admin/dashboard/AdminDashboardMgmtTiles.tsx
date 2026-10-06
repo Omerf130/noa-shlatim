@@ -36,12 +36,17 @@ export function AdminDashboardMgmtTiles() {
           </div>
         </MgmtSoonTile>
 
-        <MgmtSoonTile title="חומרים" description="עץ ומגנט" icon={Package}>
+        <MgmtLiveTile
+          title="חומרים"
+          description="עץ ומגנט"
+          href="/admin/materials"
+          icon={Package}
+        >
           <div className={styles.materialPreview}>
             <span className={styles.swatchWood} title="עץ" />
             <span className={styles.swatchMagnet} title="מגנט" />
           </div>
-        </MgmtSoonTile>
+        </MgmtLiveTile>
 
         <MgmtSoonTile title="רקעים" description="קטלוג רקעים לשלט" icon={Image}>
           <div className={styles.bgStrip}>

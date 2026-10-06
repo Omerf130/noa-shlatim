@@ -1,0 +1,116 @@
+.wrap {
+  max-width: 40rem;
+}
+
+.error {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.8125rem;
+  color: #b42318;
+  background: color-mix(in srgb, #fda29b 25%, var(--color-surface));
+  border-radius: var(--radius-sm);
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(31, 27, 24, 0.05);
+  padding: var(--space-4);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sample {
+  width: 3.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+}
+
+.sampleWood {
+  background: linear-gradient(165deg, #e8d4bc 0%, #c9a67a 50%, #a67c52 100%);
+}
+
+.sampleMagnet {
+  background: linear-gradient(180deg, #f2f2f2 0%, #d4d4d4 100%);
+}
+
+.cardCopy {
+  min-width: 0;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.price {
+  margin: var(--space-1) 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.priceHint {
+  margin: var(--space-1) 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.statusPill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+
+.statusOn {
+  color: #1a6b3a;
+  background: color-mix(in srgb, #3d9b5c 14%, var(--color-surface));
+}
+
+.statusOff {
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
+.toggleBtn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary-soft) 40%, var(--color-surface));
+  color: var(--color-primary);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

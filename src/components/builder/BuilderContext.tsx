@@ -5,6 +5,7 @@ import {
   initialBuilderState,
   type BuilderAction,
 } from "@/lib/builder/builderReducer";
+import type { MaterialAvailability } from "@/lib/store/materialAvailability";
 import type { BuilderState } from "@/types/builder";
 import {
   createContext,
@@ -18,6 +19,7 @@ import {
 
 type BuilderContextValue = {
   state: BuilderState;
+  materialAvailability: MaterialAvailability;
   dispatch: React.Dispatch<BuilderAction>;
   setSourcePhotoFile: (file: File | null) => void;
   getSourcePhotoFile: () => File | null;
@@ -27,7 +29,12 @@ type BuilderContextValue = {
 
 const BuilderContext = createContext<BuilderContextValue | null>(null);
 
-export function BuilderProvider({ children }: { children: ReactNode }) {
+type BuilderProviderProps = {
+  children: ReactNode;
+  materialAvailability: MaterialAvailability;
+};
+
+export function BuilderProvider({ children, materialAvailability }: BuilderProviderProps) {
   const [state, dispatch] = useReducer(builderReducer, initialBuilderState);
   const sourcePhotoFileRef = useRef<File | null>(null);
   const finalArtworkBlobRef = useRef<Blob | null>(null);
@@ -47,13 +54,21 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       state,
+      materialAvailability,
       dispatch,
       setSourcePhotoFile,
       getSourcePhotoFile,
       setFinalArtworkBlob,
       getFinalArtworkBlob,
     }),
-    [state, setSourcePhotoFile, getSourcePhotoFile, setFinalArtworkBlob, getFinalArtworkBlob],
+    [
+      state,
+      materialAvailability,
+      setSourcePhotoFile,
+      getSourcePhotoFile,
+      setFinalArtworkBlob,
+      getFinalArtworkBlob,
+    ],
   );
 
   return (

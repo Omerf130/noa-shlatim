@@ -1,9 +1,9 @@
 "use client";
 
 import { FinalSignCreatePanel } from "@/components/builder/designWorkspace/FinalSignCreatePanel";
-import { useBuilder } from "@/components/builder/BuilderContext";
-import type { Material } from "@/types/signDesign";
+import { BuilderMaterialSelector } from "@/components/builder/material/BuilderMaterialSelector";
 import panelStyles from "@/components/builder/designWorkspace/panels/panels.module.scss";
+import type { Material } from "@/types/signDesign";
 import styles from "./mobileEditor.module.scss";
 
 const options: {
@@ -16,35 +16,20 @@ const options: {
 ];
 
 export function MobileMaterialPicker() {
-  const { state, dispatch } = useBuilder();
-  const selected = state.design.material;
-
   return (
     <div className={panelStyles.panel}>
-      <div className={styles.materialRow} role="radiogroup" aria-label="חומר השלט">
-        {options.map((opt) => {
-          const isSelected = selected === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              className={[styles.materialCard, isSelected ? styles.materialSelected : ""]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => dispatch({ type: "SET_MATERIAL", material: opt.value })}
-            >
-              <span
-                className={[styles.materialSample, opt.sampleClass].join(" ")}
-                aria-hidden
-              />
-              <span className={styles.materialTitle}>{opt.title}</span>
-            </button>
-          );
-        })}
-      </div>
-      <FinalSignCreatePanel />
+      <BuilderMaterialSelector
+        options={options}
+        layout="mobile"
+        sampleBaseClass={styles.materialSample}
+        cardClass={styles.materialCard}
+        selectedCardClass={styles.materialSelected}
+        titleClass={styles.materialTitle}
+        rowClass={styles.materialRow}
+        unavailableClass={styles.materialUnavailable}
+      >
+        <FinalSignCreatePanel />
+      </BuilderMaterialSelector>
     </div>
   );
 }

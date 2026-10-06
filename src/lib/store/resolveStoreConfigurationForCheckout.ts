@@ -1,3 +1,4 @@
+import { normalizeMaterialAvailability } from "@/lib/store/materialAvailability";
 import {
   isPricingReady,
   isShippingMethodCustomerReady,
@@ -14,7 +15,7 @@ export type StoreConfigurationForCheckout =
   | {
       ok: true;
       currency: "ILS";
-      materialPrices: Record<Material, number>;
+      materialPrices: Partial<Record<Material, number>>;
       shippingMethods: Array<{
         methodId: string;
         displayName: string;
@@ -41,8 +42,22 @@ export async function resolveStoreConfigurationForCheckout(): Promise<StoreConfi
     return { ok: false, reason: "PRICING_INCOMPLETE" };
   }
 
-  const wood = doc.pricing.woodPriceMinor!;
-  const magnet = doc.pricing.magnetPriceMinor!;
+  const availability = normalizeMaterialAvailability(doc.pricing);
+  const materialPrices: Partial<Record<Material, number>> = {};
+  if (
+    availability.woodEnabled &&
+    doc.pricing.woodPriceMinor != null &&
+    Number.isInteger(doc.pricing.woodPriceMinor)
+  ) {
+    materialPrices.wood = doc.pricing.woodPriceMinor;
+  }
+  if (
+    availability.magnetEnabled &&
+    doc.pricing.magnetPriceMinor != null &&
+    Number.isInteger(doc.pricing.magnetPriceMinor)
+  ) {
+    materialPrices.magnet = doc.pricing.magnetPriceMinor;
+  }
 
   const shippingMethods = doc.shippingMethods
     .filter(isShippingMethodCustomerReady)
@@ -61,10 +76,7 @@ export async function resolveStoreConfigurationForCheckout(): Promise<StoreConfi
   return {
     ok: true,
     currency: "ILS",
-    materialPrices: {
-      wood,
-      magnet,
-    },
+    materialPrices,
     shippingMethods,
   };
 }
@@ -74,5 +86,9 @@ export function resolveMaterialPriceMinor(
   config: Extract<StoreConfigurationForCheckout, { ok: true }>,
   material: Material,
 ): number {
-  return config.materialPrices[material];
+  const price = config.materialPrices[material];
+  if (price == null) {
+    throw new Error("Material not available for checkout");
+  }
+  return price;
 }

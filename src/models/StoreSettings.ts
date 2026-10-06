@@ -32,6 +32,8 @@ const storeSettingsSchema = new Schema(
     pricing: {
       woodPriceMinor: { type: Number, required: false, default: null },
       magnetPriceMinor: { type: Number, required: false, default: null },
+      woodEnabled: { type: Boolean, required: false, default: true },
+      magnetEnabled: { type: Boolean, required: false, default: true },
     },
     shippingMethods: {
       type: [shippingMethodSchema],

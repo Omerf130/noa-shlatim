@@ -10,6 +10,8 @@ export type StoreSettingsLean = {
   pricing: {
     woodPriceMinor?: number | null;
     magnetPriceMinor?: number | null;
+    woodEnabled?: boolean | null;
+    magnetEnabled?: boolean | null;
   };
   shippingMethods: StoreShippingMethod[];
   createdAt?: Date;
@@ -32,6 +34,8 @@ export async function loadStoreSettingsDocument(): Promise<StoreSettingsLean | n
     pricing: {
       woodPriceMinor: doc.pricing?.woodPriceMinor ?? null,
       magnetPriceMinor: doc.pricing?.magnetPriceMinor ?? null,
+      woodEnabled: doc.pricing?.woodEnabled !== false,
+      magnetEnabled: doc.pricing?.magnetEnabled !== false,
     },
     shippingMethods: methods as StoreShippingMethod[],
     createdAt: doc.createdAt ? new Date(doc.createdAt) : undefined,

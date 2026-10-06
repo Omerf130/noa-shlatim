@@ -52,10 +52,12 @@ export const ADMIN_NAV_ENTRIES: AdminNavEntry[] = [
     icon: FileText,
   },
   {
-    kind: "soon",
+    kind: "live",
     id: "materials",
     label: "חומרים",
+    href: "/admin/materials",
     icon: Package,
+    match: "prefix",
   },
   {
     kind: "soon",

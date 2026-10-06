@@ -5,11 +5,14 @@ import { BuilderLayout } from "@/components/builder/BuilderLayout/BuilderLayout"
 import { BuilderProgress } from "@/components/builder/BuilderProgress/BuilderProgress";
 import { BuilderShell } from "@/components/builder/BuilderShell/BuilderShell";
 import { BuilderStepContent } from "@/components/builder/BuilderStepContent";
+import { useMaterialAvailabilitySync } from "@/hooks/useMaterialAvailabilitySync";
 import { revokeObjectUrl } from "@/lib/builder/objectUrl";
+import type { MaterialAvailability } from "@/lib/store/materialAvailability";
 import { useEffect, useRef } from "react";
 
 function SignBuilderInner() {
   const { state } = useBuilder();
+  useMaterialAvailabilitySync();
   const designRef = useRef(state.design);
 
   useEffect(() => {
@@ -36,9 +39,13 @@ function SignBuilderInner() {
   );
 }
 
-export function SignBuilder() {
+type SignBuilderProps = {
+  materialAvailability: MaterialAvailability;
+};
+
+export function SignBuilder({ materialAvailability }: SignBuilderProps) {
   return (
-    <BuilderProvider>
+    <BuilderProvider materialAvailability={materialAvailability}>
       <SignBuilderInner />
     </BuilderProvider>
   );

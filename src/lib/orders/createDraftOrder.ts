@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 import { connectDb } from "@/lib/db/connect";
+import {
+  assertMaterialEnabledForNewOrder,
+  MaterialNotAvailableError,
+} from "@/lib/store/materialAvailability";
+import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import { OrderError } from "@/lib/orders/errors";
 import { orderArtworkPath, orderOriginalPath } from "@/lib/orders/orderBlobPaths";
@@ -116,6 +121,16 @@ export async function createDraftOrder(
   input: CreateDraftOrderInput,
 ): Promise<CreateDraftOrderResult> {
   await connectDb();
+
+  const settings = await loadStoreSettingsDocument();
+  try {
+    assertMaterialEnabledForNewOrder(input.design.material, settings?.pricing);
+  } catch (err) {
+    if (err instanceof MaterialNotAvailableError) {
+      throw new OrderError("MATERIAL_UNAVAILABLE", "Material unavailable", 400);
+    }
+    throw err;
+  }
 
   const reusedEarly = await resolveExistingIdempotency(input.draftIdempotencyKey);
   if (reusedEarly) {
