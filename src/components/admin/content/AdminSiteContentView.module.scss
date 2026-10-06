@@ -1,0 +1,153 @@
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.lead {
+  margin: 0;
+  color: var(--color-text-muted, #667085);
+  line-height: 1.55;
+}
+
+.sections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionCard {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(31, 27, 24, 0.05);
+  overflow: hidden;
+}
+
+.sectionHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: right;
+  font: inherit;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sectionHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.chevron {
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(-180deg);
+}
+
+.sectionBody {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.stepBlock {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-muted, #f4f4f5) 80%, var(--color-surface));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stepBlockTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.submitBtn {
+  align-self: flex-start;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.feedback {
+  margin: 0;
+  font-size: 0.8125rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.feedbackOk {
+  color: #1a6b3a;
+  background: color-mix(in srgb, #3d9b5c 14%, var(--color-surface));
+}
+
+.feedbackErr {
+  color: #b42318;
+  background: color-mix(in srgb, #fda29b 25%, var(--color-surface));
+}

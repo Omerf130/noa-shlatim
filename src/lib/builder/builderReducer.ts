@@ -41,7 +41,7 @@ export type BuilderAction =
   | { type: "SET_MOCK_ILLUSTRATION" }
   | { type: "AI_GENERATION_START" }
   | { type: "AI_GENERATION_ERROR"; errorCode: string; userMessage: string }
-  | { type: "SET_BACKGROUND"; backgroundId: string }
+  | { type: "SET_BACKGROUND"; backgroundId: string | null }
   | { type: "SET_TEXT"; patch: Partial<TextDesign> }
   | { type: "SET_ILLUSTRATION_TRANSFORM"; patch: Partial<IllustrationTransform> }
   | { type: "SET_MATERIAL"; material: Material | null }

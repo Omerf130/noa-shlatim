@@ -1,7 +1,5 @@
-import {
-  homeCustomerExamples,
-  homeCustomerExamplesSection,
-} from "@/data/homeCustomerExamples";
+import { homeCustomerExamples } from "@/data/homeCustomerExamples";
+import type { SiteContentData } from "@/lib/siteContent/siteContentSchema";
 import shared from "@/components/home/shared/homeShared.module.scss";
 import { Container } from "@/components/layout/Container/Container";
 import { Button } from "@/components/ui/Button/Button";
@@ -10,9 +8,11 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import styles from "./CustomerExamplesSection.module.scss";
 
-export function CustomerExamplesSection() {
-  const { title, intro, cta } = homeCustomerExamplesSection;
+type CustomerExamplesSectionProps = {
+  content: SiteContentData["home"]["customerExamples"];
+};
 
+export function CustomerExamplesSection({ content }: CustomerExamplesSectionProps) {
   return (
     <section
       id="customer-examples"
@@ -22,11 +22,11 @@ export function CustomerExamplesSection() {
       <Container size="wide" className={styles.container}>
         <SectionHeading
           titleId="customer-examples-heading"
-          title={title}
+          title={content.heading}
           align="center"
           className={styles.heading}
         />
-        <p className={styles.intro}>{intro}</p>
+        <p className={styles.intro}>{content.intro}</p>
 
         <ul className={styles.gallery}>
           {homeCustomerExamples.map((item) => (
@@ -46,8 +46,8 @@ export function CustomerExamplesSection() {
         </ul>
 
         <div className={styles.ctaRow}>
-          <Button href={cta.href} variant="brand">
-            {cta.label}
+          <Button href="/create" variant="brand">
+            {content.ctaLabel}
             <ArrowLeft size={18} aria-hidden />
           </Button>
         </div>

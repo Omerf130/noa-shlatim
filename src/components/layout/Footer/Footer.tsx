@@ -7,18 +7,24 @@ import { Button } from "@/components/ui/Button/Button";
 import Link from "next/link";
 import styles from "./Footer.module.scss";
 
-export function Footer() {
+type FooterProps = {
+  tagline?: string;
+  primaryCtaLabel?: string;
+};
+
+export function Footer({ tagline, primaryCtaLabel }: FooterProps = {} as FooterProps) {
+  const footerTagline =
+    tagline ?? "שלטי דלת מותאמים אישית — מהתמונה שלכם ליצירה על הדלת.";
+  const ctaLabel = primaryCtaLabel ?? homePrimaryCta.label;
   return (
     <footer className={styles.footer}>
       <Container>
         <div className={styles.grid}>
           <div className={styles.brandBlock}>
             <BrandLogo asLink={false} className={styles.logoOnDark} />
-            <p className={styles.tagline}>
-              שלטי דלת מותאמים אישית — מהתמונה שלכם ליצירה על הדלת.
-            </p>
+            <p className={styles.tagline}>{footerTagline}</p>
             <Button href={homePrimaryCta.href} variant="secondary" className={styles.footerCta}>
-              {homePrimaryCta.label}
+              {ctaLabel}
             </Button>
           </div>
 

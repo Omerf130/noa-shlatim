@@ -1,4 +1,4 @@
-import { getBackgroundById } from "@/data/signBackgrounds";
+import { loadBackgroundForRenderAsSignBackground } from "@/lib/backgrounds/loadBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import { formatDecorationSummary } from "@/lib/admin/orders/decorationSummary";
 import { adminOrderAssetApiPath } from "@/lib/admin/orders/adminOrderAssets";
@@ -162,10 +162,6 @@ function parseDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
     return null;
   }
   const design = parsed.data;
-  const background = getBackgroundById(design.backgroundId);
-  if (!background?.active) {
-    return null;
-  }
   if (
     design.creationMode === "photo" &&
     !isAllowedStyleId(design.photoIllustrationStyleId)
@@ -264,7 +260,9 @@ export function buildAdminOrderListItemDto(
   };
 }
 
-export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDetailDto {
+export async function buildAdminOrderDetailDto(
+  order: OrderLeanForAdmin,
+): Promise<AdminOrderDetailDto> {
   const orderId = order._id.toString();
   const creationMode = order.creationMode as AdminCreationMode;
   const design = parseDesignSnapshot(order.design);
@@ -278,10 +276,11 @@ export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDe
 
   if (design) {
     const previewProps = buildPersistedSignPreviewProps(design, artworkUrl);
+    const background = await loadBackgroundForRenderAsSignBackground(design.backgroundId);
     designPreview = {
       ...previewProps,
       materialLabel: materialLabelFromSnapshot(design.material),
-      backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
+      backgroundName: background?.name ?? "—",
       styleName: styleNameFromOrderDesign(design),
       signText: design.text.value,
       decorationSummary: formatDecorationSummary(design.decorations),

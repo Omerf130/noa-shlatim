@@ -7,7 +7,6 @@ export const homeNavLinks: HomeNavLink[] = [
   { href: "/", label: "דף הבית" },
   { href: "#how-it-works", label: "איך זה עובד" },
   { href: "#examples", label: "דוגמאות" },
-  { href: "#materials", label: "החומרים" },
 ];
 
 export const homePrimaryCta = {

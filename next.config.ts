@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
+import { serverActionBodySizeLimitBytes } from "./config/serverUploadLimits";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      bodySizeLimit: serverActionBodySizeLimitBytes(),
+    },
+  },
 };
 
 export default nextConfig;

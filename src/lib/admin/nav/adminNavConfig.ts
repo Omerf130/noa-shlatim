@@ -4,7 +4,6 @@ import {
   Image,
   LayoutDashboard,
   Package,
-  Palette,
   Settings,
   ShoppingBag,
   Store,
@@ -46,10 +45,12 @@ export const ADMIN_NAV_ENTRIES: AdminNavEntry[] = [
     match: "prefix",
   },
   {
-    kind: "soon",
+    kind: "live",
     id: "site-content",
     label: "תוכן האתר",
+    href: "/admin/content",
     icon: FileText,
+    match: "prefix",
   },
   {
     kind: "live",
@@ -60,16 +61,12 @@ export const ADMIN_NAV_ENTRIES: AdminNavEntry[] = [
     match: "prefix",
   },
   {
-    kind: "soon",
+    kind: "live",
     id: "backgrounds",
     label: "רקעים",
+    href: "/admin/backgrounds",
     icon: Image,
-  },
-  {
-    kind: "soon",
-    id: "illustration-styles",
-    label: "סגנונות איור",
-    icon: Palette,
+    match: "prefix",
   },
   {
     kind: "live",

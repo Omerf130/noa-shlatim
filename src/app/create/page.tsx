@@ -1,4 +1,5 @@
 import { SignBuilder } from "@/components/builder/SignBuilder/SignBuilder";
+import { loadEnabledBackgroundsForCustomer } from "@/lib/backgrounds/loadBackgrounds";
 import { loadCustomerMaterialAvailability } from "@/lib/store/loadCustomerMaterialAvailability";
 
 export const metadata = {
@@ -9,6 +10,14 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CreatePage() {
-  const materialAvailability = await loadCustomerMaterialAvailability();
-  return <SignBuilder materialAvailability={materialAvailability} />;
+  const [materialAvailability, customerBackgrounds] = await Promise.all([
+    loadCustomerMaterialAvailability(),
+    loadEnabledBackgroundsForCustomer(),
+  ]);
+  return (
+    <SignBuilder
+      materialAvailability={materialAvailability}
+      customerBackgrounds={customerBackgrounds}
+    />
+  );
 }

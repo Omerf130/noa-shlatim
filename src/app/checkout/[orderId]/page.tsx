@@ -5,7 +5,7 @@ import {
   buildCheckoutPageDto,
   buildCheckoutPageDtoWithoutDesign,
 } from "@/lib/checkout/checkoutPageDto";
-import { getBackgroundById } from "@/data/signBackgrounds";
+import { loadBackgroundForRenderAsSignBackground } from "@/lib/backgrounds/loadBackgrounds";
 import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
 import {
   orderDesignSchema,
@@ -58,12 +58,17 @@ export default async function CheckoutPage({
 
     const designParsed = parseCheckoutDesignSnapshot(order.design);
     if (designParsed) {
+      const previewBackground = await loadBackgroundForRenderAsSignBackground(
+        designParsed.backgroundId,
+      );
       dto = buildCheckoutPageDto({
         orderId,
         design: designParsed,
         customer,
         notes: order.notes,
         commercial,
+        previewBackground,
+        backgroundName: previewBackground?.name ?? "—",
       });
     } else {
       dto = buildCheckoutPageDtoWithoutDesign({
@@ -86,10 +91,6 @@ function parseCheckoutDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
     return null;
   }
   const design = parsed.data;
-  const background = getBackgroundById(design.backgroundId);
-  if (!background?.active) {
-    return null;
-  }
   if (
     design.creationMode === "photo" &&
     !isAllowedStyleId(design.photoIllustrationStyleId)

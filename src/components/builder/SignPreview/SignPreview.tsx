@@ -1,6 +1,7 @@
 "use client";
 
-import { getBackgroundById } from "@/data/signBackgrounds";
+import { BuilderContext } from "@/components/builder/BuilderContext";
+import { findCustomerBackground } from "@/lib/builder/backgroundSelection";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import { getSignTextFontOption } from "@/data/signTextFonts";
 import { isMulticolorTextColor } from "@/data/signTextColors";
@@ -28,7 +29,8 @@ import type {
   DesignWorkspaceTab,
 } from "@/types/builder";
 import type { IllustrationTransform, SignDesignState, TextDesign } from "@/types/signDesign";
-import { useCallback, useRef, useState } from "react";
+import type { SignBackground } from "@/types/signBackground";
+import { useCallback, useContext, useRef, useState } from "react";
 import styles from "./SignPreview.module.scss";
 
 export type SignPreviewSize =
@@ -68,6 +70,8 @@ type SignPreviewProps = {
   ariaLabel?: string;
   compositionEditor?: CompositionEditorConfig;
   integratedFinalPreview?: IntegratedFinalPreviewConfig;
+  /** When outside Builder (e.g. checkout), pass resolved background for historical/disabled ids. */
+  previewBackground?: SignBackground | null;
 };
 
 export function SignPreview({
@@ -78,6 +82,7 @@ export function SignPreview({
   ariaLabel,
   compositionEditor,
   integratedFinalPreview,
+  previewBackground,
 }: SignPreviewProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -85,7 +90,11 @@ export function SignPreview({
 
   const editorEnabled = Boolean(compositionEditor);
 
-  const background = getBackgroundById(design.backgroundId);
+  const builderCtx = useContext(BuilderContext);
+  const background =
+    previewBackground !== undefined
+      ? previewBackground ?? undefined
+      : findCustomerBackground(builderCtx?.customerBackgrounds ?? [], design.backgroundId);
   const styleMeta = getIllustrationStyleById(design.illustration?.styleId ?? null);
   const showingIntegratedFinal =
     Boolean(integratedFinalPreview?.showFinalArtwork) &&

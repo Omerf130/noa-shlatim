@@ -1,22 +1,10 @@
-import { illustrationStyles } from "@/data/illustrationStyles";
-import { listActiveBackgrounds } from "@/data/signBackgrounds";
+import { LEGACY_BACKGROUND_SEEDS } from "@/lib/backgrounds/legacyBackgroundSeed";
 
-/** Static preview paths for dashboard management tiles — catalog assets only. */
+/** Static preview paths for dashboard management tiles — legacy catalog assets only. */
 export function dashboardBackgroundPreviewThumbs(): { src: string; alt: string }[] {
-  return listActiveBackgrounds()
-    .slice(0, 3)
-    .map((b) => ({ src: b.imageSrc, alt: b.alt }));
-}
-
-export function dashboardIllustrationStylePreviews(): {
-  id: string;
-  name: string;
-  variant: "classic" | "soft" | "playful";
-}[] {
-  return illustrationStyles.map((s) => ({
-    id: s.id,
-    name: s.name,
-    variant: s.cardVariant,
+  return LEGACY_BACKGROUND_SEEDS.slice(0, 3).map((b) => ({
+    src: b.imageSrc,
+    alt: b.alt,
   }));
 }
 

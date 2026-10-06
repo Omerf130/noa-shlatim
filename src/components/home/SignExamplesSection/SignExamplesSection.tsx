@@ -1,11 +1,16 @@
 import { homeSignExamples } from "@/data/homeSignExamples";
+import type { SiteContentData } from "@/lib/siteContent/siteContentSchema";
 import { SignExampleCard } from "@/components/home/SignExamplesSection/SignExampleCard";
 import shared from "@/components/home/shared/homeShared.module.scss";
 import { Container } from "@/components/layout/Container/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading/SectionHeading";
 import styles from "./SignExamplesSection.module.scss";
 
-export function SignExamplesSection() {
+type SignExamplesSectionProps = {
+  content: SiteContentData["home"]["signExamples"];
+};
+
+export function SignExamplesSection({ content }: SignExamplesSectionProps) {
   return (
     <section
       id="examples"
@@ -15,8 +20,8 @@ export function SignExamplesSection() {
       <Container>
         <SectionHeading
           titleId="examples-heading"
-          title="דוגמאות לשלטים"
-          subtitle="כך נראים שלטים מותאמים — עם איור אישי על הרקע שבחרתם."
+          title={content.heading}
+          subtitle={content.subtitle}
           align="center"
           className={styles.heading}
         />

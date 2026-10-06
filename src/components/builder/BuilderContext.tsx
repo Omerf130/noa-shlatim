@@ -7,6 +7,7 @@ import {
 } from "@/lib/builder/builderReducer";
 import type { MaterialAvailability } from "@/lib/store/materialAvailability";
 import type { BuilderState } from "@/types/builder";
+import type { SignBackground } from "@/types/signBackground";
 import {
   createContext,
   useCallback,
@@ -20,6 +21,7 @@ import {
 type BuilderContextValue = {
   state: BuilderState;
   materialAvailability: MaterialAvailability;
+  customerBackgrounds: SignBackground[];
   dispatch: React.Dispatch<BuilderAction>;
   setSourcePhotoFile: (file: File | null) => void;
   getSourcePhotoFile: () => File | null;
@@ -27,14 +29,19 @@ type BuilderContextValue = {
   getFinalArtworkBlob: () => Blob | null;
 };
 
-const BuilderContext = createContext<BuilderContextValue | null>(null);
+export const BuilderContext = createContext<BuilderContextValue | null>(null);
 
 type BuilderProviderProps = {
   children: ReactNode;
   materialAvailability: MaterialAvailability;
+  customerBackgrounds: SignBackground[];
 };
 
-export function BuilderProvider({ children, materialAvailability }: BuilderProviderProps) {
+export function BuilderProvider({
+  children,
+  materialAvailability,
+  customerBackgrounds,
+}: BuilderProviderProps) {
   const [state, dispatch] = useReducer(builderReducer, initialBuilderState);
   const sourcePhotoFileRef = useRef<File | null>(null);
   const finalArtworkBlobRef = useRef<Blob | null>(null);
@@ -55,6 +62,7 @@ export function BuilderProvider({ children, materialAvailability }: BuilderProvi
     () => ({
       state,
       materialAvailability,
+      customerBackgrounds,
       dispatch,
       setSourcePhotoFile,
       getSourcePhotoFile,
@@ -64,6 +72,7 @@ export function BuilderProvider({ children, materialAvailability }: BuilderProvi
     [
       state,
       materialAvailability,
+      customerBackgrounds,
       setSourcePhotoFile,
       getSourcePhotoFile,
       setFinalArtworkBlob,

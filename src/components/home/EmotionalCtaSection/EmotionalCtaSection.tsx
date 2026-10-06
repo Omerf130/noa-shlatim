@@ -1,4 +1,6 @@
 import { homeEmotionalCta } from "@/data/homeEmotionalCta";
+import { homePrimaryCta } from "@/data/homeNav";
+import type { SiteContentData } from "@/lib/siteContent/siteContentSchema";
 import shared from "@/components/home/shared/homeShared.module.scss";
 import { Container } from "@/components/layout/Container/Container";
 import { Button } from "@/components/ui/Button/Button";
@@ -6,7 +8,12 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import styles from "./EmotionalCtaSection.module.scss";
 
-export function EmotionalCtaSection() {
+type EmotionalCtaSectionProps = {
+  content: SiteContentData["home"]["emotionalCta"];
+  primaryCtaLabel: string;
+};
+
+export function EmotionalCtaSection({ content, primaryCtaLabel }: EmotionalCtaSectionProps) {
   return (
     <section
       id="start-design"
@@ -27,11 +34,11 @@ export function EmotionalCtaSection() {
           </div>
           <div className={styles.copy}>
             <h2 id="emotional-cta-heading" className={[shared.displayTitle, styles.title].join(" ")}>
-              {homeEmotionalCta.title}
+              {content.title}
             </h2>
-            <p className={styles.text}>{homeEmotionalCta.text}</p>
-            <Button href={homeEmotionalCta.cta.href} variant="brand">
-              {homeEmotionalCta.cta.label}
+            <p className={styles.text}>{content.bodyText}</p>
+            <Button href={homePrimaryCta.href} variant="brand">
+              {primaryCtaLabel}
               <ArrowLeft size={18} aria-hidden />
             </Button>
           </div>

@@ -3,12 +3,12 @@
 import { useBuilder } from "@/components/builder/BuilderContext";
 import { Button } from "@/components/ui/Button/Button";
 import { useCreateDraftOrder } from "@/hooks/useCreateDraftOrder";
-import { getBackgroundById } from "@/data/signBackgrounds";
+import { findCustomerBackground } from "@/lib/builder/backgroundSelection";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import styles from "./ReviewStep.module.scss";
 
 export function ReviewStep() {
-  const { state, dispatch } = useBuilder();
+  const { state, dispatch, customerBackgrounds } = useBuilder();
   const { design, ui } = state;
   const {
     submitDraftOrder,
@@ -29,7 +29,7 @@ export function ReviewStep() {
         ? "שלט מאויר משולב"
         : "שלט משולב"
       : null;
-  const bgName = getBackgroundById(design.backgroundId)?.name;
+  const bgName = findCustomerBackground(customerBackgrounds, design.backgroundId)?.name;
   const materialLabel =
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
 

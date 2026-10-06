@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/lib/**/*.spec.ts",
+    "test": "node --import tsx --test src/lib/**/*.spec.ts src/data/**/*.spec.ts config/**/*.spec.ts",
     "seed:admin": "tsx scripts/seed-admin.ts",
+    "seed:backgrounds": "tsx scripts/seed-backgrounds.ts",
+    "seed:site-content": "tsx scripts/seed-site-content.ts",
     "verify:admin-db": "tsx scripts/verify-admin-db.ts",
     "verify:blob": "tsx scripts/verify-blob.ts"
   },

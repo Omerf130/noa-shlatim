@@ -1,7 +1,7 @@
 "use client";
 
 import { useBuilder } from "@/components/builder/BuilderContext";
-import { getBackgroundById } from "@/data/signBackgrounds";
+import { findCustomerBackground } from "@/lib/builder/backgroundSelection";
 import { isDesignWorkspaceComplete } from "@/lib/builder/validation";
 import { createObjectUrl } from "@/lib/builder/objectUrl";
 import { buildCompositionReferenceBlob } from "@/lib/sign/buildCompositionReference";
@@ -15,7 +15,8 @@ type GenerateFinalResponse =
   | { ok: false; code: string; message: string };
 
 export function useFinalSignGeneration() {
-  const { state, dispatch, getSourcePhotoFile, setFinalArtworkBlob } = useBuilder();
+  const { state, dispatch, getSourcePhotoFile, setFinalArtworkBlob, customerBackgrounds } =
+    useBuilder();
   const finalArt = state.ui.finalSignArtwork;
 
   const generateFinalSign = useCallback(async () => {
@@ -28,7 +29,9 @@ export function useFinalSignGeneration() {
     const styleId = design.photoIllustrationStyleId;
     const backgroundId = design.backgroundId;
     const file = getSourcePhotoFile();
-    const background = backgroundId ? getBackgroundById(backgroundId) : null;
+    const background = backgroundId
+      ? findCustomerBackground(customerBackgrounds, backgroundId)
+      : undefined;
     const subjectUrl = design.originalImage?.objectUrl;
 
     if (creationMode !== "photo" && creationMode !== "illustration") {
@@ -129,7 +132,7 @@ export function useFinalSignGeneration() {
         userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
       });
     }
-  }, [dispatch, getSourcePhotoFile, setFinalArtworkBlob, state]);
+  }, [customerBackgrounds, dispatch, getSourcePhotoFile, setFinalArtworkBlob, state]);
 
   const showDraftPreview = useCallback(() => {
     dispatch({ type: "FINAL_SIGN_SHOW_DRAFT" });

@@ -24,5 +24,5 @@ export async function getAdminOrderDetail(orderId: string) {
     return null;
   }
 
-  return buildAdminOrderDetailDto(order);
+  return await buildAdminOrderDetailDto(order);
 }

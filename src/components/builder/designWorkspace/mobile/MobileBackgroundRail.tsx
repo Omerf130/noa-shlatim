@@ -1,7 +1,7 @@
 "use client";
 
 import { useBuilder } from "@/components/builder/BuilderContext";
-import { listActiveBackgrounds } from "@/data/signBackgrounds";
+import { BUILDER_BACKGROUNDS_UNAVAILABLE_MESSAGE } from "@/lib/builder/backgroundSelection";
 import Image from "next/image";
 import styles from "./mobileEditor.module.scss";
 
@@ -10,13 +10,20 @@ function thumbnailSrc(bg: { thumbnailSrc?: string; imageSrc: string }): string {
 }
 
 export function MobileBackgroundRail() {
-  const { state, dispatch } = useBuilder();
+  const { state, dispatch, customerBackgrounds } = useBuilder();
   const selected = state.design.backgroundId;
-  const backgrounds = listActiveBackgrounds();
+
+  if (customerBackgrounds.length === 0) {
+    return (
+      <p className={styles.backgroundUnavailable} role="status">
+        {BUILDER_BACKGROUNDS_UNAVAILABLE_MESSAGE}
+      </p>
+    );
+  }
 
   return (
     <ul className={styles.bgRail} role="radiogroup" aria-label="בחירת רקע">
-      {backgrounds.map((bg) => {
+      {customerBackgrounds.map((bg) => {
         const isSelected = selected === bg.id;
         const src = thumbnailSrc(bg);
         return (

@@ -43,6 +43,7 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
                     design={dto.design}
                     size="hero"
                     integratedFinalPreview={dto.integratedFinalPreview}
+                    previewBackground={dto.previewBackground}
                     ariaLabel="תצוגת השלט להזמנה"
                   />
                 </div>

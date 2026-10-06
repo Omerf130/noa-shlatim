@@ -1,10 +1,10 @@
 import {
-  homeHeroAccentLine,
   homeHeroScene,
   homeHeroValueItems,
   type HomeHeroValueItemId,
 } from "@/data/homeHero";
 import { homePrimaryCta } from "@/data/homeNav";
+import type { SiteContentData } from "@/lib/siteContent/siteContentSchema";
 import { Button } from "@/components/ui/Button/Button";
 import shared from "@/components/home/shared/homeShared.module.scss";
 import { ArrowLeft, ListChecks, Magnet, Wand2 } from "lucide-react";
@@ -18,7 +18,12 @@ const valueIcons: Record<HomeHeroValueItemId, LucideIcon> = {
   material: Magnet,
 };
 
-export function HeroSection() {
+type HeroSectionProps = {
+  hero: SiteContentData["home"]["hero"];
+  primaryCtaLabel: string;
+};
+
+export function HeroSection({ hero, primaryCtaLabel }: HeroSectionProps) {
   return (
     <section className={styles.hero} aria-labelledby="hero-heading">
       <div className={styles.scene}>
@@ -40,25 +45,20 @@ export function HeroSection() {
 
         <div className={styles.contentShell}>
           <div className={styles.copyHead}>
-            <p className={[shared.eyebrow, styles.eyebrow].join(" ")}>
-              שלטים מותאמים אישית
-            </p>
+            <p className={[shared.eyebrow, styles.eyebrow].join(" ")}>{hero.eyebrow}</p>
             <h1 id="hero-heading" className={[shared.displayTitle, styles.title].join(" ")}>
-              <span className={styles.titleLine}>שלט לדלת</span>
-              <span className={styles.titleLine}>בעיצוב אישי</span>
+              <span className={styles.titleLine}>{hero.titleLine1}</span>
+              <span className={styles.titleLine}>{hero.titleLine2}</span>
             </h1>
           </div>
 
           <div className={styles.copyTail}>
-            <p className={styles.accent}>{homeHeroAccentLine}</p>
+            <p className={styles.accent}>{hero.accent}</p>
             <div className={styles.copyRest}>
-              <p className={styles.lead}>
-                מעלים תמונה, בוחרים סגנון איור, ומעצבים שלט דלת עם רקע, טקסט וחומר —
-                מאויר ואישי, מוכן לכניסה שלכם.
-              </p>
+              <p className={styles.lead}>{hero.lead}</p>
               <div className={styles.ctaRow}>
                 <Button href={homePrimaryCta.href} variant="brand" className={styles.cta}>
-                  {homePrimaryCta.label}
+                  {primaryCtaLabel}
                   <ArrowLeft size={18} aria-hidden />
                 </Button>
               </div>

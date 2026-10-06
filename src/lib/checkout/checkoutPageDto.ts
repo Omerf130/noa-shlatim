@@ -1,5 +1,5 @@
-import { getBackgroundById } from "@/data/signBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
+import type { SignBackground } from "@/types/signBackground";
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
 import { buildPersistedSignPreviewProps } from "@/lib/orders/persistedOrderSignPreview";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
@@ -22,6 +22,7 @@ export type CheckoutPageDto = {
   styleName: string | null;
   design: SignDesignState | null;
   integratedFinalPreview: IntegratedFinalPreviewConfig | null;
+  previewBackground: SignBackground | null;
   customer: CheckoutCustomerDto;
   notes: string;
   commercial: CheckoutCommercialDto;
@@ -41,6 +42,8 @@ export function buildCheckoutPageDto(params: {
   customer?: CheckoutCustomerDto | null;
   notes?: string | null;
   commercial: CheckoutCommercialDto;
+  previewBackground: SignBackground | null;
+  backgroundName: string;
 }): CheckoutPageDto {
   const { orderId, design, commercial } = params;
   const artworkUrl = `/api/orders/${orderId}/artwork`;
@@ -61,10 +64,11 @@ export function buildCheckoutPageDto(params: {
     hasValidDesign: true,
     material: design.material,
     materialLabel,
-    backgroundName: getBackgroundById(design.backgroundId)?.name ?? "—",
+    backgroundName: params.backgroundName,
     styleName: styleNameFromOrderDesign(design),
     design: previewProps.design,
     integratedFinalPreview: previewProps.integratedFinalPreview,
+    previewBackground: params.previewBackground,
     customer: {
       fullName: customer.fullName ?? "",
       phone: customer.phone ?? "",
@@ -97,6 +101,7 @@ export function buildCheckoutPageDtoWithoutDesign(params: {
     styleName: null,
     design: null,
     integratedFinalPreview: null,
+    previewBackground: null,
     customer: {
       fullName: customer.fullName ?? "",
       phone: customer.phone ?? "",

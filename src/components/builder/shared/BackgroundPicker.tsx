@@ -1,6 +1,7 @@
 "use client";
 
-import { listActiveBackgrounds } from "@/data/signBackgrounds";
+import { useBuilder } from "@/components/builder/BuilderContext";
+import { BUILDER_BACKGROUNDS_UNAVAILABLE_MESSAGE } from "@/lib/builder/backgroundSelection";
 import Image from "next/image";
 import styles from "@/components/builder/designWorkspace/panels/panels.module.scss";
 
@@ -14,11 +15,19 @@ type BackgroundPickerProps = {
 };
 
 export function BackgroundPicker({ selectedId, onSelect }: BackgroundPickerProps) {
-  const backgrounds = listActiveBackgrounds();
+  const { customerBackgrounds } = useBuilder();
+
+  if (customerBackgrounds.length === 0) {
+    return (
+      <p className={styles.backgroundUnavailable} role="status">
+        {BUILDER_BACKGROUNDS_UNAVAILABLE_MESSAGE}
+      </p>
+    );
+  }
 
   return (
     <ul className={styles.thumbGrid}>
-      {backgrounds.map((bg) => {
+      {customerBackgrounds.map((bg) => {
         const isSelected = selectedId === bg.id;
         const src = thumbnailSrc(bg);
         return (

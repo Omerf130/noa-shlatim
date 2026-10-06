@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { getBackgroundById } from "@/data/signBackgrounds";
 import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
 import {
   DECORATION_SCALE_MAX,
@@ -88,13 +87,6 @@ export type IllustrationOrderDesignSnapshot = z.infer<
 >;
 export type OrderDesignSnapshot = z.infer<typeof orderDesignSchema>;
 
-function validatePersistedBackground(backgroundId: string): void {
-  const background = getBackgroundById(backgroundId);
-  if (!background?.active) {
-    throw new OrderError("INVALID_DESIGN", "Invalid background", 400);
-  }
-}
-
 export function parseAndValidateOrderDesign(raw: unknown): OrderDesignSnapshot {
   const parsed = orderDesignSchema.safeParse(raw);
   if (!parsed.success) {
@@ -102,7 +94,6 @@ export function parseAndValidateOrderDesign(raw: unknown): OrderDesignSnapshot {
   }
 
   const design = parsed.data;
-  validatePersistedBackground(design.backgroundId);
 
   if (design.creationMode === "photo") {
     if (!isAllowedStyleId(design.photoIllustrationStyleId)) {

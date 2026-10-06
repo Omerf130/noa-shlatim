@@ -8,7 +8,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import styles from "./Header.module.scss";
 
-export function Header() {
+type HeaderProps = {
+  primaryCtaLabel?: string;
+};
+
+export function Header({ primaryCtaLabel }: HeaderProps = {} as HeaderProps) {
+  const ctaLabel = primaryCtaLabel ?? homePrimaryCta.label;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +68,7 @@ export function Header() {
 
         <div className={styles.actions}>
           <Button href={homePrimaryCta.href} variant="brand" className={styles.desktopCta}>
-            {homePrimaryCta.label}
+            {ctaLabel}
           </Button>
 
           <button
@@ -109,7 +114,7 @@ export function Header() {
               className={styles.mobileCta}
               onClick={onNavClick}
             >
-              {homePrimaryCta.label}
+              {ctaLabel}
             </Button>
           </li>
         </ul>

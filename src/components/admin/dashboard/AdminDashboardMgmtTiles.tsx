@@ -1,18 +1,16 @@
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
 import {
   dashboardBackgroundPreviewThumbs,
-  dashboardIllustrationStylePreviews,
   DASHBOARD_CONTENT_PREVIEW_IMAGE,
   DASHBOARD_STORE_PREVIEW_IMAGE,
 } from "@/lib/admin/dashboard/adminDashboardMgmtPreviews";
-import { FileText, Image, Package, Palette, Store } from "lucide-react";
+import { FileText, Image, Package, Store } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./AdminDashboardMgmtTiles.module.scss";
 
 export function AdminDashboardMgmtTiles() {
   const backgrounds = dashboardBackgroundPreviewThumbs();
-  const stylesPreview = dashboardIllustrationStylePreviews();
 
   return (
     <section className={styles.section} aria-labelledby="mgmt-heading">
@@ -20,9 +18,10 @@ export function AdminDashboardMgmtTiles() {
         ניהול מהיר
       </h2>
       <div className={styles.grid}>
-        <MgmtSoonTile
+        <MgmtLiveTile
           title="תוכן האתר"
           description="טקסטים ודפי מידע"
+          href="/admin/content"
           icon={FileText}
         >
           <div className={styles.contentPreview}>
@@ -34,7 +33,7 @@ export function AdminDashboardMgmtTiles() {
               <span className={styles.typeTitle}>שלטים לדלת</span>
             </div>
           </div>
-        </MgmtSoonTile>
+        </MgmtLiveTile>
 
         <MgmtLiveTile
           title="חומרים"
@@ -48,26 +47,19 @@ export function AdminDashboardMgmtTiles() {
           </div>
         </MgmtLiveTile>
 
-        <MgmtSoonTile title="רקעים" description="קטלוג רקעים לשלט" icon={Image}>
+        <MgmtLiveTile
+          title="רקעים"
+          description="קטלוג רקעים לשלט"
+          href="/admin/backgrounds"
+          icon={Image}
+        >
           <div className={styles.bgStrip}>
             {backgrounds.map((b) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={b.src} src={b.src} alt="" className={styles.bgThumb} />
             ))}
           </div>
-        </MgmtSoonTile>
-
-        <MgmtSoonTile title="סגנונות איור" description="כיווני איור AI" icon={Palette}>
-          <div className={styles.styleStrip}>
-            {stylesPreview.map((s) => (
-              <span
-                key={s.id}
-                className={`${styles.styleOrb} ${styles[`style_${s.variant}`]}`}
-                title={s.name}
-              />
-            ))}
-          </div>
-        </MgmtSoonTile>
+        </MgmtLiveTile>
 
         <MgmtLiveTile
           title="הגדרות חנות"
@@ -83,34 +75,6 @@ export function AdminDashboardMgmtTiles() {
         </MgmtLiveTile>
       </div>
     </section>
-  );
-}
-
-function MgmtSoonTile({
-  title,
-  description,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  description: string;
-  icon: typeof FileText;
-  children: ReactNode;
-}) {
-  return (
-    <article className={styles.tileSoon}>
-      <div className={styles.tileHead}>
-        <span className={styles.tileIcon}>
-          <Icon size={14} strokeWidth={1.75} aria-hidden />
-        </span>
-        <div>
-          <h3 className={styles.tileTitle}>{title}</h3>
-          <p className={styles.tileDesc}>{description}</p>
-        </div>
-        <span className={styles.soonPill}>בקרוב</span>
-      </div>
-      <div className={styles.previewArea}>{children}</div>
-    </article>
   );
 }
 

@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import { connectDb } from "@/lib/db/connect";
 import {
+  assertBackgroundEnabledForNewOrder,
+  BackgroundNotAvailableError,
+} from "@/lib/backgrounds/loadBackgrounds";
+import {
   assertMaterialEnabledForNewOrder,
   MaterialNotAvailableError,
 } from "@/lib/store/materialAvailability";
@@ -128,6 +132,15 @@ export async function createDraftOrder(
   } catch (err) {
     if (err instanceof MaterialNotAvailableError) {
       throw new OrderError("MATERIAL_UNAVAILABLE", "Material unavailable", 400);
+    }
+    throw err;
+  }
+
+  try {
+    await assertBackgroundEnabledForNewOrder(input.design.backgroundId);
+  } catch (err) {
+    if (err instanceof BackgroundNotAvailableError) {
+      throw new OrderError("BACKGROUND_UNAVAILABLE", "Background unavailable", 400);
     }
     throw err;
   }
