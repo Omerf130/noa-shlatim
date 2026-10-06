@@ -27,7 +27,11 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
       <header className={styles.header}>
         <div className={styles.headerMain}>
           <h1 className={styles.title}>הזמנה {dto.orderReference}</h1>
-          <span className={styles.statusBadge}>{dto.statusLabel}</span>
+          <span
+            className={`${styles.statusBadge} ${styles[`status_${dto.statusKey}`] ?? ""}`}
+          >
+            {dto.statusLabel}
+          </span>
         </div>
         <dl className={styles.meta}>
           <div>
@@ -65,6 +69,66 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
           </p>
         )}
       </section>
+
+      {dto.paymentSummary && (
+        <section className={styles.section} aria-labelledby="payment-heading">
+          <h2 id="payment-heading" className={styles.sectionTitle}>
+            תשלום ומחיר (נתונים קפואים)
+          </h2>
+          <dl className={styles.fieldList}>
+            <div>
+              <dt>סטטוס תשלום</dt>
+              <dd>{dto.paymentSummary.statusLabel}</dd>
+            </div>
+            <div>
+              <dt>מחיר מוצר</dt>
+              <dd dir="ltr">{dto.paymentSummary.productAmountLabel}</dd>
+            </div>
+            <div>
+              <dt>משלוח</dt>
+              <dd>{dto.paymentSummary.shippingMethodLabel}</dd>
+            </div>
+            <div>
+              <dt>עלות משלוח</dt>
+              <dd dir="ltr">{dto.paymentSummary.shippingAmountLabel}</dd>
+            </div>
+            <div>
+              <dt>סה״כ</dt>
+              <dd dir="ltr">{dto.paymentSummary.totalLabel}</dd>
+            </div>
+            <div>
+              <dt>מטבע</dt>
+              <dd dir="ltr">{dto.paymentSummary.currency}</dd>
+            </div>
+            <div>
+              <dt>מחיר נקבע ב</dt>
+              <dd>{dto.paymentSummary.capturedAtLabel}</dd>
+            </div>
+            <div>
+              <dt>גרסת תקנון</dt>
+              <dd dir="ltr">{dto.paymentSummary.termsVersion}</dd>
+            </div>
+            <div>
+              <dt>אישור תקנון</dt>
+              <dd>{dto.paymentSummary.termsAcceptedAtLabel}</dd>
+            </div>
+            {dto.paymentSummary.payplusTransactionUid && (
+              <div>
+                <dt>מזהה עסקה PayPlus</dt>
+                <dd className={styles.mono} dir="ltr">
+                  {dto.paymentSummary.payplusTransactionUid}
+                </dd>
+              </div>
+            )}
+            {dto.paymentSummary.paymentCompletedAtLabel && (
+              <div>
+                <dt>תשלום הושלם</dt>
+                <dd>{dto.paymentSummary.paymentCompletedAtLabel}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      )}
 
       <section className={styles.section} aria-labelledby="customer-heading">
         <h2 id="customer-heading" className={styles.sectionTitle}>

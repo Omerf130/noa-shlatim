@@ -16,18 +16,46 @@ import {
   orderDesignSchema,
   type OrderDesignSnapshot,
 } from "@/lib/orders/orderDesignSchema";
+import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { formatMinorToIlsDisplay } from "@/lib/money/ils";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
+import type { OrderStatus } from "@/models/Order";
 
 export const DESIGN_PREVIEW_UNAVAILABLE_MESSAGE =
   "לא ניתן לשחזר את תצוגת העיצוב מהנתונים השמורים.";
 
+export type AdminOrderStatusKey = OrderStatus;
+
+export type AdminOrderStatusLabel =
+  | "טיוטה"
+  | "ממתין לתשלום"
+  | "שולם"
+  | "בהכנה";
+
+export function adminOrderStatusLabel(status: string): AdminOrderStatusLabel | "—" {
+  switch (status) {
+    case "draft":
+      return "טיוטה";
+    case "payment_pending":
+      return "ממתין לתשלום";
+    case "paid":
+      return "שולם";
+    case "creating":
+      return "בהכנה";
+    default:
+      return "—";
+  }
+}
+
 export type AdminOrderListItemDto = {
   orderId: string;
   orderReference: string;
-  statusLabel: "טיוטה";
+  statusKey: AdminOrderStatusKey;
+  statusLabel: AdminOrderStatusLabel | "—";
   createdAtLabel: string;
   materialLabel: string;
+  totalLabel: string | null;
   customerDisplayName: string;
   customerPhone: string | null;
   detailHref: string;
@@ -57,12 +85,27 @@ export function adminCreationModeLabel(mode: AdminCreationMode): string {
   return mode === "photo" ? "תמונה" : "איור קיים";
 }
 
+export type AdminOrderPaymentSummaryDto = {
+  statusLabel: AdminOrderStatusLabel | "—";
+  productAmountLabel: string;
+  shippingMethodLabel: string;
+  shippingAmountLabel: string;
+  totalLabel: string;
+  currency: string;
+  capturedAtLabel: string;
+  termsVersion: string;
+  termsAcceptedAtLabel: string;
+  payplusTransactionUid: string | null;
+  paymentCompletedAtLabel: string | null;
+};
+
 export type AdminOrderDetailDto = {
   orderId: string;
   orderReference: string;
   creationMode: AdminCreationMode;
   creationModeLabel: string;
-  statusLabel: "טיוטה";
+  statusKey: AdminOrderStatusKey;
+  statusLabel: AdminOrderStatusLabel | "—";
   createdAtLabel: string;
   updatedAtLabel: string;
   customer: {
@@ -77,6 +120,7 @@ export type AdminOrderDetailDto = {
     originalImageUrl: string | null;
     artworkUrl: string | null;
   };
+  paymentSummary: AdminOrderPaymentSummaryDto | null;
 };
 
 type OrderLeanForAdmin = {
@@ -90,9 +134,27 @@ type OrderLeanForAdmin = {
     originalImage?: unknown;
     finalArtwork?: unknown;
   };
+  commercialSnapshot?: unknown;
+  termsAcceptance?: {
+    termsVersion?: string;
+    termsAcceptedAt?: string;
+  };
+  payment?: {
+    attempts?: Array<{
+      status?: string;
+      payplusTransactionUid?: string;
+      completedAt?: string;
+    }>;
+  };
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+const ADMIN_LIST_STATUSES = ["draft", "payment_pending", "paid", "creating"] as const;
+
+export function isAdminVisibleOrderStatus(status: string): status is (typeof ADMIN_LIST_STATUSES)[number] {
+  return (ADMIN_LIST_STATUSES as readonly string[]).includes(status);
+}
 
 function parseDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
   const parsed = orderDesignSchema.safeParse(raw);
@@ -120,12 +182,66 @@ function styleNameFromOrderDesign(design: OrderDesignSnapshot): string | null {
   return getIllustrationStyleById(design.photoIllustrationStyleId)?.name ?? null;
 }
 
+function totalLabelFromSnapshot(commercialSnapshot: unknown): string | null {
+  const parsed = orderCommercialSnapshotSchema.safeParse(commercialSnapshot);
+  if (!parsed.success) {
+    return null;
+  }
+  return formatMinorToIlsDisplay(parsed.data.totalAmountMinor);
+}
+
+function materialLabelForOrder(order: OrderLeanForAdmin, design: OrderDesignSnapshot | null): string {
+  const snapshotMat = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
+  if (snapshotMat.success) {
+    return materialLabelFromSnapshot(snapshotMat.data.material);
+  }
+  return materialLabelFromSnapshot(design?.material);
+}
+
+function findSucceededPaymentAttempt(order: OrderLeanForAdmin) {
+  return order.payment?.attempts?.find((a) => a.status === "succeeded") ?? null;
+}
+
+export function buildAdminOrderPaymentSummaryDto(
+  order: OrderLeanForAdmin,
+): AdminOrderPaymentSummaryDto | null {
+  if (order.status !== "payment_pending" && order.status !== "paid") {
+    return null;
+  }
+
+  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
+  if (!snapshotParsed.success) {
+    return null;
+  }
+  const snapshot = snapshotParsed.data;
+  const terms = order.termsAcceptance;
+  const succeeded = findSucceededPaymentAttempt(order);
+
+  return {
+    statusLabel: adminOrderStatusLabel(order.status),
+    productAmountLabel: formatMinorToIlsDisplay(snapshot.productAmountMinor),
+    shippingMethodLabel: snapshot.shippingLabel,
+    shippingAmountLabel: formatMinorToIlsDisplay(snapshot.shippingAmountMinor),
+    totalLabel: formatMinorToIlsDisplay(snapshot.totalAmountMinor),
+    currency: snapshot.currency,
+    capturedAtLabel: formatAdminDateTime(snapshot.capturedAt),
+    termsVersion: terms?.termsVersion?.trim() || "—",
+    termsAcceptedAtLabel: terms?.termsAcceptedAt
+      ? formatAdminDateTime(terms.termsAcceptedAt)
+      : "—",
+    payplusTransactionUid: succeeded?.payplusTransactionUid?.trim() || null,
+    paymentCompletedAtLabel: succeeded?.completedAt
+      ? formatAdminDateTime(succeeded.completedAt)
+      : null,
+  };
+}
+
 export function buildAdminOrderListItemDto(
   order: OrderLeanForAdmin,
 ): AdminOrderListItemDto | null {
   const mode = order.creationMode;
   if (
-    order.status !== "draft" ||
+    !isAdminVisibleOrderStatus(order.status) ||
     (mode !== "photo" && mode !== "illustration")
   ) {
     return null;
@@ -137,9 +253,11 @@ export function buildAdminOrderListItemDto(
   return {
     orderId,
     orderReference: formatOrderReference(orderId),
-    statusLabel: "טיוטה",
+    statusKey: order.status as AdminOrderStatusKey,
+    statusLabel: adminOrderStatusLabel(order.status),
     createdAtLabel: formatAdminDateTime(order.createdAt),
-    materialLabel: materialLabelFromSnapshot(design?.material),
+    materialLabel: materialLabelForOrder(order, design),
+    totalLabel: totalLabelFromSnapshot(order.commercialSnapshot),
     customerDisplayName: customerDisplayName(order.customer),
     customerPhone: order.customer?.phone?.trim() || null,
     detailHref: `/admin/orders/${orderId}`,
@@ -177,7 +295,8 @@ export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDe
     orderReference: formatOrderReference(orderId),
     creationMode,
     creationModeLabel: adminCreationModeLabel(creationMode),
-    statusLabel: "טיוטה",
+    statusKey: order.status as AdminOrderStatusKey,
+    statusLabel: adminOrderStatusLabel(order.status),
     createdAtLabel: formatAdminDateTime(order.createdAt),
     updatedAtLabel: formatAdminDateTime(order.updatedAt),
     customer: {
@@ -192,6 +311,7 @@ export function buildAdminOrderDetailDto(order: OrderLeanForAdmin): AdminOrderDe
       originalImageUrl: originalUrl,
       artworkUrl: order.assets?.finalArtwork ? artworkUrl : null,
     },
+    paymentSummary: buildAdminOrderPaymentSummaryDto(order),
   };
 }
 

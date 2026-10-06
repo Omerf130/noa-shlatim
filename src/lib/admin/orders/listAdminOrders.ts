@@ -15,7 +15,7 @@ export async function listAdminOrders(params: {
   await connectDb();
 
   const filter = {
-    status: "draft" as const,
+    status: { $in: ["draft", "payment_pending", "paid", "creating"] as const },
     creationMode: { $in: ["photo", "illustration"] as const },
   };
 

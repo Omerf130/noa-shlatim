@@ -1,9 +1,7 @@
-import { CheckoutPaymentReturnActions } from "@/components/checkout/CheckoutPaymentReturnActions";
+import { CheckoutPaymentReturnView } from "@/components/checkout/CheckoutPaymentReturnView";
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
-import {
-  findPaymentAttemptById,
-  isPaymentInitRetryAllowed,
-} from "@/lib/orders/paymentAttemptStatus";
+import { formatOrderReference } from "@/lib/admin/orders/formatOrderReference";
+import { computeCheckoutPaymentUiState } from "@/lib/orders/checkoutPaymentReturnState";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { notFound } from "next/navigation";
 import styles from "./page.module.scss";
@@ -13,17 +11,23 @@ type PaymentReturnPageProps = {
   searchParams: Promise<{ outcome?: string }>;
 };
 
-function outcomeMessage(outcome: string | undefined): string {
-  switch (outcome) {
-    case "success":
-      return "התשלום עדיין נבדק במערכת. אם אישרתם תשלום, הסטטוס יתעדכן בקרוב.";
-    case "failure":
-      return "התשלום לא הושלם. אפשר לנסות שוב.";
-    case "cancel":
-      return "התשלום בוטל. אפשר לנסות שוב כשתרצו.";
-    default:
-      return "חזרתם מדף התשלום. הסטטוס המעודכן מוצג למטה.";
-  }
+async function loadPaymentReturnContext(orderId: string) {
+  const { order } = await authorizeCheckoutAccess(orderId, undefined, {
+    mode: "view",
+  });
+
+  const ui = computeCheckoutPaymentUiState({
+    orderStatus: order.status,
+    commercialSnapshot: order.commercialSnapshot,
+    payment: order.payment,
+  });
+
+  return {
+    orderId,
+    ui,
+    orderReference: formatOrderReference(orderId),
+    showCheckoutLink: order.status === "draft",
+  };
 }
 
 export default async function CheckoutPaymentReturnPage({
@@ -39,48 +43,23 @@ export default async function CheckoutPaymentReturnPage({
     notFound();
   }
 
-  let orderStatus: string;
-  let canRetry = false;
-
+  let context: Awaited<ReturnType<typeof loadPaymentReturnContext>>;
   try {
-    const { order } = await authorizeCheckoutAccess(orderId, undefined, {
-      mode: "view",
-    });
-    orderStatus = order.status;
-    const activeAttempt = findPaymentAttemptById(
-      order.payment?.attempts,
-      order.payment?.activeAttemptId ?? null,
-    );
-    canRetry = isPaymentInitRetryAllowed({
-      orderStatus: order.status,
-      hasCommercialSnapshot: Boolean(order.commercialSnapshot),
-      activeAttempt,
-    });
+    context = await loadPaymentReturnContext(orderId);
   } catch {
     notFound();
   }
 
-  const statusLabel =
-    orderStatus === "paid"
-      ? "שולם"
-      : orderStatus === "payment_pending"
-        ? "ממתין לתשלום"
-        : orderStatus === "draft"
-          ? "טיוטה"
-          : orderStatus;
-
   return (
     <main className={styles.main} dir="rtl">
       <div className={styles.inner}>
-        <h1 className={styles.title}>תשלום</h1>
-        <p className={styles.lead}>{outcomeMessage(outcome)}</p>
-        <p className={styles.status} role="status">
-          סטטוס הזמנה במערכת: <strong>{statusLabel}</strong>
-        </p>
-        <CheckoutPaymentReturnActions
-          orderId={orderId}
-          canRetry={canRetry}
-          showCheckoutLink={orderStatus === "draft"}
+        <CheckoutPaymentReturnView
+          orderId={context.orderId}
+          initialStatus={context.ui.status}
+          initialCanRetry={context.ui.canRetryPayment}
+          orderReference={context.orderReference}
+          outcomeHint={outcome}
+          showCheckoutLink={context.showCheckoutLink}
         />
       </div>
     </main>

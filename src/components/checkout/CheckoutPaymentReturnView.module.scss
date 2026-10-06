@@ -1,0 +1,52 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.titleSuccess {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-success, #027a48);
+}
+
+.lead {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted, #667085);
+  line-height: 1.55;
+}
+
+.polling {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #667085);
+}
+
+.timedOut {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.reference {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.9375rem;
+}

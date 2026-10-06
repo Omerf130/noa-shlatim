@@ -34,6 +34,26 @@
   color: var(--color-primary);
 }
 
+.status_draft {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.status_payment_pending {
+  background: color-mix(in srgb, #b54708 14%, transparent);
+  color: #b54708;
+}
+
+.status_paid {
+  background: color-mix(in srgb, #027a48 14%, transparent);
+  color: #027a48;
+}
+
+.status_creating {
+  background: color-mix(in srgb, #667085 14%, transparent);
+  color: #667085;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;

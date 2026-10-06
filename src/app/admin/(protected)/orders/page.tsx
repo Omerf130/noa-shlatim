@@ -20,12 +20,12 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.heading}>הזמנות</h1>
-        <p className={styles.lead}>טיוטות הזמנה מהסטודיו — לקריאה בלבד.</p>
+        <p className={styles.lead}>הזמנות מהסטודיו — לקריאה בלבד.</p>
       </header>
 
       {list.items.length === 0 ? (
         <div className={styles.empty} role="status">
-          <p>אין הזמנות טיוטה כרגע.</p>
+          <p>אין הזמנות כרגע.</p>
         </div>
       ) : (
         <>
@@ -38,6 +38,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   <th scope="col">טלפון</th>
                   <th scope="col">נוצר</th>
                   <th scope="col">חומר</th>
+                  <th scope="col">סה״כ</th>
                   <th scope="col">סטטוס</th>
                   <th scope="col">
                     <span className={styles.srOnly}>פעולה</span>
@@ -56,8 +57,13 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                     </td>
                     <td>{item.createdAtLabel}</td>
                     <td>{item.materialLabel}</td>
+                    <td dir="ltr">{item.totalLabel ?? "—"}</td>
                     <td>
-                      <span className={styles.statusBadge}>{item.statusLabel}</span>
+                      <span
+                        className={`${styles.statusBadge} ${styles[`status_${item.statusKey}`] ?? ""}`}
+                      >
+                        {item.statusLabel}
+                      </span>
                     </td>
                     <td>
                       <Link href={item.detailHref} className={styles.openLink}>
@@ -77,7 +83,11 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   <span className={styles.mono} dir="ltr">
                     {item.orderReference}
                   </span>
-                  <span className={styles.statusBadge}>{item.statusLabel}</span>
+                  <span
+                    className={`${styles.statusBadge} ${styles[`status_${item.statusKey}`] ?? ""}`}
+                  >
+                    {item.statusLabel}
+                  </span>
                 </div>
                 <dl className={styles.cardMeta}>
                   <div>
@@ -97,6 +107,10 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   <div>
                     <dt>חומר</dt>
                     <dd>{item.materialLabel}</dd>
+                  </div>
+                  <div>
+                    <dt>סה״כ</dt>
+                    <dd dir="ltr">{item.totalLabel ?? "—"}</dd>
                   </div>
                 </dl>
                 <Link href={item.detailHref} className={styles.openLink}>
