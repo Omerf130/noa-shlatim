@@ -259,8 +259,8 @@ describe("blob cleanup helper (CASE 20-21)", () => {
   });
 });
 
-describe("legacy draft validation parity (CASE 23)", () => {
-  it("createDraftOrder path uses shared product validation rules", () => {
+describe("shared product validation (CASE 23)", () => {
+  it("cart add uses shared product validation rules", () => {
     assert.throws(
       () =>
         validateDesignProductAvailability(

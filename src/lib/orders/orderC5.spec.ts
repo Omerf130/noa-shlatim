@@ -1,7 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import {
   orderArtworkPath,
@@ -19,7 +16,6 @@ import {
 } from "@/lib/orders/validateOrderItemQuantity";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const orderId = "507f1f77bcf86cd799439011";
 const lineA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const lineB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -161,18 +157,6 @@ describe("order blob paths", () => {
       orderItemArtworkPath(orderId, lineA),
       `orders/${orderId}/items/${lineA}/artwork.png`,
     );
-  });
-});
-
-describe("createDraftOrder legacy shape", () => {
-  it("CASE 16: does not write items[]", () => {
-    const src = readFileSync(
-      join(repoRoot, "src/lib/orders/createDraftOrder.ts"),
-      "utf8",
-    );
-    assert.doesNotMatch(src, /items\s*:/);
-    assert.match(src, /creationMode:/);
-    assert.match(src, /design:/);
   });
 });
 

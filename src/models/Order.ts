@@ -139,18 +139,19 @@ const orderSchema = new Schema(
       enum: ORDER_STATUSES,
       required: true,
     },
-    /** Legacy single-item field — optional for future multi-item (items[]) Orders. */
+    /** Legacy single-item field on historical Builder→Order docs; new Cart orders use items[]. */
     creationMode: {
       type: String,
       enum: ["photo", "illustration"],
       required: false,
     },
+    /** Unique key: cart conversion idempotency (cart:…) or legacy direct-draft orders. */
     draftIdempotencyKey: {
       type: String,
       required: true,
       unique: true,
     },
-    /** Legacy single-item field — optional for future multi-item (items[]) Orders. */
+    /** Legacy single-item field on historical orders; new Cart orders use items[]. */
     design: {
       type: Schema.Types.Mixed,
       required: false,

@@ -84,14 +84,15 @@ describe("ReviewStep wiring (C2)", () => {
   });
 });
 
-describe("legacy draft order hook remains", () => {
-  it("useCreateDraftOrder still posts to orders draft", () => {
-    const hookSrc = readFileSync(
-      join(repoRoot, "src/hooks/useCreateDraftOrder.ts"),
-      "utf8",
-    );
-    assert.match(hookSrc, /\/api\/orders\/draft/);
-    assert.match(hookSrc, /useCreateDraftOrder/);
+describe("C12 — direct Order creation removed", () => {
+  it("does not ship useCreateDraftOrder hook", () => {
+    const hookPath = join(repoRoot, "src/hooks/useCreateDraftOrder.ts");
+    assert.throws(() => readFileSync(hookPath, "utf8"));
+  });
+
+  it("does not ship POST /api/orders/draft route", () => {
+    const routePath = join(repoRoot, "src/app/api/orders/draft/route.ts");
+    assert.throws(() => readFileSync(routePath, "utf8"));
   });
 });
 

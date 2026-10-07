@@ -202,13 +202,9 @@ describe("checkout cookie options", () => {
   });
 });
 
-describe("legacy draft unchanged", () => {
-  it("CASE 30: createDraftOrder still legacy", () => {
-    const src = readFileSync(
-      join(repoRoot, "src/lib/orders/createDraftOrder.ts"),
-      "utf8",
-    );
-    assert.doesNotMatch(src, /convertCartToOrder/);
-    assert.match(src, /design: params\.design/);
+describe("C12 — direct draft creation removed", () => {
+  it("CASE 30: createDraftOrder module removed", () => {
+    const path = join(repoRoot, "src/lib/orders/createDraftOrder.ts");
+    assert.throws(() => readFileSync(path, "utf8"));
   });
 });
