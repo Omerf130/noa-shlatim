@@ -42,8 +42,6 @@ export function MagnetSizesEditor({
   const [rows, setRows] = useState<SizeRow[]>(initialRows);
   const [state, formAction, isPending] = useActionState(saveMagnetSizes, initialState);
   const [isSubmitting, startTransition] = useTransition();
-  const [saveSuccessVisible, setSaveSuccessVisible] = useState(false);
-
   const baseline = useMemo(() => serializeRowsForCompare(initialRows), [initialRows]);
   const isDirty = useMemo(
     () => serializeRowsForCompare(rows) !== baseline,
@@ -54,16 +52,9 @@ export function MagnetSizesEditor({
 
   useEffect(() => {
     if (state.ok) {
-      setSaveSuccessVisible(true);
       router.refresh();
     }
   }, [state.ok, router]);
-
-  useEffect(() => {
-    if (isDirty) {
-      setSaveSuccessVisible(false);
-    }
-  }, [isDirty]);
 
   const buildPayload = useCallback(() => {
     return JSON.stringify({
@@ -126,7 +117,7 @@ export function MagnetSizesEditor({
     );
   }, []);
 
-  const showSuccess = saveSuccessVisible && state.ok && !isDirty;
+  const showSuccess = Boolean(state.ok && state.message && !isDirty);
 
   return (
     <div className={styles.editor}>
