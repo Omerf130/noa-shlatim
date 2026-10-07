@@ -67,6 +67,17 @@ export async function deletePrivateBlob(pathnameOrUrl: string): Promise<void> {
   await del(pathnameOrUrl);
 }
 
+/** Best-effort delete for rollback after partial uploads. */
+export async function deletePrivateBlobPaths(pathnames: string[]): Promise<void> {
+  for (const pathname of pathnames) {
+    try {
+      await deletePrivateBlob(pathname);
+    } catch (err) {
+      console.error("[storage] blob cleanup failed", { pathname, err });
+    }
+  }
+}
+
 /** Consume a private blob stream into a UTF-8 string (server-only helper). */
 export async function readPrivateBlobUtf8(
   pathnameOrUrl: string,

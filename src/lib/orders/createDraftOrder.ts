@@ -1,17 +1,7 @@
 import mongoose from "mongoose";
 import { connectDb } from "@/lib/db/connect";
-import {
-  assertBackgroundEnabledForNewOrder,
-  BackgroundNotAvailableError,
-} from "@/lib/backgrounds/loadBackgrounds";
-import {
-  assertMagnetSizeForNewOrder,
-  assertMaterialEnabledForNewOrder,
-  MaterialNotAvailableError,
-} from "@/lib/store/materialAvailability";
-import { MagnetSizeNotAvailableError } from "@/lib/store/magnetSizes";
-import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import { validateDesignForPurchase } from "@/lib/orders/validateDesignForPurchase";
 import { OrderError } from "@/lib/orders/errors";
 import { orderArtworkPath, orderOriginalPath } from "@/lib/orders/orderBlobPaths";
 import {
@@ -128,46 +118,7 @@ export async function createDraftOrder(
 ): Promise<CreateDraftOrderResult> {
   await connectDb();
 
-  const settings = await loadStoreSettingsDocument();
-  const pricingInput = settings
-    ? { ...settings.pricing, magnetSizes: settings.magnetSizes }
-    : undefined;
-
-  try {
-    assertMaterialEnabledForNewOrder(input.design.material, pricingInput);
-  } catch (err) {
-    if (err instanceof MaterialNotAvailableError) {
-      throw new OrderError("MATERIAL_UNAVAILABLE", "Material unavailable", 400);
-    }
-    throw err;
-  }
-
-  if (input.design.material === "wood" && input.design.magnetSizeId) {
-    throw new OrderError("INVALID_DESIGN", "Invalid design", 400);
-  }
-
-  if (input.design.material === "magnet") {
-    if (!input.design.magnetSizeId?.trim()) {
-      throw new OrderError("INVALID_DESIGN", "Invalid design", 400);
-    }
-    try {
-      assertMagnetSizeForNewOrder(input.design.magnetSizeId, pricingInput);
-    } catch (err) {
-      if (err instanceof MagnetSizeNotAvailableError) {
-        throw new OrderError("MAGNET_SIZE_UNAVAILABLE", "Magnet size unavailable", 400);
-      }
-      throw err;
-    }
-  }
-
-  try {
-    await assertBackgroundEnabledForNewOrder(input.design.backgroundId);
-  } catch (err) {
-    if (err instanceof BackgroundNotAvailableError) {
-      throw new OrderError("BACKGROUND_UNAVAILABLE", "Background unavailable", 400);
-    }
-    throw err;
-  }
+  await validateDesignForPurchase(input.design);
 
   const reusedEarly = await resolveExistingIdempotency(input.draftIdempotencyKey);
   if (reusedEarly) {

@@ -5,14 +5,14 @@ import {
 } from "@/lib/cart/constants";
 import { verifyCartAccessToken } from "@/lib/cart/cartAccessToken";
 import { isValidCartId } from "@/lib/cart/assertValidCartId";
-import { Cart, type CartDocument, type CartStatus } from "@/models/Cart";
+import { Cart, type CartItemDocument, type CartStatus } from "@/models/Cart";
 import { cookies } from "next/headers";
 
 export type AuthorizedCart = {
   cartId: string;
   cart: {
     status: CartStatus;
-    items: CartDocument["items"];
+    items: CartItemDocument[];
     convertedOrderId?: string | null;
   };
 };
