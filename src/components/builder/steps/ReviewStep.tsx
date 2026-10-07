@@ -120,7 +120,12 @@ export function ReviewStep() {
 
       <div className={styles.actions}>
         {addedToCart ? (
-          <Button onClick={startNewSign}>יצירת שלט נוסף</Button>
+          <>
+            <Button href="/cart">מעבר לסל</Button>
+            <Button variant="secondary" onClick={startNewSign}>
+              יצירת שלט נוסף
+            </Button>
+          </>
         ) : (
           <>
             <Button

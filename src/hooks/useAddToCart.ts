@@ -13,6 +13,7 @@ import {
 } from "@/lib/cart/buildAddToCartFormData";
 import { buildOrderDesignPayload } from "@/lib/orders/buildDesignPayload";
 import { hasValidFinalSignArtwork } from "@/lib/builder/validation";
+import { useCartBadgeCount } from "@/components/cart/CartCountProvider";
 import { useCallback, useRef, useState } from "react";
 
 export function useAddToCart() {
@@ -28,6 +29,7 @@ export function useAddToCart() {
     null,
   );
   const idempotencySessionRef = useRef(new AddIdempotencyKeySession());
+  const { setBadgeQuantity } = useCartBadgeCount();
 
   const submitAddToCart = useCallback(async () => {
     const { design, ui } = state;
@@ -90,13 +92,14 @@ export function useAddToCart() {
       }
 
       idempotencySessionRef.current.consumeAfterSuccess();
+      setBadgeQuantity(data.totalQuantity);
       setAddSuccess(data);
     } catch {
       setErrorMessage(ADD_TO_CART_NETWORK_ERROR_MESSAGE);
     } finally {
       setIsSubmitting(false);
     }
-  }, [getFinalArtworkBlob, getSourcePhotoFile, state]);
+  }, [getFinalArtworkBlob, getSourcePhotoFile, setBadgeQuantity, state]);
 
   const startNewSign = useCallback(() => {
     idempotencySessionRef.current.resetForNewSign();

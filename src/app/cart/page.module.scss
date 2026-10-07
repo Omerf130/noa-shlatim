@@ -1,0 +1,19 @@
+.main {
+  padding: var(--space-8) var(--space-4) var(--space-12);
+}
+
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.pageHeader {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 700;
+}

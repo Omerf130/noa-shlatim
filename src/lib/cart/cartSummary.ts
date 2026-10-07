@@ -9,6 +9,8 @@ export type CartSummaryDto = {
   status: CartSummaryStatus;
   lineCount: number;
   totalQuantity: number;
+  /** Navbar badge — active cart only; converted/empty => 0. */
+  badgeQuantity: number;
 };
 
 export const EMPTY_CART_SUMMARY: CartSummaryDto = {
@@ -16,7 +18,12 @@ export const EMPTY_CART_SUMMARY: CartSummaryDto = {
   status: "empty",
   lineCount: 0,
   totalQuantity: 0,
+  badgeQuantity: 0,
 };
+
+export function navbarBadgeQuantityFromSummary(summary: CartSummaryDto): number {
+  return summary.badgeQuantity;
+}
 
 /** Normalize quantity for summary totals — invalid values contribute 0. */
 export function normalizedCartItemQuantity(quantity: unknown): number {
@@ -48,10 +55,13 @@ export function buildCartSummaryDto(params: {
   items: Array<{ quantity?: unknown }> | null | undefined;
 }): CartSummaryDto {
   const { lineCount, totalQuantity } = computeCartCounts(params.items);
+  const badgeQuantity = params.status === "active" ? totalQuantity : 0;
+
   return {
     ok: true,
     status: params.status,
     lineCount,
     totalQuantity,
+    badgeQuantity,
   };
 }

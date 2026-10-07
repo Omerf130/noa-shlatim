@@ -95,6 +95,7 @@ describe("cart summary counts", () => {
       status: "empty",
       lineCount: 0,
       totalQuantity: 0,
+      badgeQuantity: 0,
     });
   });
 
@@ -131,6 +132,7 @@ describe("cart summary counts", () => {
       status: "active",
       lineCount: 1,
       totalQuantity: 1,
+      badgeQuantity: 1,
     });
   });
 
@@ -141,6 +143,7 @@ describe("cart summary counts", () => {
     });
     assert.equal(dto.status, "converted");
     assert.equal(dto.totalQuantity, 3);
+    assert.equal(dto.badgeQuantity, 0);
   });
 
   it("summary DTO exposes only safe fields", () => {
@@ -149,7 +152,13 @@ describe("cart summary counts", () => {
       items: [{ quantity: 1 }],
     });
     const keys = Object.keys(dto).sort();
-    assert.deepEqual(keys, ["lineCount", "ok", "status", "totalQuantity"]);
+    assert.deepEqual(keys, [
+      "badgeQuantity",
+      "lineCount",
+      "ok",
+      "status",
+      "totalQuantity",
+    ]);
     assert.equal(JSON.stringify(dto).includes("pathname"), false);
     assert.equal(JSON.stringify(dto).includes("secret"), false);
   });

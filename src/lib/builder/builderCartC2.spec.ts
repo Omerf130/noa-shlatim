@@ -59,6 +59,7 @@ describe("ReviewStep wiring (C2)", () => {
     assert.doesNotMatch(reviewSrc, /להמשך להזמנה/);
     assert.match(reviewSrc, /הוספה לסל/);
     assert.match(reviewSrc, /יצירת שלט נוסף/);
+    assert.match(reviewSrc, /מעבר לסל/);
     assert.doesNotMatch(reviewSrc, /router\.push/);
     assert.doesNotMatch(reviewSrc, /checkout/);
   });

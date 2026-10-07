@@ -1,5 +1,6 @@
 "use client";
 
+import { CartNavLink } from "@/components/cart/CartNavLink";
 import { BrandLogo } from "@/components/brand/BrandLogo/BrandLogo";
 import { homeNavLinks, homePrimaryCta } from "@/data/homeNav";
 import { Button } from "@/components/ui/Button/Button";
@@ -67,6 +68,7 @@ export function Header({ primaryCtaLabel }: HeaderProps = {} as HeaderProps) {
         </nav>
 
         <div className={styles.actions}>
+          <CartNavLink className={styles.cartLink} />
           <Button href={homePrimaryCta.href} variant="brand" className={styles.desktopCta}>
             {ctaLabel}
           </Button>
