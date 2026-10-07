@@ -21,6 +21,24 @@ export function CheckoutOrderSummary({
     return null;
   }
 
+  if (commercial.pricingMode === "deferred") {
+    const selected = selectedShippingMethodId
+      ? commercial.shippingMethods.find((m) => m.methodId === selectedShippingMethodId)
+      : null;
+
+    return (
+      <section className={styles.summary} aria-label="סיכום משלוח">
+        <h2 className={styles.title}>משלוח</h2>
+        <dl className={styles.lines}>
+          <div className={styles.line}>
+            <dt>משלוח</dt>
+            <dd>{selected ? selected.displayAmount : CHECKOUT_SHIPPING_LINE_PENDING}</dd>
+          </div>
+        </dl>
+      </section>
+    );
+  }
+
   const productLine = commercial.product.displayAmount;
   const selected = selectedShippingMethodId
     ? commercial.shippingMethods.find((m) => m.methodId === selectedShippingMethodId)

@@ -88,6 +88,14 @@ function legacySynthesizedItem(order: OrderLikeForResolveItems): ResolvedOrderIt
  * Canonical product lines for an Order — persisted items[] or legacy top-level.
  * When both exist, items[] wins (no merge).
  */
+/** True when persisted items[] (not legacy top-level) drive checkout lines. */
+export function orderHasPersistedCheckoutItems(
+  order: OrderLikeForResolveItems,
+): boolean {
+  const persisted = order.items ?? [];
+  return persisted.some(isPersistedOrderItem);
+}
+
 export function resolveOrderItems(
   order: OrderLikeForResolveItems,
 ): ResolvedOrderItem[] {

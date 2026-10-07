@@ -8,8 +8,14 @@ describe("customerPaymentStatusDto", () => {
     const auth: AuthorizedCheckoutOrder = {
       orderId: "507f1f77bcf86cd799439011",
       accessMode: "view",
+      checkoutSource: {
+        creationMode: "photo",
+        design: {},
+      },
       order: {
         status: "payment_pending",
+        checkoutKind: "legacy",
+        resolvedItems: [],
         creationMode: "photo",
         design: {} as AuthorizedCheckoutOrder["order"]["design"],
         commercialSnapshot: {

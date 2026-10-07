@@ -1,5 +1,4 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
-import { LEGACY_ORDER_LINE_ID } from "@/lib/orders/orderItemConstants";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { getPrivateBlob } from "@/lib/storage/privateBlob";
 import { streamPrivateImageResponse } from "@/lib/storage/streamPrivateImageResponse";
@@ -8,18 +7,20 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: Promise<{ orderId: string }>;
+  params: Promise<{ orderId: string; lineId: string }>;
 };
 
 export async function GET(request: Request, context: RouteContext) {
-  const { orderId } = await context.params;
+  const { orderId, lineId } = await context.params;
 
   try {
     const { order } = await authorizeCheckoutAccess(orderId, request);
-    const legacyLine =
-      order.resolvedItems.find((line) => line.lineId === LEGACY_ORDER_LINE_ID) ??
-      order.resolvedItems[0];
-    const pathname = legacyLine?.assets.finalArtwork?.pathname;
+    const line = order.resolvedItems.find((item) => item.lineId === lineId);
+    if (!line) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const pathname = line.assets.finalArtwork?.pathname;
     if (!pathname) {
       return new NextResponse(null, { status: 404 });
     }
@@ -42,7 +43,7 @@ export async function GET(request: Request, context: RouteContext) {
         { status },
       );
     }
-    console.error("[api/orders/artwork]", err);
+    console.error("[api/orders/items/artwork]", err);
     return new NextResponse(null, { status: 500 });
   }
 }

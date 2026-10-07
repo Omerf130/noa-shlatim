@@ -10,6 +10,12 @@ import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
 import type { OrderTermsAcceptance } from "@/lib/orders/termsAcceptance";
 import { OrderError } from "@/lib/orders/errors";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
+import {
+  orderHasPersistedCheckoutItems,
+  resolveOrderItems,
+  type OrderLikeForResolveItems,
+  type ResolvedOrderItem,
+} from "@/lib/orders/resolveOrderItems";
 import { ORDER_STATUSES, type OrderStatus } from "@/models/Order";
 import { Order } from "@/models/Order";
 import { cookies } from "next/headers";
@@ -22,14 +28,26 @@ const CHECKOUT_ACCESS_BY_MODE: Record<CheckoutAccessMode, readonly OrderStatus[]
   payment_init: ["draft", "payment_pending"],
 };
 
+export type CheckoutOrderKind = "legacy" | "cart_items";
+
+export type CheckoutSourceOrder = OrderLikeForResolveItems & {
+  customer?: { fullName?: string; phone?: string; email?: string };
+  notes?: string;
+  checkoutSelection?: { shippingMethodId?: string };
+};
+
 export type AuthorizedCheckoutOrder = {
   orderId: string;
   accessMode: CheckoutAccessMode;
+  checkoutSource: CheckoutSourceOrder;
   order: {
     status: OrderStatus;
-    creationMode: string;
+    checkoutKind: CheckoutOrderKind;
+    resolvedItems: ResolvedOrderItem[];
     checkoutAccessTokenHash?: string | null;
-    design: OrderDesignSnapshot;
+    /** Legacy payment path — first resolved line design when legacy. */
+    creationMode?: string;
+    design?: OrderDesignSnapshot;
     assets?: {
       finalArtwork?: { pathname: string; contentType: string; sizeBytes: number };
     };
@@ -81,6 +99,17 @@ function isOrderStatus(value: string): value is OrderStatus {
   return (ORDER_STATUSES as readonly string[]).includes(value);
 }
 
+function assertCheckoutLinesReady(resolved: ResolvedOrderItem[]): void {
+  if (resolved.length === 0) {
+    throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
+  }
+  for (const item of resolved) {
+    if (!item.assets.finalArtwork?.pathname) {
+      throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
+    }
+  }
+}
+
 async function loadCheckoutOrder(orderId: string, mode: CheckoutAccessMode) {
   await connectDb();
   const order = await Order.findById(orderId).lean();
@@ -88,13 +117,8 @@ async function loadCheckoutOrder(orderId: string, mode: CheckoutAccessMode) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  const creationMode = order.creationMode;
-  if (
-    creationMode !== "photo" &&
-    creationMode !== "illustration"
-  ) {
-    throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
-  }
+  const resolvedItems = resolveOrderItems(order);
+  assertCheckoutLinesReady(resolvedItems);
 
   const statusRaw = order.status;
   if (!isOrderStatus(statusRaw)) {
@@ -110,11 +134,7 @@ async function loadCheckoutOrder(orderId: string, mode: CheckoutAccessMode) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  if (!order.assets?.finalArtwork?.pathname) {
-    throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
-  }
-
-  return order;
+  return { order, resolvedItems };
 }
 
 export type AuthorizeCheckoutAccessOptions = {
@@ -134,21 +154,40 @@ export async function authorizeCheckoutAccess(
     throw new OrderError("ORDER_PERSIST_FAILED", "Not found", 404);
   }
 
-  const order = await loadCheckoutOrder(orderId, mode);
+  const { order, resolvedItems } = await loadCheckoutOrder(orderId, mode);
   const token = await extractCheckoutToken(orderId, request);
   if (!token || !verifyCheckoutAccessToken(token, order.checkoutAccessTokenHash)) {
     throw new OrderError("ORDER_PERSIST_FAILED", "Unauthorized", 401);
   }
 
+  const checkoutKind: CheckoutOrderKind = orderHasPersistedCheckoutItems(order)
+    ? "cart_items"
+    : "legacy";
+
+  const first = resolvedItems[0]!;
+
+  const checkoutSource: CheckoutSourceOrder = {
+    creationMode: order.creationMode,
+    design: order.design,
+    assets: order.assets,
+    items: order.items,
+    customer: order.customer,
+    notes: order.notes,
+    checkoutSelection: order.checkoutSelection,
+  };
+
   return {
     orderId,
     accessMode: mode,
+    checkoutSource,
     order: {
       status: order.status as OrderStatus,
-      creationMode: order.creationMode,
+      checkoutKind,
+      resolvedItems,
       checkoutAccessTokenHash: order.checkoutAccessTokenHash,
-      design: order.design as OrderDesignSnapshot,
-      assets: order.assets,
+      creationMode: checkoutKind === "legacy" ? first.creationMode : order.creationMode,
+      design: first.design,
+      assets: first.assets,
       customer: order.customer,
       notes: order.notes,
       checkoutSelection: order.checkoutSelection,
@@ -170,10 +209,10 @@ export async function verifyCheckoutAccessBootstrap(
     return false;
   }
 
-  const order = await loadCheckoutOrder(orderId, "edit").catch(() => null);
-  if (!order) {
+  const loaded = await loadCheckoutOrder(orderId, "edit").catch(() => null);
+  if (!loaded) {
     return false;
   }
 
-  return verifyCheckoutAccessToken(accessToken, order.checkoutAccessTokenHash);
+  return verifyCheckoutAccessToken(accessToken, loaded.order.checkoutAccessTokenHash);
 }

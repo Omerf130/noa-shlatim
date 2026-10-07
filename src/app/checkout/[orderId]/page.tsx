@@ -1,16 +1,6 @@
 import { CheckoutPageContent } from "@/components/checkout/CheckoutPageContent";
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
-import { buildCheckoutCommercialView } from "@/lib/checkout/buildCheckoutCommercialView";
-import {
-  buildCheckoutPageDto,
-  buildCheckoutPageDtoWithoutDesign,
-} from "@/lib/checkout/checkoutPageDto";
-import { loadBackgroundForRenderAsSignBackground } from "@/lib/backgrounds/loadBackgrounds";
-import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
-import {
-  orderDesignSchema,
-  type OrderDesignSnapshot,
-} from "@/lib/orders/orderDesignSchema";
+import { buildCheckoutPageFromOrder } from "@/lib/checkout/buildCheckoutPageFromOrder";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { redirect, notFound } from "next/navigation";
 
@@ -42,60 +32,14 @@ export default async function CheckoutPage({
 
   let dto;
   try {
-    const { order } = await authorizeCheckoutAccess(orderId);
-    const commercial = await buildCheckoutCommercialView({
-      design: order.design,
-      savedShippingMethodId: order.checkoutSelection?.shippingMethodId,
+    const auth = await authorizeCheckoutAccess(orderId);
+    dto = await buildCheckoutPageFromOrder({
+      orderId,
+      order: auth.checkoutSource,
     });
-
-    const customer = order.customer
-      ? {
-          fullName: order.customer.fullName ?? "",
-          phone: order.customer.phone ?? "",
-          email: order.customer.email ?? "",
-        }
-      : null;
-
-    const designParsed = parseCheckoutDesignSnapshot(order.design);
-    if (designParsed) {
-      const previewBackground = await loadBackgroundForRenderAsSignBackground(
-        designParsed.backgroundId,
-      );
-      dto = buildCheckoutPageDto({
-        orderId,
-        design: designParsed,
-        customer,
-        notes: order.notes,
-        commercial,
-        previewBackground,
-        backgroundName: previewBackground?.name ?? "—",
-      });
-    } else {
-      dto = buildCheckoutPageDtoWithoutDesign({
-        orderId,
-        customer,
-        notes: order.notes,
-        commercial,
-      });
-    }
   } catch {
     notFound();
   }
 
   return <CheckoutPageContent dto={dto!} />;
-}
-
-function parseCheckoutDesignSnapshot(raw: unknown): OrderDesignSnapshot | null {
-  const parsed = orderDesignSchema.safeParse(raw);
-  if (!parsed.success) {
-    return null;
-  }
-  const design = parsed.data;
-  if (
-    design.creationMode === "photo" &&
-    !isAllowedStyleId(design.photoIllustrationStyleId)
-  ) {
-    return null;
-  }
-  return design;
 }

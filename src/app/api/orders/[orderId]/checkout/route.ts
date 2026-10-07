@@ -1,6 +1,7 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
+import { buildCheckoutCommercialForOrder } from "@/lib/checkout/buildCheckoutPageFromOrder";
 import {
-  buildCheckoutCommercialView,
+  buildCommercialSummaryForDeferredSelection,
   buildCommercialSummaryForSelection,
   resolveSelectedShippingMethod,
 } from "@/lib/checkout/buildCheckoutCommercialView";
@@ -18,6 +19,7 @@ import {
 import { resolveStoreConfigurationForCheckout } from "@/lib/store/resolveStoreConfigurationForCheckout";
 import { connectDb } from "@/lib/db/connect";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
+import { resolveOrderItems } from "@/lib/orders/resolveOrderItems";
 import { Order } from "@/models/Order";
 import { NextResponse } from "next/server";
 
@@ -31,7 +33,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { orderId } = await context.params;
 
   try {
-    const { order } = await authorizeCheckoutAccess(orderId, request);
+    const auth = await authorizeCheckoutAccess(orderId, request);
+    const lines = resolveOrderItems(auth.checkoutSource);
+    if (lines.length === 0) {
+      return checkoutJsonError("INVALID_DESIGN", 400, "נתונים לא תקינים.");
+    }
 
     let body: unknown;
     try {
@@ -70,7 +76,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       {
         _id: orderId,
         status: "draft",
-        creationMode: { $in: ["photo", "illustration"] },
       },
       {
         $set: {
@@ -88,8 +93,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       return checkoutJsonError("ORDER_PERSIST_FAILED", 404);
     }
 
-    const commercial = await buildCheckoutCommercialView({
-      design: order.design,
+    const commercial = await buildCheckoutCommercialForOrder({
+      order: auth.checkoutSource,
       savedShippingMethodId: parsed.selectedShippingMethodId,
     });
 
@@ -109,13 +114,25 @@ export async function PATCH(request: Request, context: RouteContext) {
       return checkoutJsonError("INVALID_DESIGN", 400, CHECKOUT_STALE_SHIPPING_MESSAGE);
     }
 
-    const commercialWithSummary = {
-      ...commercial,
-      selectedShippingMethodId: parsed.selectedShippingMethodId,
-      selectionValid: true,
-      staleSelectionMessage: null,
-      summary: buildCommercialSummaryForSelection(commercial, selected),
-    };
+    const commercialWithSummary =
+      commercial.pricingMode === "deferred"
+        ? {
+            ...commercial,
+            selectedShippingMethodId: parsed.selectedShippingMethodId,
+            selectionValid: true,
+            staleSelectionMessage: null,
+            summary: buildCommercialSummaryForDeferredSelection(
+              commercial,
+              selected,
+            ),
+          }
+        : {
+            ...commercial,
+            selectedShippingMethodId: parsed.selectedShippingMethodId,
+            selectionValid: true,
+            staleSelectionMessage: null,
+            summary: buildCommercialSummaryForSelection(commercial, selected),
+          };
 
     return NextResponse.json(
       buildCheckoutSaveResponseDto({

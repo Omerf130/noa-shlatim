@@ -1,0 +1,60 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.card {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.previewWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.meta {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: minmax(5rem, 6rem) minmax(0, 1fr);
+  gap: var(--space-3);
+  font-size: 0.9375rem;
+}
+
+.metaRow dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text-muted, #6d5a4a);
+}
+
+.metaRow dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.quantityRow dd {
+  font-weight: 700;
+}
+
+.unavailable {
+  margin: 0;
+  padding: var(--space-4);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-muted, #6d5a4a);
+  background: var(--color-bg-muted, #f9fafb);
+  border-radius: var(--radius-md, 8px);
+}

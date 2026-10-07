@@ -22,6 +22,7 @@ type CheckoutCustomerFormProps = {
   initialNotes: string;
   commercial: CheckoutCommercialDto;
   canSaveCommercialCheckout: boolean;
+  canInitiatePayment: boolean;
   initialSelectedShippingMethodId: string | null;
   onShippingSelectionChange?: (methodId: string) => void;
 };
@@ -46,6 +47,7 @@ export function CheckoutCustomerForm({
   initialNotes,
   commercial,
   canSaveCommercialCheckout,
+  canInitiatePayment,
   initialSelectedShippingMethodId,
   onShippingSelectionChange,
 }: CheckoutCustomerFormProps) {
@@ -132,7 +134,7 @@ export function CheckoutCustomerForm({
   const onSecurePayment = useCallback(async () => {
     setFieldError(null);
 
-    if (!canSaveCommercialCheckout || !commercial.available) {
+    if (!canInitiatePayment || !canSaveCommercialCheckout || !commercial.available) {
       return;
     }
 
@@ -182,6 +184,7 @@ export function CheckoutCustomerForm({
       setPaymentState("idle");
     }
   }, [
+    canInitiatePayment,
     canSaveCommercialCheckout,
     commercial.available,
     onShippingSelectionChange,
@@ -348,14 +351,16 @@ export function CheckoutCustomerForm({
         {saveState === "submitting" ? "שומרים…" : "שמירת פרטים ומשלוח"}
       </Button>
 
-      <Button
-        type="button"
-        disabled={paymentBusy || formDisabled}
-        className={styles.payButton}
-        onClick={() => void onSecurePayment()}
-      >
-        {paymentState === "processing" ? "פותחים תשלום מאובטח…" : "מעבר לתשלום מאובטח"}
-      </Button>
+      {canInitiatePayment && (
+        <Button
+          type="button"
+          disabled={paymentBusy || formDisabled}
+          className={styles.payButton}
+          onClick={() => void onSecurePayment()}
+        >
+          {paymentState === "processing" ? "פותחים תשלום מאובטח…" : "מעבר לתשלום מאובטח"}
+        </Button>
+      )}
     </form>
   );
 }

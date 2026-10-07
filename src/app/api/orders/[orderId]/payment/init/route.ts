@@ -25,11 +25,30 @@ export async function POST(request: Request, context: RouteContext) {
       return paymentInitError("INVALID_DESIGN", 400, "יש לאשר את התקנון כדי להמשיך.");
     }
 
-    const { order } = await authorizeCheckoutAccess(orderId, request, {
+    const auth = await authorizeCheckoutAccess(orderId, request, {
       mode: "payment_init",
     });
 
-    const result = await initiateOrderPayment({ orderId, order });
+    if (auth.order.checkoutKind === "cart_items") {
+      return paymentInitError(
+        "INVALID_DESIGN",
+        400,
+        "תשלום מקוון לעגלה זו ייפתח בהמשך. ניתן לשמור פרטים ומשלוח בדף ההזמנה.",
+      );
+    }
+
+    const result = await initiateOrderPayment({
+      orderId,
+      order: {
+        status: auth.order.status,
+        design: auth.order.design,
+        customer: auth.order.customer,
+        checkoutSelection: auth.order.checkoutSelection,
+        commercialSnapshot: auth.order.commercialSnapshot,
+        termsAcceptance: auth.order.termsAcceptance,
+        payment: auth.order.payment,
+      },
+    });
 
     if (!result.ok) {
       const err = result.error;
