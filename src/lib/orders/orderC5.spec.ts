@@ -19,7 +19,7 @@ import {
 } from "@/lib/orders/validateOrderItemQuantity";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const orderId = "507f1f77bcf86cd799439011";
 const lineA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const lineB = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";

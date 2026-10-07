@@ -11,7 +11,13 @@ import {
   patchCartLineQuantity,
 } from "@/lib/cart/fetchCartDetail";
 import { useCartBadgeCount } from "@/components/cart/CartCountProvider";
-import { useCallback, useState } from "react";
+import {
+  CART_CONVERSION_NETWORK_ERROR_MESSAGE,
+  ConversionIdempotencyKeySession,
+  parseCartConversionResponse,
+} from "@/lib/cart/cartConversionClient";
+import { useRouter } from "next/navigation";
+import { useCallback, useRef, useState } from "react";
 import styles from "./CartPageClient.module.scss";
 
 type CartPageClientProps = {
@@ -26,7 +32,11 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
   const [confirmRemoveLineId, setConfirmRemoveLineId] = useState<string | null>(
     null,
   );
+  const router = useRouter();
   const { setBadgeQuantity } = useCartBadgeCount();
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const conversionSessionRef = useRef(new ConversionIdempotencyKeySession());
 
   const applyDetail = useCallback(
     (next: CartDetailDto) => {
@@ -78,6 +88,50 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
     },
     [runMutation],
   );
+
+  const handleContinueToCheckout = useCallback(async () => {
+    if (converting || pending) {
+      return;
+    }
+    setConvertError(null);
+    setConverting(true);
+    const conversionIdempotencyKey = conversionSessionRef.current.getOrCreate();
+    try {
+      const res = await fetch("/api/cart/convert", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversionIdempotencyKey }),
+      });
+
+      let json: unknown;
+      try {
+        json = await res.json();
+      } catch {
+        setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
+        return;
+      }
+
+      const data = parseCartConversionResponse(json);
+      if (!data || !data.ok) {
+        if (data && !data.ok) {
+          setConvertError(data.message);
+          conversionSessionRef.current.resetForNewAttempt();
+        } else {
+          setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
+        }
+        return;
+      }
+
+      conversionSessionRef.current.consumeAfterSuccess();
+      setBadgeQuantity(0);
+      router.push(data.checkoutPath);
+    } catch {
+      setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
+    } finally {
+      setConverting(false);
+    }
+  }, [converting, pending, router, setBadgeQuantity]);
 
   if (loadError) {
     return (
@@ -148,17 +202,12 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
 
         <Button
           className={styles.checkoutBtn}
-          disabled={!checkoutReady}
-          aria-disabled={!checkoutReady}
+          disabled={!checkoutReady || converting || pending}
+          aria-busy={converting}
+          onClick={() => void handleContinueToCheckout()}
         >
-          המשך להזמנה
+          {converting ? "מכינים את ההזמנה…" : "המשך להזמנה"}
         </Button>
-
-        {detail.canCheckout && !CART_CHECKOUT_CONVERSION_ENABLED ? (
-          <p className={styles.checkoutSoon}>
-            בקרוב תוכלו להמשיך לתשלום ישירות מהסל. בינתיים אפשר להוסיף עוד שלטים.
-          </p>
-        ) : null}
 
         {!detail.canCheckout && detail.lines.length > 0 ? (
           <p className={styles.checkoutBlocked} role="status">
@@ -170,6 +219,12 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
       {mutationError ? (
         <p className={styles.mutationError} role="alert">
           {mutationError}
+        </p>
+      ) : null}
+
+      {convertError ? (
+        <p className={styles.mutationError} role="alert">
+          {convertError}
         </p>
       ) : null}
     </div>
