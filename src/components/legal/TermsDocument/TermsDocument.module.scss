@@ -82,3 +82,18 @@
     text-decoration-thickness: 2px;
   }
 }
+
+.bulletList {
+  margin: 0 0 var(--space-3);
+  padding-inline-start: 1.25rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.bulletItem {
+  margin-bottom: var(--space-2);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}

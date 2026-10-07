@@ -305,7 +305,7 @@ export function CheckoutCustomerForm({
           }}
         />
         <label htmlFor="checkout-terms-accepted" className={styles.termsLabel}>
-          <span>אני מסכים/ה ל</span>{" "}
+          <span>קראתי ואני מסכים ל</span>{" "}
           <Link
             href="/terms"
             target="_blank"
@@ -314,6 +314,16 @@ export function CheckoutCustomerForm({
             onClick={(e) => e.stopPropagation()}
           >
             תקנון
+          </Link>{" "}
+          <span>ול</span>{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.termsLink}
+            onClick={(e) => e.stopPropagation()}
+          >
+            מדיניות הפרטיות
           </Link>
         </label>
       </div>

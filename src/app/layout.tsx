@@ -1,3 +1,4 @@
+import { CookieNotice } from "@/components/layout/CookieNotice/CookieNotice";
 import type { Metadata } from "next";
 import { homeDisplayFont } from "@/lib/fonts/homeDisplayFontLoader";
 import { signTextFontClassNames } from "@/lib/fonts/signTextFontLoader";
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       dir="rtl"
       className={`${rubik.variable} ${signTextFontClassNames} ${homeDisplayFont.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieNotice />
+      </body>
     </html>
   );
 }

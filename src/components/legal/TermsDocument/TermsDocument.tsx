@@ -5,7 +5,26 @@ import {
   TERMS_LAST_UPDATED_LABEL,
   TERMS_PAGE_TITLE,
 } from "@/lib/legal/terms";
+import Link from "next/link";
 import styles from "./TermsDocument.module.scss";
+
+const PRIVACY_POLICY_PHRASE = "מדיניות הפרטיות";
+
+function renderTermsParagraph(text: string) {
+  const idx = text.indexOf(PRIVACY_POLICY_PHRASE);
+  if (idx === -1) {
+    return text;
+  }
+  return (
+    <>
+      {text.slice(0, idx)}
+      <Link href="/privacy" className={styles.contactLink}>
+        {PRIVACY_POLICY_PHRASE}
+      </Link>
+      {text.slice(idx + PRIVACY_POLICY_PHRASE.length)}
+    </>
+  );
+}
 
 export function TermsDocument() {
   return (
@@ -30,7 +49,7 @@ export function TermsDocument() {
               <h3 className={styles.subsectionTitle}>{subsection.id}</h3>
               {subsection.paragraphs.map((paragraph, index) => (
                 <p key={index} className={styles.paragraph}>
-                  {paragraph}
+                  {renderTermsParagraph(paragraph)}
                 </p>
               ))}
             </div>

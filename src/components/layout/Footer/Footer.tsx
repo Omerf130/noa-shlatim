@@ -56,6 +56,12 @@ export function Footer({ tagline, primaryCtaLabel }: FooterProps = {} as FooterP
               <Link href="/terms" className={styles.footerLink}>
                 תקנון
               </Link>
+              <span className={styles.legalSep} aria-hidden="true">
+                {" · "}
+              </span>
+              <Link href="/privacy" className={styles.footerLink}>
+                מדיניות פרטיות
+              </Link>
             </p>
           </div>
 

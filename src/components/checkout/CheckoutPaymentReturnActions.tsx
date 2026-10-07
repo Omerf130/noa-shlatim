@@ -63,9 +63,13 @@ export function CheckoutPaymentReturnActions({
               onChange={(e) => setTermsAccepted(e.target.checked)}
             />
             <span>
-              אני מסכים/ה ל{" "}
+              קראתי ואני מסכים ל{" "}
               <Link href="/terms" target="_blank" rel="noopener noreferrer">
                 תקנון
+              </Link>{" "}
+              ול{" "}
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+                מדיניות הפרטיות
               </Link>
             </span>
           </label>
