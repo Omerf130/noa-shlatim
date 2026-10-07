@@ -1,10 +1,11 @@
 import { loadBackgroundForRenderAsSignBackground } from "@/lib/backgrounds/loadBackgrounds";
 import { isAllowedStyleId } from "@/lib/ai/illustrationPrompts";
 import {
-  buildCheckoutCommercialView,
-  buildCheckoutShippingOnlyCommercialView,
-} from "@/lib/checkout/buildCheckoutCommercialView";
+  buildCheckoutCommercialForOrder,
+  mergeLineCommercialIntoCheckoutItems,
+} from "@/lib/checkout/buildCheckoutCommercialForOrder";
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
+import { CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE } from "@/lib/checkout/formatCheckoutUnavailableMessage";
 import { checkoutLineArtworkUrl } from "@/lib/checkout/checkoutArtworkUrl";
 import type {
   CheckoutCustomerDto,
@@ -17,10 +18,7 @@ import {
   type OrderDesignSnapshot,
 } from "@/lib/orders/orderDesignSchema";
 import { buildPersistedSignPreviewProps } from "@/lib/orders/persistedOrderSignPreview";
-import {
-  orderHasPersistedCheckoutItems,
-  resolveOrderItems,
-} from "@/lib/orders/resolveOrderItems";
+import { resolveOrderItems } from "@/lib/orders/resolveOrderItems";
 import type { OrderLikeForResolveItems } from "@/lib/orders/resolveOrderItems";
 import {
   findMagnetSizeInCatalog,
@@ -28,9 +26,6 @@ import {
 } from "@/lib/store/magnetSizes";
 import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
-
-export const CHECKOUT_PAYMENT_DEFERRED_CUSTOMER_MESSAGE =
-  "תשלום מקוון ייפתח בהמשך. ניתן להשלים כעת פרטי התקשרות ושיטת משלוח.";
 
 function parseLineDesign(raw: unknown): OrderDesignSnapshot | null {
   const parsed = orderDesignSchema.safeParse(raw);
@@ -65,6 +60,8 @@ async function buildCheckoutLineItemDto(params: {
   designRaw: unknown;
   magnetSizeName: string | null;
   magnetSizeDimensionsLabel: string | null;
+  unitPriceDisplay: string | null;
+  lineTotalDisplay: string | null;
 }): Promise<CheckoutLineItemDto> {
   const design = parseLineDesign(params.designRaw);
   const artworkUrl = checkoutLineArtworkUrl(params.orderId, params.lineId);
@@ -83,6 +80,8 @@ async function buildCheckoutLineItemDto(params: {
       previewBackground: null,
       hasValidDesign: false,
       artworkUrl,
+      unitPriceDisplay: params.unitPriceDisplay,
+      lineTotalDisplay: params.lineTotalDisplay,
     };
   }
 
@@ -110,27 +109,12 @@ async function buildCheckoutLineItemDto(params: {
     previewBackground,
     hasValidDesign: true,
     artworkUrl,
+    unitPriceDisplay: params.unitPriceDisplay,
+    lineTotalDisplay: params.lineTotalDisplay,
   };
 }
 
-export async function buildCheckoutCommercialForOrder(params: {
-  order: OrderLikeForResolveItems;
-  savedShippingMethodId?: string | null;
-}): Promise<CheckoutCommercialDto> {
-  const cartOrigin = orderHasPersistedCheckoutItems(params.order);
-  if (cartOrigin) {
-    return buildCheckoutShippingOnlyCommercialView({
-      savedShippingMethodId: params.savedShippingMethodId,
-    });
-  }
-
-  const items = resolveOrderItems(params.order);
-  const design = items[0]?.design;
-  return buildCheckoutCommercialView({
-    design,
-    savedShippingMethodId: params.savedShippingMethodId,
-  });
-}
+export { buildCheckoutCommercialForOrder } from "@/lib/checkout/buildCheckoutCommercialForOrder";
 
 export async function buildCheckoutPageFromOrder(params: {
   orderId: string;
@@ -138,10 +122,11 @@ export async function buildCheckoutPageFromOrder(params: {
     customer?: { fullName?: string; phone?: string; email?: string } | null;
     notes?: string | null;
     checkoutSelection?: { shippingMethodId?: string } | null;
+    commercialSnapshot?: unknown;
+    status?: string;
   };
 }): Promise<CheckoutPageDto> {
   const resolved = resolveOrderItems(params.order);
-  const cartOrigin = orderHasPersistedCheckoutItems(params.order);
 
   const customer: CheckoutCustomerDto = {
     fullName: params.order.customer?.fullName ?? "",
@@ -149,16 +134,11 @@ export async function buildCheckoutPageFromOrder(params: {
     email: params.order.customer?.email ?? "",
   };
 
-  const commercial = await buildCheckoutCommercialForOrder({
-    order: params.order,
-    savedShippingMethodId: params.order.checkoutSelection?.shippingMethodId,
-  });
-
-  const canSaveCommercialCheckout = commercial.available;
-  const canInitiatePayment =
-    commercial.available && commercial.pricingMode === "legacy";
-
   if (resolved.length === 0) {
+    const commercial: CheckoutCommercialDto = {
+      available: false,
+      message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
+    };
     return {
       orderId: params.orderId,
       items: [],
@@ -168,9 +148,22 @@ export async function buildCheckoutPageFromOrder(params: {
       commercial,
       canSaveCommercialCheckout: false,
       canInitiatePayment: false,
-      paymentDeferredMessage: null,
     };
   }
+
+  const commercial = await buildCheckoutCommercialForOrder({
+    order: params.order,
+    savedShippingMethodId: params.order.checkoutSelection?.shippingMethodId,
+  });
+
+  const canSaveCommercialCheckout = commercial.available;
+  const canInitiatePayment =
+    commercial.available &&
+    commercial.selectionValid &&
+    Boolean(commercial.selectedShippingMethodId) &&
+    (commercial.pricingMode === "multi_v2" ||
+      commercial.pricingMode === "legacy") &&
+    commercial.summary.totalAmountMinor !== null;
 
   const storeDoc = await loadStoreSettingsDocument();
   const magnetCatalog =
@@ -180,6 +173,13 @@ export async function buildCheckoutPageFromOrder(params: {
           magnetSizes: storeDoc.magnetSizes,
         })
       : null;
+
+  const lineIds = resolved.map((l) => l.lineId);
+  const priceByLineId = new Map(
+    commercial.available && commercial.pricingMode === "multi_v2"
+      ? commercial.lineItems.map((l) => [l.lineId, l] as const)
+      : [],
+  );
 
   const items: CheckoutLineItemDto[] = [];
   for (const line of resolved) {
@@ -196,6 +196,7 @@ export async function buildCheckoutPageFromOrder(params: {
       magnetSizeDimensionsLabel = size?.dimensionsLabel ?? null;
     }
 
+    const priced = priceByLineId.get(line.lineId);
     items.push(
       await buildCheckoutLineItemDto({
         orderId: params.orderId,
@@ -204,9 +205,13 @@ export async function buildCheckoutPageFromOrder(params: {
         designRaw: line.design,
         magnetSizeName,
         magnetSizeDimensionsLabel,
+        unitPriceDisplay: priced?.unitPriceDisplay ?? null,
+        lineTotalDisplay: priced?.lineTotalDisplay ?? null,
       }),
     );
   }
+
+  void mergeLineCommercialIntoCheckoutItems(items, lineIds, commercial);
 
   const hasValidDesign = items.some((item) => item.hasValidDesign);
 
@@ -219,6 +224,5 @@ export async function buildCheckoutPageFromOrder(params: {
     commercial,
     canSaveCommercialCheckout,
     canInitiatePayment,
-    paymentDeferredMessage: cartOrigin ? CHECKOUT_PAYMENT_DEFERRED_CUSTOMER_MESSAGE : null,
   };
 }

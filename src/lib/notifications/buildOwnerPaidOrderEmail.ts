@@ -4,6 +4,12 @@ import {
   materialLabelFromSnapshot,
 } from "@/lib/admin/orders/formatOrderReference";
 import { formatMinorToIlsDisplay } from "@/lib/money/ils";
+import {
+  commercialSnapshotDisplayLines,
+  commercialSnapshotShipping,
+  commercialSnapshotTotalMinor,
+  parseOrderCommercialSnapshot,
+} from "@/lib/orders/commercialSnapshotAccess";
 import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
 import {
   OWNER_PAID_ORDER_EMAIL_FROM,
@@ -25,18 +31,50 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function formatLineRowsHtml(
+  snapshotRaw: unknown,
+): { htmlRows: string; textLines: string[] } {
+  const parsed = parseOrderCommercialSnapshot(snapshotRaw);
+  if (!parsed) {
+    return { htmlRows: "", textLines: [] };
+  }
+  const lines = commercialSnapshotDisplayLines(parsed);
+  const htmlRows = lines
+    .map((line) => {
+      const qty = line.quantity > 1 ? ` × ${line.quantity}` : "";
+      return `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>${escapeHtml(line.description)}</strong>${escapeHtml(qty)} — ${escapeHtml(formatMinorToIlsDisplay(line.lineTotalMinor))}</td></tr>`;
+    })
+    .join("");
+  const textLines = lines.map((line) => {
+    const qty = line.quantity > 1 ? ` × ${line.quantity}` : "";
+    return `${line.description}${qty}: ${formatMinorToIlsDisplay(line.lineTotalMinor)}`;
+  });
+  return { htmlRows, textLines };
+}
+
 export function buildOwnerPaidOrderEmail(params: {
   orderId: string;
   customer: { fullName: string; phone: string; email: string };
-  snapshot: OrderCommercialSnapshot;
+  snapshot: unknown;
   paymentCompletedAtIso: string;
   adminOrderUrl: string;
 }): OwnerPaidOrderEmailContent {
+  const parsed = parseOrderCommercialSnapshot(params.snapshot);
+  if (!parsed) {
+    throw new Error("INVALID_SNAPSHOT");
+  }
+
   const orderReference = formatOrderReference(params.orderId);
-  const material = materialLabelFromSnapshot(params.snapshot.material);
-  const totalLabel = formatMinorToIlsDisplay(params.snapshot.totalAmountMinor);
+  const totalLabel = formatMinorToIlsDisplay(commercialSnapshotTotalMinor(parsed));
   const paidAtLabel = formatAdminDateTime(params.paymentCompletedAtIso);
-  const shippingLabel = params.snapshot.shippingLabel.trim();
+  const shipping = commercialSnapshotShipping(parsed);
+
+  const materialSummary =
+    parsed.version === 1
+      ? materialLabelFromSnapshot(parsed.snapshot.material)
+      : `${parsed.snapshot.lines.length} פריטים`;
+
+  const lineRows = formatLineRowsHtml(params.snapshot);
 
   const name = escapeHtml(params.customer.fullName.trim());
   const phone = escapeHtml(params.customer.phone.trim());
@@ -77,9 +115,11 @@ export function buildOwnerPaidOrderEmail(params: {
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>לקוח:</strong> ${name}</td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>טלפון:</strong> <span dir="ltr">${phone}</span></td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>אימייל:</strong> <span dir="ltr">${email}</span></td></tr>
+                <tr><td style="padding:0 16px 10px;font-size:14px;"><strong>פריטים:</strong></td></tr>
+                ${lineRows.htmlRows}
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>סכום ששולם:</strong> ${escapeHtml(totalLabel)}</td></tr>
-                <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>חומר:</strong> ${escapeHtml(material)}</td></tr>
-                <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>משלוח:</strong> ${escapeHtml(shippingLabel)}</td></tr>
+                <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>סיכום:</strong> ${escapeHtml(materialSummary)}</td></tr>
+                <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>משלוח:</strong> ${escapeHtml(shipping.label)} (${escapeHtml(formatMinorToIlsDisplay(shipping.amountMinor))})</td></tr>
                 <tr><td style="padding:0 16px 16px;font-size:14px;"><strong>תאריך תשלום:</strong> ${escapeHtml(paidAtLabel)}</td></tr>
               </table>
             </td>
@@ -107,20 +147,20 @@ export function buildOwnerPaidOrderEmail(params: {
     "נועה | שלטים לדלת",
     "",
     "התקבלה הזמנה חדשה 🎉",
-    "התקבלה הזמנה חדשה ושולמה בהצלחה באתר.",
     "",
     `מספר הזמנה: ${orderReference}`,
     `לקוח: ${params.customer.fullName.trim()}`,
     `טלפון: ${params.customer.phone.trim()}`,
     `אימייל: ${params.customer.email.trim()}`,
+    "",
+    "פריטים:",
+    ...lineRows.textLines,
+    "",
     `סכום ששולם: ${totalLabel}`,
-    `חומר: ${material}`,
-    `משלוח: ${shippingLabel}`,
+    `משלוח: ${shipping.label} (${formatMinorToIlsDisplay(shipping.amountMinor)})`,
     `תאריך תשלום: ${paidAtLabel}`,
     "",
     `צפייה בהזמנה: ${params.adminOrderUrl}`,
-    "",
-    "הודעה אוטומטית מאתר נועה | שלטים לדלת",
   ].join("\n");
 
   return {
@@ -130,3 +170,6 @@ export function buildOwnerPaidOrderEmail(params: {
     text,
   };
 }
+
+/** @deprecated tests may import v1 snapshot type */
+export type { OrderCommercialSnapshot };

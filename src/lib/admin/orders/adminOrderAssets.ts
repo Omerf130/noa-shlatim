@@ -1,3 +1,8 @@
+import {
+  resolveOrderItems,
+  type OrderLikeForResolveItems,
+} from "@/lib/orders/resolveOrderItems";
+
 export const ADMIN_ORDER_ASSET_TYPES = ["original", "artwork"] as const;
 
 export type AdminOrderAssetType = (typeof ADMIN_ORDER_ASSET_TYPES)[number];
@@ -12,20 +17,21 @@ export const ADMIN_ORDER_ASSET_ALLOWED_STATUSES = [
 export type AdminOrderAssetAllowedStatus =
   (typeof ADMIN_ORDER_ASSET_ALLOWED_STATUSES)[number];
 
-/**
- * Whether an authenticated Admin may stream this order's private Blob assets.
- * Does not include auth checks — route must call requireAdminApiSession first.
- */
 export function isAdminOrderAssetAccessAllowed(params: {
   status: string;
-  creationMode: string;
+  creationMode?: string | null;
+  items?: unknown;
+  design?: unknown;
 }): boolean {
-  if (params.creationMode !== "photo" && params.creationMode !== "illustration") {
+  if (!(ADMIN_ORDER_ASSET_ALLOWED_STATUSES as readonly string[]).includes(params.status)) {
     return false;
   }
-  return (ADMIN_ORDER_ASSET_ALLOWED_STATUSES as readonly string[]).includes(
-    params.status,
-  );
+  const resolved = resolveOrderItems({
+    creationMode: params.creationMode as "photo" | "illustration" | undefined,
+    design: params.design,
+    items: params.items as Parameters<typeof resolveOrderItems>[0]["items"],
+  });
+  return resolved.length > 0;
 }
 
 export function isAdminOrderAssetType(value: string): value is AdminOrderAssetType {
@@ -39,17 +45,26 @@ export function adminOrderAssetApiPath(
   return `/api/admin/orders/${orderId}/assets/${assetType}`;
 }
 
-export function resolveOrderAssetPathname(
-  order: {
-    assets?: {
-      originalImage?: { pathname: string };
-      finalArtwork?: { pathname: string };
-    };
-  },
+export function adminOrderItemAssetApiPath(
+  orderId: string,
+  lineId: string,
+  assetType: AdminOrderAssetType,
+): string {
+  return `/api/admin/orders/${orderId}/items/${lineId}/assets/${assetType}`;
+}
+
+export function resolveOrderItemAssetPathname(
+  order: OrderLikeForResolveItems,
+  lineId: string,
   assetType: AdminOrderAssetType,
 ): string | null {
-  if (assetType === "original") {
-    return order.assets?.originalImage?.pathname ?? null;
+  const resolved = resolveOrderItems(order);
+  const line = resolved.find((item) => item.lineId === lineId);
+  if (!line) {
+    return null;
   }
-  return order.assets?.finalArtwork?.pathname ?? null;
+  if (assetType === "original") {
+    return line.assets.originalImage?.pathname ?? null;
+  }
+  return line.assets.finalArtwork?.pathname ?? null;
 }

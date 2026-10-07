@@ -1,6 +1,10 @@
 import { connectDb } from "@/lib/db/connect";
-import { computeLiveCommercialSnapshotForDraftOrder } from "@/lib/orders/computeOrderCommercial";
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import {
+  hasValidCommercialSnapshot,
+  parseOrderCommercialSnapshot,
+} from "@/lib/orders/commercialSnapshotAccess";
+import { computeLiveCommercialSnapshotV2ForOrder } from "@/lib/orders/computeLiveCommercialForOrder";
+import type { OrderCommercialSnapshotV2 } from "@/lib/orders/commercialSnapshotV2";
 import { OrderError } from "@/lib/orders/errors";
 import {
   findPaymentAttemptById,
@@ -17,16 +21,19 @@ import {
 } from "@/lib/payplus/generatePaymentLink";
 import { TERMS_VERSION } from "@/lib/legal/terms";
 import type { OrderTermsAcceptance } from "@/lib/orders/termsAcceptance";
-import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
 import { Order } from "@/models/Order";
+import type { OrderLikeForResolveItems } from "@/lib/orders/resolveOrderItems";
 import { randomUUID } from "node:crypto";
 
 export type OrderLeanForPayment = {
   status: string;
-  design: unknown;
+  design?: unknown;
+  creationMode?: string;
+  assets?: unknown;
+  items?: unknown;
   customer?: { fullName?: string; phone?: string; email?: string };
   checkoutSelection?: { shippingMethodId?: string };
-  commercialSnapshot?: OrderCommercialSnapshot | null;
+  commercialSnapshot?: unknown;
   termsAcceptance?: OrderTermsAcceptance | null;
   payment?: {
     activeAttemptId?: string | null;
@@ -42,10 +49,16 @@ function activeAttemptRecord(order: OrderLeanForPayment): PaymentAttemptRecord |
 }
 
 function hasCommercialSnapshot(order: OrderLeanForPayment): boolean {
-  if (!order.commercialSnapshot) {
-    return false;
-  }
-  return orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot).success;
+  return hasValidCommercialSnapshot(order.commercialSnapshot);
+}
+
+function orderLikeForCommercial(order: OrderLeanForPayment): OrderLikeForResolveItems {
+  return {
+    creationMode: order.creationMode as OrderLikeForResolveItems["creationMode"],
+    design: order.design,
+    assets: order.assets as OrderLikeForResolveItems["assets"],
+    items: order.items as OrderLikeForResolveItems["items"],
+  };
 }
 
 async function reclaimStalePendingLink(orderId: string, nowMs: number): Promise<void> {
@@ -96,7 +109,7 @@ async function reserveFirstPaymentAttempt(params: {
   orderId: string;
   attemptId: string;
   createdAt: string;
-  snapshot: OrderCommercialSnapshot;
+  snapshot: OrderCommercialSnapshotV2;
   termsAcceptance: OrderTermsAcceptance;
 }): Promise<boolean> {
   const updated = await Order.findOneAndUpdate(
@@ -283,12 +296,12 @@ export async function initiateOrderPayment(params: {
   }
 
   const attemptId = randomUUID();
-  let snapshot: OrderCommercialSnapshot;
+  let snapshotForPayment: unknown;
   let termsAcceptance: OrderTermsAcceptance;
 
   if (refreshedOrder.status === "draft") {
-    const computed = await computeLiveCommercialSnapshotForDraftOrder({
-      design: refreshedOrder.design,
+    const computed = await computeLiveCommercialSnapshotV2ForOrder({
+      order: orderLikeForCommercial(refreshedOrder),
       shippingMethodId,
       capturedAt: nowIso,
     });
@@ -298,14 +311,14 @@ export async function initiateOrderPayment(params: {
         error: new OrderError("PAYMENT_NOT_READY", "Not ready", 400),
       };
     }
-    snapshot = computed.snapshot;
+    snapshotForPayment = computed.snapshot;
     termsAcceptance = buildTermsAcceptance(nowIso);
 
     const reserved = await reserveFirstPaymentAttempt({
       orderId,
       attemptId,
       createdAt: nowIso,
-      snapshot,
+      snapshot: computed.snapshot,
       termsAcceptance,
     });
     if (!reserved) {
@@ -318,14 +331,14 @@ export async function initiateOrderPayment(params: {
     refreshedOrder.status === "payment_pending" &&
     hasCommercialSnapshot(refreshedOrder)
   ) {
-    const parsed = orderCommercialSnapshotSchema.safeParse(refreshedOrder.commercialSnapshot);
-    if (!parsed.success) {
+    const parsed = parseOrderCommercialSnapshot(refreshedOrder.commercialSnapshot);
+    if (!parsed) {
       return {
         ok: false,
         error: new OrderError("PAYMENT_INVALID_STATE", "Invalid state", 409),
       };
     }
-    snapshot = parsed.data;
+    snapshotForPayment = refreshedOrder.commercialSnapshot;
     if (!refreshedOrder.termsAcceptance?.termsAccepted) {
       return {
         ok: false,
@@ -375,7 +388,7 @@ export async function initiateOrderPayment(params: {
     siteUrl: payplusConfig.siteUrl,
     orderId,
     attemptId,
-    snapshot,
+    snapshot: snapshotForPayment,
     customer: {
       customer_name: customerName,
       email: customerEmail,

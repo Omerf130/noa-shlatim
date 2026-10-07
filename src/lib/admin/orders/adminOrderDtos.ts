@@ -1,7 +1,6 @@
 import { loadBackgroundForRenderAsSignBackground } from "@/lib/backgrounds/loadBackgrounds";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import { formatDecorationSummary } from "@/lib/admin/orders/decorationSummary";
-import { adminOrderAssetApiPath } from "@/lib/admin/orders/adminOrderAssets";
 import {
   customerDisplayName,
   formatAdminDateTime,
@@ -16,7 +15,17 @@ import {
   orderDesignSchema,
   type OrderDesignSnapshot,
 } from "@/lib/orders/orderDesignSchema";
+import {
+  commercialSnapshotDisplayLines,
+  parseOrderCommercialSnapshot,
+} from "@/lib/orders/commercialSnapshotAccess";
 import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { LEGACY_ORDER_LINE_ID } from "@/lib/orders/orderItemConstants";
+import { resolveOrderItems } from "@/lib/orders/resolveOrderItems";
+import {
+  adminOrderAssetApiPath,
+  adminOrderItemAssetApiPath,
+} from "@/lib/admin/orders/adminOrderAssets";
 import { formatMinorToIlsDisplay } from "@/lib/money/ils";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
@@ -58,6 +67,7 @@ export type AdminOrderListItemDto = {
   totalLabel: string | null;
   customerDisplayName: string;
   customerPhone: string | null;
+  productSummaryLabel: string | null;
   detailHref: string;
 };
 
@@ -111,6 +121,21 @@ export type AdminOrderPaymentSummaryDto = {
   paymentCompletedAtLabel: string | null;
 };
 
+export type AdminOrderLineDetailDto = {
+  lineId: string;
+  quantity: number;
+  creationMode: AdminCreationMode;
+  creationModeLabel: string;
+  designPreview: AdminOrderDesignPreviewDto | null;
+  designPreviewUnavailableMessage: string | null;
+  productionAssets: {
+    originalImageUrl: string | null;
+    artworkUrl: string | null;
+  };
+  commercialLineLabel: string | null;
+  commercialLineTotalLabel: string | null;
+};
+
 export type AdminOrderDetailDto = {
   orderId: string;
   orderReference: string;
@@ -126,6 +151,8 @@ export type AdminOrderDetailDto = {
     email: string | null;
   };
   customerNotes: string;
+  productSummaryLabel: string | null;
+  orderLines: AdminOrderLineDetailDto[];
   designPreview: AdminOrderDesignPreviewDto | null;
   designPreviewUnavailableMessage: string | null;
   productionAssets: {
@@ -139,8 +166,9 @@ export type AdminOrderDetailDto = {
 type OrderLeanForAdmin = {
   _id: { toString(): string };
   status: string;
-  creationMode: string;
-  design: unknown;
+  creationMode?: string;
+  design?: unknown;
+  items?: unknown;
   customer?: { fullName?: string; phone?: string; email?: string };
   notes?: string;
   assets?: {
@@ -199,11 +227,28 @@ function styleNameFromOrderDesign(design: OrderDesignSnapshot): string | null {
 }
 
 function totalLabelFromSnapshot(commercialSnapshot: unknown): string | null {
-  const parsed = orderCommercialSnapshotSchema.safeParse(commercialSnapshot);
-  if (!parsed.success) {
+  const parsed = parseOrderCommercialSnapshot(commercialSnapshot);
+  if (!parsed) {
     return null;
   }
-  return formatMinorToIlsDisplay(parsed.data.totalAmountMinor);
+  return formatMinorToIlsDisplay(parsed.snapshot.totalAmountMinor);
+}
+
+function adminProductSummaryLabel(order: OrderLeanForAdmin): string | null {
+  const resolved = resolveOrderItems({
+    creationMode: order.creationMode as "photo" | "illustration" | undefined,
+    design: order.design,
+    assets: order.assets as Parameters<typeof resolveOrderItems>[0]["assets"],
+    items: order.items as Parameters<typeof resolveOrderItems>[0]["items"],
+  });
+  if (resolved.length === 0) {
+    return null;
+  }
+  const totalQty = resolved.reduce((sum, line) => sum + line.quantity, 0);
+  if (resolved.length === 1 && totalQty === 1) {
+    return null;
+  }
+  return `${resolved.length} סוגי שלטים · ${totalQty} יחידות`;
 }
 
 function materialLabelForOrder(order: OrderLeanForAdmin, design: OrderDesignSnapshot | null): string {
@@ -311,11 +356,11 @@ export function buildAdminOrderPaymentSummaryDto(
     return null;
   }
 
-  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
-  if (!snapshotParsed.success) {
+  const snapshotParsed = parseOrderCommercialSnapshot(order.commercialSnapshot);
+  if (!snapshotParsed) {
     return null;
   }
-  const snapshot = snapshotParsed.data;
+  const snapshot = snapshotParsed.snapshot;
   const terms = order.termsAcceptance;
   const succeeded = findSucceededPaymentAttempt(order);
 
@@ -341,16 +386,23 @@ export function buildAdminOrderPaymentSummaryDto(
 export function buildAdminOrderListItemDto(
   order: OrderLeanForAdmin,
 ): AdminOrderListItemDto | null {
-  const mode = order.creationMode;
-  if (
-    !isAdminVisibleOrderStatus(order.status) ||
-    (mode !== "photo" && mode !== "illustration")
-  ) {
+  if (!isAdminVisibleOrderStatus(order.status)) {
+    return null;
+  }
+
+  const resolved = resolveOrderItems({
+    creationMode: order.creationMode as "photo" | "illustration" | undefined,
+    design: order.design,
+    assets: order.assets as Parameters<typeof resolveOrderItems>[0]["assets"],
+    items: order.items as Parameters<typeof resolveOrderItems>[0]["items"],
+  });
+  if (resolved.length === 0) {
     return null;
   }
 
   const orderId = order._id.toString();
   const design = parseDesignSnapshot(order.design);
+  const summary = adminProductSummaryLabel(order);
 
   return {
     orderId,
@@ -358,24 +410,41 @@ export function buildAdminOrderListItemDto(
     statusKey: order.status as AdminOrderStatusKey,
     statusLabel: adminOrderStatusLabel(order.status),
     createdAtLabel: formatAdminDateTime(order.createdAt),
-    materialLabel: materialLabelForOrder(order, design),
+    materialLabel: summary ?? materialLabelForOrder(order, design),
     totalLabel: totalLabelFromSnapshot(order.commercialSnapshot),
     customerDisplayName: customerDisplayName(order.customer),
     customerPhone: order.customer?.phone?.trim() || null,
+    productSummaryLabel: summary,
     detailHref: `/admin/orders/${orderId}`,
   };
 }
 
-export async function buildAdminOrderDetailDto(
-  order: OrderLeanForAdmin,
-): Promise<AdminOrderDetailDto> {
-  const orderId = order._id.toString();
-  const creationMode = order.creationMode as AdminCreationMode;
-  const design = parseDesignSnapshot(order.design);
-  const artworkUrl = adminOrderAssetApiPath(orderId, "artwork");
-  const originalUrl = order.assets?.originalImage
-    ? adminOrderAssetApiPath(orderId, "original")
+async function buildAdminOrderLineDetail(params: {
+  orderId: string;
+  lineId: string;
+  quantity: number;
+  creationMode: AdminCreationMode;
+  designRaw: unknown;
+  order: OrderLeanForAdmin;
+  commercialLine?: { description: string; lineTotalMinor: number } | null;
+}): Promise<AdminOrderLineDetailDto> {
+  const design = parseDesignSnapshot(params.designRaw);
+  const useLegacyAssets = params.lineId === LEGACY_ORDER_LINE_ID;
+  const artworkUrl = useLegacyAssets
+    ? adminOrderAssetApiPath(params.orderId, "artwork")
+    : adminOrderItemAssetApiPath(params.orderId, params.lineId, "artwork");
+  const hasOriginal = useLegacyAssets
+    ? Boolean(params.order.assets?.originalImage)
+    : true;
+  const originalUrl = hasOriginal
+    ? useLegacyAssets
+      ? adminOrderAssetApiPath(params.orderId, "original")
+      : adminOrderItemAssetApiPath(params.orderId, params.lineId, "original")
     : null;
+  const hasArtwork = useLegacyAssets
+    ? Boolean(params.order.assets?.finalArtwork)
+    : true;
+  const artworkDisplayUrl = hasArtwork ? artworkUrl : null;
 
   let designPreview: AdminOrderDesignPreviewDto | null = null;
   let designPreviewUnavailableMessage: string | null = null;
@@ -383,7 +452,7 @@ export async function buildAdminOrderDetailDto(
   if (design) {
     const previewProps = buildPersistedSignPreviewProps(design, artworkUrl);
     const background = await loadBackgroundForRenderAsSignBackground(design.backgroundId);
-    const magnetLabels = magnetSizeLabelsForOrder(order, design);
+    const magnetLabels = magnetSizeLabelsForOrder(params.order, design);
     designPreview = {
       ...previewProps,
       materialLabel: materialLabelFromSnapshot(design.material),
@@ -397,6 +466,71 @@ export async function buildAdminOrderDetailDto(
   } else {
     designPreviewUnavailableMessage = DESIGN_PREVIEW_UNAVAILABLE_MESSAGE;
   }
+
+  return {
+    lineId: params.lineId,
+    quantity: params.quantity,
+    creationMode: params.creationMode,
+    creationModeLabel: adminCreationModeLabel(params.creationMode),
+    designPreview,
+    designPreviewUnavailableMessage,
+    productionAssets: {
+      originalImageUrl: originalUrl,
+      artworkUrl: artworkDisplayUrl,
+    },
+    commercialLineLabel: params.commercialLine?.description ?? null,
+    commercialLineTotalLabel: params.commercialLine
+      ? formatMinorToIlsDisplay(params.commercialLine.lineTotalMinor)
+      : null,
+  };
+}
+
+export async function buildAdminOrderDetailDto(
+  order: OrderLeanForAdmin,
+): Promise<AdminOrderDetailDto> {
+  const orderId = order._id.toString();
+  const resolved = resolveOrderItems({
+    creationMode: order.creationMode as "photo" | "illustration" | undefined,
+    design: order.design,
+    assets: order.assets as Parameters<typeof resolveOrderItems>[0]["assets"],
+    items: order.items as Parameters<typeof resolveOrderItems>[0]["items"],
+  });
+  const first = resolved[0];
+  const creationMode = (first?.creationMode ?? order.creationMode ?? "illustration") as AdminCreationMode;
+
+  const parsedCommercial = parseOrderCommercialSnapshot(order.commercialSnapshot);
+  const commercialByLineId = new Map(
+    parsedCommercial
+      ? commercialSnapshotDisplayLines(parsedCommercial).map((line) => [
+          line.lineId,
+          { description: line.description, lineTotalMinor: line.lineTotalMinor },
+        ] as const)
+      : [],
+  );
+
+  const orderLines: AdminOrderLineDetailDto[] = [];
+  for (const line of resolved) {
+    orderLines.push(
+      await buildAdminOrderLineDetail({
+        orderId,
+        lineId: line.lineId,
+        quantity: line.quantity,
+        creationMode: line.creationMode,
+        designRaw: line.design,
+        order,
+        commercialLine: commercialByLineId.get(line.lineId) ?? null,
+      }),
+    );
+  }
+
+  const primary = orderLines[0];
+  const designPreview = primary?.designPreview ?? null;
+  const designPreviewUnavailableMessage =
+    primary?.designPreviewUnavailableMessage ?? DESIGN_PREVIEW_UNAVAILABLE_MESSAGE;
+  const productionAssets = primary?.productionAssets ?? {
+    originalImageUrl: null,
+    artworkUrl: null,
+  };
 
   return {
     orderId,
@@ -413,12 +547,11 @@ export async function buildAdminOrderDetailDto(
       email: order.customer?.email?.trim() || null,
     },
     customerNotes: order.notes?.trim() ?? "",
+    productSummaryLabel: adminProductSummaryLabel(order),
+    orderLines,
     designPreview,
     designPreviewUnavailableMessage,
-    productionAssets: {
-      originalImageUrl: originalUrl,
-      artworkUrl: order.assets?.finalArtwork ? artworkUrl : null,
-    },
+    productionAssets,
     paymentSummary: buildAdminOrderPaymentSummaryDto(order),
     accountingDocument: buildAdminOrderAccountingDocumentDto(order),
   };

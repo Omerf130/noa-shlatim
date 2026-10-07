@@ -29,19 +29,14 @@ export async function POST(request: Request, context: RouteContext) {
       mode: "payment_init",
     });
 
-    if (auth.order.checkoutKind === "cart_items") {
-      return paymentInitError(
-        "INVALID_DESIGN",
-        400,
-        "תשלום מקוון לעגלה זו ייפתח בהמשך. ניתן לשמור פרטים ומשלוח בדף ההזמנה.",
-      );
-    }
-
     const result = await initiateOrderPayment({
       orderId,
       order: {
         status: auth.order.status,
         design: auth.order.design,
+        creationMode: auth.order.creationMode,
+        assets: auth.order.assets,
+        items: auth.checkoutSource.items,
         customer: auth.order.customer,
         checkoutSelection: auth.order.checkoutSelection,
         commercialSnapshot: auth.order.commercialSnapshot,

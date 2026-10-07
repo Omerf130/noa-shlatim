@@ -1,4 +1,3 @@
-import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
 import { accountingExternalRefForOrder } from "@/lib/orders/accountingDocument";
 import type { ValidatedPayPlusCardDetails } from "@/lib/payplus/payPlusCardDetails";
 import {
@@ -47,7 +46,7 @@ export function formatFinbotDocumentDateFromIso(iso: string): string {
 
 export function buildFinbotIncomeRequest(params: {
   orderId: string;
-  snapshot: OrderCommercialSnapshot;
+  snapshot: unknown;
   customer: { fullName: string; email: string; phone: string };
   card: ValidatedPayPlusCardDetails;
   payplusTransactionUid: string;

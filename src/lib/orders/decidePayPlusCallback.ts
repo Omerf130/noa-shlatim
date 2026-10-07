@@ -1,4 +1,7 @@
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import {
+  commercialSnapshotTotalMinor,
+  parseOrderCommercialSnapshot,
+} from "@/lib/orders/commercialSnapshotAccess";
 import {
   findPaymentAttemptById,
   type PaymentAttemptRecord,
@@ -71,18 +74,17 @@ function validateAmountAndCurrency(
   amount: number,
   currency: string,
 ): PayPlusCallbackDecision | null {
-  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
-  if (!snapshotParsed.success) {
+  const snapshotParsed = parseOrderCommercialSnapshot(order.commercialSnapshot);
+  if (!snapshotParsed) {
     return { kind: "reject", reason: "INVALID_SNAPSHOT" };
   }
-  const snapshot = snapshotParsed.data;
 
-  if (currency !== snapshot.currency) {
+  if (currency !== snapshotParsed.snapshot.currency) {
     return { kind: "reject", reason: "CURRENCY_MISMATCH" };
   }
 
   const minor = payPlusAmountToOrderMinor(amount);
-  if (!minor.ok || minor.minor !== snapshot.totalAmountMinor) {
+  if (!minor.ok || minor.minor !== commercialSnapshotTotalMinor(snapshotParsed)) {
     return { kind: "reject", reason: "AMOUNT_MISMATCH" };
   }
 

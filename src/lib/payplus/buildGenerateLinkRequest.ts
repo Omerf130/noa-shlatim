@@ -1,4 +1,4 @@
-import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
+import { commercialSnapshotTotalMinor, parseOrderCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import { orderMinorToPayPlusAmount } from "@/lib/payplus/amount";
 
 export type PayPlusGenerateLinkCustomer = {
@@ -41,13 +41,17 @@ export function buildPayPlusGenerateLinkRequest(params: {
   siteUrl: string;
   orderId: string;
   attemptId: string;
-  snapshot: OrderCommercialSnapshot;
+  snapshot: unknown;
   customer: PayPlusGenerateLinkCustomer;
 }): PayPlusGenerateLinkRequestBody {
+  const parsed = parseOrderCommercialSnapshot(params.snapshot);
+  if (!parsed) {
+    throw new Error("INVALID_COMMERCIAL_SNAPSHOT");
+  }
   const urls = buildPayPlusReturnUrls(params.siteUrl, params.orderId);
   return {
     payment_page_uid: params.paymentPageUid,
-    amount: orderMinorToPayPlusAmount(params.snapshot.totalAmountMinor),
+    amount: orderMinorToPayPlusAmount(commercialSnapshotTotalMinor(parsed)),
     currency_code: "ILS",
     charge_method: 1,
     sendEmailApproval: false,

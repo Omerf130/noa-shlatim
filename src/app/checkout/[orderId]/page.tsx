@@ -35,7 +35,11 @@ export default async function CheckoutPage({
     const auth = await authorizeCheckoutAccess(orderId);
     dto = await buildCheckoutPageFromOrder({
       orderId,
-      order: auth.checkoutSource,
+      order: {
+        ...auth.checkoutSource,
+        commercialSnapshot: undefined,
+        status: auth.order.status,
+      },
     });
   } catch {
     notFound();

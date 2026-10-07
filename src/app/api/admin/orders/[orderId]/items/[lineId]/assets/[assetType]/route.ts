@@ -1,9 +1,8 @@
 import {
   isAdminOrderAssetAccessAllowed,
   isAdminOrderAssetType,
+  resolveOrderItemAssetPathname,
 } from "@/lib/admin/orders/adminOrderAssets";
-import { resolveOrderItems } from "@/lib/orders/resolveOrderItems";
-import { LEGACY_ORDER_LINE_ID } from "@/lib/orders/orderItemConstants";
 import {
   isAdminApiAuthFailure,
   requireAdminApiSession,
@@ -18,7 +17,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: Promise<{ orderId: string; assetType: string }>;
+  params: Promise<{ orderId: string; lineId: string; assetType: string }>;
 };
 
 export async function GET(_request: Request, context: RouteContext) {
@@ -27,7 +26,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return auth;
   }
 
-  const { orderId, assetType: assetTypeRaw } = await context.params;
+  const { orderId, lineId, assetType: assetTypeRaw } = await context.params;
 
   if (!isAdminOrderAssetType(assetTypeRaw)) {
     return new NextResponse(null, { status: 404 });
@@ -53,20 +52,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return new NextResponse(null, { status: 404 });
   }
 
-  const resolved = resolveOrderItems(order);
-  const legacyOnly =
-    resolved.length === 1 && resolved[0]!.lineId === LEGACY_ORDER_LINE_ID;
-  if (!legacyOnly) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const pathname =
-    assetTypeRaw === "original"
-      ? order.assets?.originalImage?.pathname ?? null
-      : order.assets?.finalArtwork?.pathname ?? null;
-  if (!pathname) {
-    return new NextResponse(null, { status: 404 });
-  }
+  const pathname = resolveOrderItemAssetPathname(order, lineId, assetTypeRaw);
   if (!pathname) {
     return new NextResponse(null, { status: 404 });
   }

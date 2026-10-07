@@ -43,12 +43,6 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
           <section className={styles.previewSection} aria-label={productSectionLabel}>
             <CheckoutProductItems items={dto.items} />
 
-            {dto.paymentDeferredMessage && (
-              <p className={styles.deferredNote} role="status">
-                {dto.paymentDeferredMessage}
-              </p>
-            )}
-
             <CheckoutOrderSummary
               commercial={dto.commercial}
               selectedShippingMethodId={selectedShippingMethodId}

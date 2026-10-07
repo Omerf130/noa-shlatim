@@ -21,19 +21,48 @@ export function CheckoutOrderSummary({
     return null;
   }
 
-  if (commercial.pricingMode === "deferred") {
+  if (commercial.pricingMode === "multi_v2") {
     const selected = selectedShippingMethodId
       ? commercial.shippingMethods.find((m) => m.methodId === selectedShippingMethodId)
       : null;
 
+    const summary = commercial.summary;
+    const shippingLine =
+      commercial.priceSource === "frozen"
+        ? summary.shippingDisplay
+        : selected
+          ? selected.displayAmount
+          : CHECKOUT_SHIPPING_LINE_PENDING;
+
+    let totalLine = summary.totalDisplay;
+    if (commercial.priceSource === "live" && selected) {
+      const totals = computeCheckoutTotals(
+        summary.productAmountMinor,
+        selected.amountMinor,
+      );
+      if (totals.ok) {
+        totalLine = formatMinorForCheckoutDisplay(totals.totalAmountMinor);
+      }
+    }
+
     return (
-      <section className={styles.summary} aria-label="סיכום משלוח">
-        <h2 className={styles.title}>משלוח</h2>
+      <section className={styles.summary} aria-label="סיכום מחיר">
+        <h2 className={styles.title}>סיכום הזמנה</h2>
         <dl className={styles.lines}>
           <div className={styles.line}>
-            <dt>משלוח</dt>
-            <dd>{selected ? selected.displayAmount : CHECKOUT_SHIPPING_LINE_PENDING}</dd>
+            <dt>מוצרים</dt>
+            <dd dir="ltr">{summary.productDisplay}</dd>
           </div>
+          <div className={styles.line}>
+            <dt>משלוח</dt>
+            <dd>{shippingLine}</dd>
+          </div>
+          {totalLine && (
+            <div className={[styles.line, styles.totalLine].join(" ")}>
+              <dt>סה״כ</dt>
+              <dd dir="ltr">{totalLine}</dd>
+            </div>
+          )}
         </dl>
       </section>
     );

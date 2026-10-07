@@ -1,7 +1,7 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
 import { buildCheckoutCommercialForOrder } from "@/lib/checkout/buildCheckoutPageFromOrder";
 import {
-  buildCommercialSummaryForDeferredSelection,
+  buildCommercialSummaryForMultiV2Selection,
   buildCommercialSummaryForSelection,
   resolveSelectedShippingMethod,
 } from "@/lib/checkout/buildCheckoutCommercialView";
@@ -94,7 +94,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const commercial = await buildCheckoutCommercialForOrder({
-      order: auth.checkoutSource,
+      order: {
+        ...auth.checkoutSource,
+        status: auth.order.status,
+        commercialSnapshot: undefined,
+      },
       savedShippingMethodId: parsed.selectedShippingMethodId,
     });
 
@@ -115,16 +119,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const commercialWithSummary =
-      commercial.pricingMode === "deferred"
+      commercial.pricingMode === "multi_v2"
         ? {
             ...commercial,
             selectedShippingMethodId: parsed.selectedShippingMethodId,
             selectionValid: true,
             staleSelectionMessage: null,
-            summary: buildCommercialSummaryForDeferredSelection(
-              commercial,
-              selected,
-            ),
+            summary: buildCommercialSummaryForMultiV2Selection(commercial, selected),
           }
         : {
             ...commercial,

@@ -1,4 +1,4 @@
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { hasValidCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import {
   findPaymentAttemptById,
   isPaymentInitRetryAllowed,
@@ -14,7 +14,7 @@ export type CheckoutPaymentUiState = {
 export function hasPersistedCommercialSnapshot(
   commercialSnapshot: unknown,
 ): boolean {
-  return orderCommercialSnapshotSchema.safeParse(commercialSnapshot).success;
+  return hasValidCommercialSnapshot(commercialSnapshot);
 }
 
 /**

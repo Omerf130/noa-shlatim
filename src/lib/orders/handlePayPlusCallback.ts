@@ -1,7 +1,7 @@
 import { decidePayPlusCallback } from "@/lib/orders/decidePayPlusCallback";
 import { persistPayPlusCallbackDecision } from "@/lib/orders/finalizePaidOrder";
 import type { OrderForPayPlusCallback } from "@/lib/orders/payPlusCallbackTypes";
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { parseOrderCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import type { PayPlusCallbackPayload } from "@/lib/payplus/parseCallbackPayload";
 import { connectDb } from "@/lib/db/connect";
 import { Order } from "@/models/Order";
@@ -24,11 +24,11 @@ function toOrderForCallback(
     payment?: OrderForPayPlusCallback["payment"];
   },
 ): OrderForPayPlusCallback {
-  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(doc.commercialSnapshot);
+  const snapshotParsed = parseOrderCommercialSnapshot(doc.commercialSnapshot);
   return {
     orderId,
     status: doc.status as OrderForPayPlusCallback["status"],
-    commercialSnapshot: snapshotParsed.success ? snapshotParsed.data : null,
+    commercialSnapshot: snapshotParsed ? doc.commercialSnapshot : null,
     payment: doc.payment ?? null,
   };
 }

@@ -6,7 +6,7 @@ import {
 } from "@/lib/notifications/claimOwnerPaidNotification";
 import { buildOwnerPaidOrderEmail } from "@/lib/notifications/buildOwnerPaidOrderEmail";
 import { connectDb } from "@/lib/db/connect";
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { parseOrderCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
 import { validatePersistedCheckoutCustomer } from "@/lib/orders/validatePersistedCheckoutCustomer";
 import { getResendNotificationConfig, type ResendNotificationConfig } from "@/lib/resend/env";
@@ -119,8 +119,8 @@ export async function sendOwnerPaidOrderNotification(params: {
     return { ok: true, outcome: "failed" };
   }
 
-  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
-  if (!snapshotParsed.success) {
+  const snapshotParsed = parseOrderCommercialSnapshot(order.commercialSnapshot);
+  if (!snapshotParsed) {
     await markFailedFn(params.orderId, "חסר snapshot מסחרי");
     return { ok: true, outcome: "failed" };
   }
@@ -148,7 +148,7 @@ export async function sendOwnerPaidOrderNotification(params: {
       phone: order.customer!.phone!.trim(),
       email: order.customer!.email!.trim(),
     },
-    snapshot: snapshotParsed.data,
+    snapshot: order.commercialSnapshot,
     paymentCompletedAtIso,
     adminOrderUrl,
   });

@@ -29,6 +29,16 @@ export type CheckoutShippingMethodOptionDto = {
   instructions: string;
 };
 
+export type CheckoutLineCommercialDto = {
+  lineId: string;
+  quantity: number;
+  description: string;
+  unitPriceMinor: number;
+  lineTotalMinor: number;
+  unitPriceDisplay: string;
+  lineTotalDisplay: string;
+};
+
 export type CheckoutCommercialSummaryDto = {
   productLabel: string;
   productDisplay: string;
@@ -47,6 +57,7 @@ export type CheckoutCommercialDto =
   | {
       available: true;
       pricingMode: "legacy";
+      priceSource: "live" | "frozen";
       product: {
         material: Material;
         materialLabel: string;
@@ -62,7 +73,9 @@ export type CheckoutCommercialDto =
     }
   | {
       available: true;
-      pricingMode: "deferred";
+      pricingMode: "multi_v2";
+      priceSource: "live" | "frozen";
+      lineItems: CheckoutLineCommercialDto[];
       shippingMethods: CheckoutShippingMethodOptionDto[];
       selectedShippingMethodId: string | null;
       selectionValid: boolean;
@@ -74,7 +87,7 @@ function materialLabel(material: Material): string {
   return material === "wood" ? "עץ" : material === "magnet" ? "מגנט" : "—";
 }
 
-function buildSummary(params: {
+export function buildSummary(params: {
   materialLabel: string;
   productAmountMinor: number;
   selectedMethod: CheckoutShippingMethodOptionDto | null;
@@ -237,6 +250,7 @@ export async function buildCheckoutCommercialView(params: {
   return {
     available: true,
     pricingMode: "legacy",
+    priceSource: "live",
     product: {
       material,
       materialLabel: materialLabelText,
@@ -252,18 +266,14 @@ export async function buildCheckoutCommercialView(params: {
   };
 }
 
-export async function buildCheckoutShippingOnlyCommercialView(params: {
-  savedShippingMethodId?: string | null;
-}): Promise<CheckoutCommercialDto> {
+export async function loadCheckoutShippingMethodOptions(): Promise<
+  CheckoutShippingMethodOptionDto[]
+> {
   const doc = await loadStoreSettingsDocument();
   if (!doc) {
-    return {
-      available: false,
-      message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
-    };
+    return [];
   }
-
-  const shippingMethods: CheckoutShippingMethodOptionDto[] = doc.shippingMethods
+  return doc.shippingMethods
     .filter(isShippingMethodCustomerReady)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((m) => ({
@@ -273,64 +283,17 @@ export async function buildCheckoutShippingOnlyCommercialView(params: {
       displayAmount: formatMinorForCheckoutDisplay(m.priceMinor!),
       instructions: m.instructions?.trim() ?? "",
     }));
-
-  if (shippingMethods.length === 0) {
-    return {
-      available: false,
-      message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
-    };
-  }
-
-  const savedId = params.savedShippingMethodId?.trim() || null;
-  const methodById = new Map(shippingMethods.map((m) => [m.methodId, m]));
-
-  let selectionValid = false;
-  let selectedShippingMethodId: string | null = null;
-  let staleSelectionMessage: string | null = null;
-
-  if (savedId && methodById.has(savedId)) {
-    selectionValid = true;
-    selectedShippingMethodId = savedId;
-  } else if (savedId) {
-    selectionValid = false;
-    selectedShippingMethodId = null;
-    staleSelectionMessage = CHECKOUT_STALE_SHIPPING_MESSAGE;
-  }
-
-  const selectedMethod = selectedShippingMethodId
-    ? methodById.get(selectedShippingMethodId) ?? null
-    : null;
-
-  const summary = buildSummary({
-    materialLabel: "משלוח",
-    productAmountMinor: 0,
-    selectedMethod,
-  });
-
-  return {
-    available: true,
-    pricingMode: "deferred",
-    shippingMethods,
-    selectedShippingMethodId,
-    selectionValid,
-    staleSelectionMessage,
-    summary,
-  };
 }
 
-export function buildCommercialSummaryForDeferredSelection(
-  commercial: Extract<CheckoutCommercialDto, { available: true; pricingMode: "deferred" }>,
+export function buildCommercialSummaryForMultiV2Selection(
+  commercial: Extract<CheckoutCommercialDto, { available: true; pricingMode: "multi_v2" }>,
   selectedMethod: CheckoutShippingMethodOptionDto,
 ): CheckoutCommercialSummaryDto {
-  return {
-    productLabel: "—",
-    productDisplay: "—",
-    shippingDisplay: formatMinorForCheckoutDisplay(selectedMethod.amountMinor),
-    totalDisplay: null,
-    productAmountMinor: 0,
-    shippingAmountMinor: selectedMethod.amountMinor,
-    totalAmountMinor: null,
-  };
+  return buildSummary({
+    materialLabel: "מוצרים",
+    productAmountMinor: commercial.summary.productAmountMinor,
+    selectedMethod,
+  });
 }
 
 export function resolveSelectedShippingMethod(

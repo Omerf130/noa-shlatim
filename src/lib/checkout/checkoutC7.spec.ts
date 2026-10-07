@@ -142,12 +142,13 @@ describe("checkout UI wiring", () => {
 });
 
 describe("payment gating", () => {
-  it("CASE 16-17: cart_items blocked at payment init", () => {
+  it("CASE 16-17: cart_items payment init uses multi-item checkout source", () => {
     const route = readFileSync(
       join(repoRoot, "src/app/api/orders/[orderId]/payment/init/route.ts"),
       "utf8",
     );
-    assert.match(route, /checkoutKind === "cart_items"/);
+    assert.doesNotMatch(route, /checkoutKind === "cart_items"/);
+    assert.match(route, /checkoutSource\.items/);
   });
 
   it("CASE 17: client hides payment when canInitiatePayment false", () => {

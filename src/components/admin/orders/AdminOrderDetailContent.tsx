@@ -3,7 +3,10 @@
 import { AdminOrderAccountingSection } from "@/components/admin/orders/AdminOrderAccountingSection";
 import { AdminOrderPreview } from "@/components/admin/orders/AdminOrderPreview";
 import { AdminStatusBadge } from "@/components/admin/ui/AdminStatusBadge";
-import type { AdminOrderDetailDto } from "@/lib/admin/orders/adminOrderDtos";
+import type {
+  AdminOrderDetailDto,
+  AdminOrderLineDetailDto,
+} from "@/lib/admin/orders/adminOrderDtos";
 import styles from "./AdminOrderDetailContent.module.scss";
 
 type AdminOrderDetailContentProps = {
@@ -14,7 +17,117 @@ function fieldValue(value: string | null): string {
   return value?.trim() ? value : "—";
 }
 
+function AdminOrderLineSections({ line, index }: { line: AdminOrderLineDetailDto; index: number }) {
+  const isPhoto = line.creationMode === "photo";
+  const originalAssetCaption = isPhoto ? "תמונת מקור" : "איור מקור";
+  const originalAssetAlt = isPhoto
+    ? "תמונת מקור של הלקוח"
+    : "איור מקור של הלקוח";
+  const originalAssetMissing = isPhoto
+    ? "תמונת מקור אינה זמינה."
+    : "איור מקור אינו זמין.";
+  const headingId = `line-${line.lineId}-heading`;
+
+  return (
+    <article className={styles.lineBlock} aria-labelledby={headingId}>
+      <h2 id={headingId} className={styles.sectionTitle}>
+        שלט {index + 1}
+        {line.quantity > 1 ? ` · ${line.quantity} יח׳` : ""}
+        {line.commercialLineLabel ? ` · ${line.commercialLineLabel}` : ""}
+        {line.commercialLineTotalLabel ? (
+          <span dir="ltr"> · {line.commercialLineTotalLabel}</span>
+        ) : null}
+      </h2>
+      <p className={styles.lineMeta}>
+        סוג יצירה: {line.creationModeLabel}
+      </p>
+
+      {line.designPreview ? (
+        <div className={styles.previewWrap}>
+          <AdminOrderPreview preview={line.designPreview} />
+        </div>
+      ) : (
+        <p className={styles.unavailable} role="status">
+          {line.designPreviewUnavailableMessage}
+        </p>
+      )}
+
+      {line.designPreview && (
+        <dl className={styles.fieldList}>
+          <div>
+            <dt>חומר</dt>
+            <dd>{line.designPreview.materialLabel}</dd>
+          </div>
+          {line.designPreview.materialLabel === "מגנט" &&
+          line.designPreview.magnetSizeName ? (
+            <>
+              <div>
+                <dt>גודל</dt>
+                <dd>{line.designPreview.magnetSizeName}</dd>
+              </div>
+              {line.designPreview.magnetSizeDimensionsLabel ? (
+                <div>
+                  <dt>מידות</dt>
+                  <dd>{line.designPreview.magnetSizeDimensionsLabel}</dd>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          <div>
+            <dt>רקע</dt>
+            <dd>{line.designPreview.backgroundName}</dd>
+          </div>
+          {line.designPreview.styleName && (
+            <div>
+              <dt>סגנון איור</dt>
+              <dd>{line.designPreview.styleName}</dd>
+            </div>
+          )}
+          <div>
+            <dt>טקסט השלט</dt>
+            <dd>{line.designPreview.signText}</dd>
+          </div>
+          <div>
+            <dt>קישוטים</dt>
+            <dd>{line.designPreview.decorationSummary}</dd>
+          </div>
+        </dl>
+      )}
+
+      <div className={styles.assetsGrid}>
+        {line.productionAssets.originalImageUrl ? (
+          <figure className={styles.assetFigure}>
+            <figcaption>{originalAssetCaption}</figcaption>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={line.productionAssets.originalImageUrl}
+              alt={originalAssetAlt}
+              className={styles.assetImg}
+            />
+          </figure>
+        ) : (
+          <p className={styles.missingAsset}>{originalAssetMissing}</p>
+        )}
+        {line.productionAssets.artworkUrl ? (
+          <figure className={styles.assetFigure}>
+            <figcaption>Artwork שנוצר ב-AI</figcaption>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={line.productionAssets.artworkUrl}
+              alt="Artwork שנוצר ב-AI"
+              className={styles.assetImg}
+            />
+          </figure>
+        ) : (
+          <p className={styles.missingAsset}>Artwork אינו זמין.</p>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
+  const multiLine = dto.orderLines.length > 1;
   const isPhoto = dto.creationMode === "photo";
   const originalAssetCaption = isPhoto ? "תמונת מקור" : "איור מקור";
   const originalAssetAlt = isPhoto
@@ -50,23 +163,40 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
             <dt>סוג יצירה</dt>
             <dd>{dto.creationModeLabel}</dd>
           </div>
+          {dto.productSummaryLabel ? (
+            <div>
+              <dt>מוצרים</dt>
+              <dd>{dto.productSummaryLabel}</dd>
+            </div>
+          ) : null}
         </dl>
       </header>
 
-      <section className={styles.section} aria-labelledby="final-sign-heading">
-        <h2 id="final-sign-heading" className={styles.sectionTitle}>
-          השלט כפי שאושר על ידי הלקוח
-        </h2>
-        {dto.designPreview ? (
-          <div className={styles.previewWrap}>
-            <AdminOrderPreview preview={dto.designPreview} />
-          </div>
-        ) : (
-          <p className={styles.unavailable} role="status">
-            {dto.designPreviewUnavailableMessage}
-          </p>
-        )}
-      </section>
+      {multiLine ? (
+        <section className={styles.section} aria-labelledby="lines-heading">
+          <h2 id="lines-heading" className={styles.sectionTitle}>
+            שלטים בהזמנה
+          </h2>
+          {dto.orderLines.map((line, index) => (
+            <AdminOrderLineSections key={line.lineId} line={line} index={index} />
+          ))}
+        </section>
+      ) : (
+        <section className={styles.section} aria-labelledby="final-sign-heading">
+          <h2 id="final-sign-heading" className={styles.sectionTitle}>
+            השלט כפי שאושר על ידי הלקוח
+          </h2>
+          {dto.designPreview ? (
+            <div className={styles.previewWrap}>
+              <AdminOrderPreview preview={dto.designPreview} />
+            </div>
+          ) : (
+            <p className={styles.unavailable} role="status">
+              {dto.designPreviewUnavailableMessage}
+            </p>
+          )}
+        </section>
+      )}
 
       {dto.accountingDocument && (
         <AdminOrderAccountingSection
@@ -163,7 +293,7 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
         </dl>
       </section>
 
-      {dto.designPreview && (
+      {!multiLine && dto.designPreview && (
         <section className={styles.section} aria-labelledby="design-heading">
           <h2 id="design-heading" className={styles.sectionTitle}>
             פרטי עיצוב
@@ -210,39 +340,41 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
         </section>
       )}
 
-      <section className={styles.section} aria-labelledby="assets-heading">
-        <h2 id="assets-heading" className={styles.sectionTitle}>
-          נכסי ייצור
-        </h2>
-        <div className={styles.assetsGrid}>
-          {dto.productionAssets.originalImageUrl ? (
-            <figure className={styles.assetFigure}>
-              <figcaption>{originalAssetCaption}</figcaption>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={dto.productionAssets.originalImageUrl}
-                alt={originalAssetAlt}
-                className={styles.assetImg}
-              />
-            </figure>
-          ) : (
-            <p className={styles.missingAsset}>{originalAssetMissing}</p>
-          )}
-          {dto.productionAssets.artworkUrl ? (
-            <figure className={styles.assetFigure}>
-              <figcaption>Artwork שנוצר ב-AI</figcaption>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={dto.productionAssets.artworkUrl}
-                alt="Artwork שנוצר ב-AI"
-                className={styles.assetImg}
-              />
-            </figure>
-          ) : (
-            <p className={styles.missingAsset}>Artwork אינו זמין.</p>
-          )}
-        </div>
-      </section>
+      {!multiLine && (
+        <section className={styles.section} aria-labelledby="assets-heading">
+          <h2 id="assets-heading" className={styles.sectionTitle}>
+            נכסי ייצור
+          </h2>
+          <div className={styles.assetsGrid}>
+            {dto.productionAssets.originalImageUrl ? (
+              <figure className={styles.assetFigure}>
+                <figcaption>{originalAssetCaption}</figcaption>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={dto.productionAssets.originalImageUrl}
+                  alt={originalAssetAlt}
+                  className={styles.assetImg}
+                />
+              </figure>
+            ) : (
+              <p className={styles.missingAsset}>{originalAssetMissing}</p>
+            )}
+            {dto.productionAssets.artworkUrl ? (
+              <figure className={styles.assetFigure}>
+                <figcaption>Artwork שנוצר ב-AI</figcaption>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={dto.productionAssets.artworkUrl}
+                  alt="Artwork שנוצר ב-AI"
+                  className={styles.assetImg}
+                />
+              </figure>
+            ) : (
+              <p className={styles.missingAsset}>Artwork אינו זמין.</p>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

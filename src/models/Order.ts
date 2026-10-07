@@ -12,23 +12,6 @@ const storedAssetSchema = new Schema(
   { _id: false },
 );
 
-const commercialSnapshotSchema = new Schema(
-  {
-    currency: { type: String, required: true, enum: ["ILS"], default: "ILS" },
-    capturedAt: { type: String, required: true },
-    material: { type: String, required: true, enum: ["wood", "magnet"] },
-    productAmountMinor: { type: Number, required: true },
-    shippingMethodId: { type: String, required: true },
-    shippingLabel: { type: String, required: true },
-    shippingAmountMinor: { type: Number, required: true },
-    totalAmountMinor: { type: Number, required: true },
-    magnetSizeId: { type: String, required: false },
-    magnetSizeName: { type: String, required: false },
-    magnetSizeDimensionsLabel: { type: String, required: false },
-  },
-  { _id: false },
-);
-
 const termsAcceptanceSchema = new Schema(
   {
     termsAccepted: {
@@ -188,7 +171,8 @@ const orderSchema = new Schema(
     checkoutSelection: {
       shippingMethodId: { type: String, required: false },
     },
-    commercialSnapshot: { type: commercialSnapshotSchema, required: false },
+    /** v1 legacy or v2 multi-line — validated in application code. */
+    commercialSnapshot: { type: Schema.Types.Mixed, required: false },
     termsAcceptance: { type: termsAcceptanceSchema, required: false },
     payment: { type: paymentSchema, required: false },
     accountingDocument: { type: accountingDocumentSchema, required: false },

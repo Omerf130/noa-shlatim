@@ -3,43 +3,67 @@ import { describe, it } from "node:test";
 import {
   isAdminOrderAssetAccessAllowed,
   isAdminOrderAssetType,
-  resolveOrderAssetPathname,
+  resolveOrderItemAssetPathname,
 } from "@/lib/admin/orders/adminOrderAssets";
+import { LEGACY_ORDER_LINE_ID } from "@/lib/orders/orderItemConstants";
 
 describe("admin order asset access", () => {
-  const photo = { creationMode: "photo" as const };
+  const photoDesign = {
+    creationMode: "photo" as const,
+    material: "wood" as const,
+    backgroundId: "classic-white",
+    photoIllustrationStyleId: "watercolor-soft",
+    text: { value: "שלום", fontId: "assistant", color: "#000", align: "center" as const },
+    decorations: [],
+  };
 
   it("allows draft", () => {
     assert.equal(
-      isAdminOrderAssetAccessAllowed({ status: "draft", ...photo }),
+      isAdminOrderAssetAccessAllowed({
+        status: "draft",
+        creationMode: "photo",
+        design: photoDesign,
+      }),
       true,
     );
   });
 
   it("allows payment_pending", () => {
     assert.equal(
-      isAdminOrderAssetAccessAllowed({ status: "payment_pending", ...photo }),
+      isAdminOrderAssetAccessAllowed({
+        status: "payment_pending",
+        creationMode: "photo",
+        design: photoDesign,
+      }),
       true,
     );
   });
 
   it("allows paid", () => {
     assert.equal(
-      isAdminOrderAssetAccessAllowed({ status: "paid", ...photo }),
+      isAdminOrderAssetAccessAllowed({
+        status: "paid",
+        creationMode: "photo",
+        design: photoDesign,
+      }),
       true,
     );
   });
 
   it("rejects creating", () => {
     assert.equal(
-      isAdminOrderAssetAccessAllowed({ status: "creating", ...photo }),
+      isAdminOrderAssetAccessAllowed({
+        status: "creating",
+        creationMode: "photo",
+        design: photoDesign,
+      }),
       false,
     );
   });
 
-  it("rejects invalid creation mode", () => {
+  it("rejects order with no resolvable items", () => {
     assert.equal(
-      isAdminOrderAssetAccessAllowed({ status: "draft", creationMode: "unknown" }),
+      isAdminOrderAssetAccessAllowed({ status: "draft", creationMode: "photo" }),
       false,
     );
   });
@@ -51,15 +75,32 @@ describe("admin order asset access", () => {
   });
 
   it("returns null pathname when asset metadata missing", () => {
-    assert.equal(resolveOrderAssetPathname({}, "artwork"), null);
-    assert.equal(resolveOrderAssetPathname({ assets: {} }, "original"), null);
+    assert.equal(
+      resolveOrderItemAssetPathname(
+        { creationMode: "photo", design: photoDesign },
+        LEGACY_ORDER_LINE_ID,
+        "artwork",
+      ),
+      null,
+    );
   });
 
-  it("resolves pathname when asset metadata present", () => {
+  it("resolves legacy pathname when asset metadata present", () => {
     const pathname = "orders/507f1f77bcf86cd799439011/artwork.png";
     assert.equal(
-      resolveOrderAssetPathname(
-        { assets: { finalArtwork: { pathname } } },
+      resolveOrderItemAssetPathname(
+        {
+          creationMode: "photo",
+          design: photoDesign,
+          assets: {
+            finalArtwork: {
+              pathname,
+              contentType: "image/png",
+              sizeBytes: 1,
+            },
+          },
+        },
+        LEGACY_ORDER_LINE_ID,
         "artwork",
       ),
       pathname,

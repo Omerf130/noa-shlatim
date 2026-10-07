@@ -1,7 +1,12 @@
-import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
+import type { ParsedCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
+import {
+  commercialSnapshotTotalMinor,
+  parseOrderCommercialSnapshot,
+} from "@/lib/orders/commercialSnapshotAccess";
 import {
   materialLabelForSnapshot,
   productDescriptionForSnapshot,
+  type OrderCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshot";
 import { ISRAEL_STANDARD_VAT_RATE } from "@/lib/finbot/vatRate";
 
@@ -28,6 +33,7 @@ export function finbotGrossIlsFromPreVatUnitPrice(
 type GrossLinePart = {
   name: string;
   grossMinor: number;
+  quantity: number;
 };
 
 function buildPreVatLinesFromGrossParts(
@@ -50,10 +56,11 @@ function buildPreVatLinesFromGrossParts(
       netMinor = Math.round((totalNetMinor * part.grossMinor) / totalGrossMinor);
       allocatedNetMinor += netMinor;
     }
+    const unitNet = part.quantity > 0 ? netMinor / part.quantity : netMinor;
     return {
       name: part.name,
-      amount: 1,
-      price: round2(netMinor / 100),
+      amount: part.quantity,
+      price: round2(unitNet / 100),
     };
   });
 
@@ -88,38 +95,77 @@ function buildPreVatLinesFromGrossParts(
   throw new Error("FINBOT_VAT_ROUNDING_MISMATCH");
 }
 
-/**
- * Build Finbot line items from frozen snapshot. Pre-VAT unit prices; gross total matches snapshot.
- */
-export function buildFinbotIncomeLineItems(
-  snapshot: OrderCommercialSnapshot,
-  vatRate: number = ISRAEL_STANDARD_VAT_RATE,
-): FinbotIncomeLineItem[] {
+function grossPartsFromV1(snapshot: OrderCommercialSnapshot): GrossLinePart[] {
   const productName =
     snapshot.material === "magnet" && snapshot.magnetSizeName?.trim()
       ? productDescriptionForSnapshot(snapshot)
       : `שלט לדלת בעיצוב אישי — ${materialLabelForSnapshot(snapshot.material)}`;
   const parts: GrossLinePart[] = [
-    {
-      name: productName,
-      grossMinor: snapshot.productAmountMinor,
-    },
+    { name: productName, grossMinor: snapshot.productAmountMinor, quantity: 1 },
   ];
-
   if (snapshot.shippingAmountMinor > 0) {
     parts.push({
       name: snapshot.shippingLabel.trim(),
       grossMinor: snapshot.shippingAmountMinor,
+      quantity: 1,
     });
   }
+  return parts;
+}
 
-  if (snapshot.totalAmountMinor !== parts.reduce((s, p) => s + p.grossMinor, 0)) {
+function grossPartsFromParsed(parsed: ParsedCommercialSnapshot): GrossLinePart[] {
+  if (parsed.version === 1) {
+    return grossPartsFromV1(parsed.snapshot);
+  }
+  const parts: GrossLinePart[] = parsed.snapshot.lines.map((line) => ({
+    name: line.description,
+    grossMinor: line.lineTotalMinor,
+    quantity: line.quantity,
+  }));
+  if (parsed.snapshot.shippingAmountMinor > 0) {
+    parts.push({
+      name: parsed.snapshot.shippingLabel.trim(),
+      grossMinor: parsed.snapshot.shippingAmountMinor,
+      quantity: 1,
+    });
+  }
+  return parts;
+}
+
+/**
+ * Build Finbot line items from frozen snapshot. Pre-VAT unit prices; gross total matches snapshot.
+ */
+export function buildFinbotIncomeLineItems(
+  snapshot: unknown,
+  vatRate: number = ISRAEL_STANDARD_VAT_RATE,
+): FinbotIncomeLineItem[] {
+  const parsed = parseOrderCommercialSnapshot(snapshot);
+  if (!parsed) {
+    throw new Error("INVALID_COMMERCIAL_SNAPSHOT");
+  }
+
+  const parts = grossPartsFromParsed(parsed);
+  const totalGrossMinor = commercialSnapshotTotalMinor(parsed);
+  const sumParts = parts.reduce((s, p) => s + p.grossMinor, 0);
+  if (totalGrossMinor !== sumParts) {
     throw new Error("FINBOT_SNAPSHOT_TOTAL_MISMATCH");
   }
 
-  return buildPreVatLinesFromGrossParts(parts, snapshot.totalAmountMinor, vatRate);
+  return buildPreVatLinesFromGrossParts(parts, totalGrossMinor, vatRate);
 }
 
-export function finbotPaymentSumIlsFromSnapshot(snapshot: OrderCommercialSnapshot): number {
-  return round2(snapshot.totalAmountMinor / 100);
+export function finbotPaymentSumIlsFromSnapshot(snapshot: unknown): number {
+  const parsed = parseOrderCommercialSnapshot(snapshot);
+  if (!parsed) {
+    throw new Error("INVALID_COMMERCIAL_SNAPSHOT");
+  }
+  return round2(commercialSnapshotTotalMinor(parsed) / 100);
+}
+
+/** @deprecated use buildFinbotIncomeLineItems(snapshot unknown) */
+export function buildFinbotIncomeLineItemsFromV1(
+  snapshot: OrderCommercialSnapshot,
+  vatRate: number = ISRAEL_STANDARD_VAT_RATE,
+): FinbotIncomeLineItem[] {
+  return buildFinbotIncomeLineItems(snapshot, vatRate);
 }

@@ -23,6 +23,8 @@ export type CheckoutLineItemDto = {
   hasValidDesign: boolean;
   /** Authenticated API route only — not a private blob path. */
   artworkUrl: string;
+  unitPriceDisplay: string | null;
+  lineTotalDisplay: string | null;
 };
 
 export type CheckoutPageDto = {
@@ -34,7 +36,6 @@ export type CheckoutPageDto = {
   commercial: CheckoutCommercialDto;
   canSaveCommercialCheckout: boolean;
   canInitiatePayment: boolean;
-  paymentDeferredMessage: string | null;
 };
 
 export type CheckoutSaveResponseDto = {

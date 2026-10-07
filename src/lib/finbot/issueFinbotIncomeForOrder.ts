@@ -8,7 +8,7 @@ import {
   setAccountingDocumentUncertain,
 } from "@/lib/finbot/claimAccountingIssuance";
 import { getFinbotConfig } from "@/lib/finbot/env";
-import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
+import { parseOrderCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import { validatePersistedCheckoutCustomer } from "@/lib/orders/validatePersistedCheckoutCustomer";
 import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
 import { fetchPayPlusTransactionViewCardDetails } from "@/lib/payplus/fetchTransactionView";
@@ -133,8 +133,8 @@ export async function issueFinbotIncomeForOrder(params: {
     return failAccounting(FINBOT_NOT_CONFIGURED_ERROR, "FINBOT_NOT_CONFIGURED");
   }
 
-  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
-  if (!snapshotParsed.success) {
+  const snapshotParsed = parseOrderCommercialSnapshot(order.commercialSnapshot);
+  if (!snapshotParsed) {
     return failAccounting("חסר snapshot מסחרי קפוא להזמנה.", "MISSING_SNAPSHOT");
   }
 
@@ -162,7 +162,7 @@ export async function issueFinbotIncomeForOrder(params: {
   try {
     body = buildFinbotIncomeRequest({
       orderId: params.orderId,
-      snapshot: snapshotParsed.data,
+      snapshot: order.commercialSnapshot,
       customer,
       card,
       payplusTransactionUid,

@@ -77,6 +77,18 @@ export function CheckoutProductItems({ items }: CheckoutProductItemsProps) {
                     <dd>{item.quantity}</dd>
                   </div>
                 )}
+                {item.unitPriceDisplay && (
+                  <div className={styles.metaRow}>
+                    <dt>מחיר ליחידה</dt>
+                    <dd dir="ltr">{item.unitPriceDisplay}</dd>
+                  </div>
+                )}
+                {item.lineTotalDisplay && (
+                  <div className={styles.metaRow}>
+                    <dt>סה״כ שורה</dt>
+                    <dd dir="ltr">{item.lineTotalDisplay}</dd>
+                  </div>
+                )}
               </dl>
             </>
           ) : (

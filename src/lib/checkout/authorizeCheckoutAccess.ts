@@ -34,6 +34,7 @@ export type CheckoutSourceOrder = OrderLikeForResolveItems & {
   customer?: { fullName?: string; phone?: string; email?: string };
   notes?: string;
   checkoutSelection?: { shippingMethodId?: string };
+  commercialSnapshot?: unknown;
 };
 
 export type AuthorizedCheckoutOrder = {
@@ -174,6 +175,7 @@ export async function authorizeCheckoutAccess(
     customer: order.customer,
     notes: order.notes,
     checkoutSelection: order.checkoutSelection,
+    commercialSnapshot: order.commercialSnapshot,
   };
 
   return {
