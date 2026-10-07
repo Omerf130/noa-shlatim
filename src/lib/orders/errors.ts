@@ -11,6 +11,7 @@ export type OrderErrorCode =
   | "PAYMENT_NOT_READY"
   | "PAYPLUS_LINK_FAILED"
   | "MATERIAL_UNAVAILABLE"
+  | "MAGNET_SIZE_UNAVAILABLE"
   | "BACKGROUND_UNAVAILABLE";
 
 export class OrderError extends Error {
@@ -39,6 +40,8 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
     "לא הצלחנו לפתוח את דף התשלום. נסו שוב בעוד רגע.",
   MATERIAL_UNAVAILABLE:
     "החומר שבחרתם אינו זמין כרגע. בחרו חומר אחר והמשיכו.",
+  MAGNET_SIZE_UNAVAILABLE:
+    "גודל המגנט שבחרתם אינו זמין. בחרו גודל אחר או חזרו לעריכת השלט.",
   BACKGROUND_UNAVAILABLE:
     "הרקע שבחרתם אינו זמין כרגע. בחרו רקע אחר והמשיכו.",
 };

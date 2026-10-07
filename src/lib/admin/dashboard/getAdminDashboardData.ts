@@ -71,7 +71,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardDto> {
   const storeReadiness = storeDoc
     ? computeStoreSettingsReadiness({
         documentExists: true,
-        pricing: storeDoc.pricing,
+        pricing: { ...storeDoc.pricing, magnetSizes: storeDoc.magnetSizes },
         shippingMethods: storeDoc.shippingMethods,
       })
     : null;

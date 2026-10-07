@@ -45,6 +45,7 @@ export type BuilderAction =
   | { type: "SET_TEXT"; patch: Partial<TextDesign> }
   | { type: "SET_ILLUSTRATION_TRANSFORM"; patch: Partial<IllustrationTransform> }
   | { type: "SET_MATERIAL"; material: Material | null }
+  | { type: "SET_MAGNET_SIZE_ID"; magnetSizeId: string | null }
   | { type: "GO_NEXT" }
   | { type: "GO_BACK" }
   | { type: "GO_TO_STEP"; stepId: BuilderStepId }
@@ -353,10 +354,41 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       };
     }
 
-    case "SET_MATERIAL":
+    case "SET_MATERIAL": {
+      if (action.material === "wood") {
+        return {
+          ...state,
+          design: {
+            ...state.design,
+            material: action.material,
+            magnetSizeId: null,
+          },
+        };
+      }
+      if (action.material === "magnet") {
+        return {
+          ...state,
+          design: {
+            ...state.design,
+            material: action.material,
+            magnetSizeId: null,
+          },
+        };
+      }
       return {
         ...state,
-        design: { ...state.design, material: action.material },
+        design: {
+          ...state.design,
+          material: action.material,
+          magnetSizeId: null,
+        },
+      };
+    }
+
+    case "SET_MAGNET_SIZE_ID":
+      return {
+        ...state,
+        design: { ...state.design, magnetSizeId: action.magnetSizeId },
       };
 
     case "ADD_DECORATION": {

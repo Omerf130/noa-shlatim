@@ -36,7 +36,6 @@ type StoreSettingsFormProps = {
 export function StoreSettingsForm({ dto }: StoreSettingsFormProps) {
   const router = useRouter();
   const [woodPrice, setWoodPrice] = useState(dto.woodPrice);
-  const [magnetPrice, setMagnetPrice] = useState(dto.magnetPrice);
   const [shippingRows, setShippingRows] = useState<ShippingRow[]>(() =>
     rowsFromDto(dto),
   );
@@ -56,7 +55,6 @@ export function StoreSettingsForm({ dto }: StoreSettingsFormProps) {
   const buildPayloadJson = useCallback(() => {
     return JSON.stringify({
       woodPrice,
-      magnetPrice,
       shippingMethods: shippingRows.map((row) => ({
         id: row.id,
         displayName: row.displayName,
@@ -65,7 +63,7 @@ export function StoreSettingsForm({ dto }: StoreSettingsFormProps) {
         instructions: row.instructions,
       })),
     });
-  }, [magnetPrice, shippingRows, woodPrice]);
+  }, [shippingRows, woodPrice]);
 
   const handleSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -147,7 +145,7 @@ export function StoreSettingsForm({ dto }: StoreSettingsFormProps) {
           תמחור
         </h2>
         <p className={styles.sectionLead}>
-          מחיר סופי לשלט לפי חומר. השאר ריק אם טרם הוגדר.
+          מחיר שלט עץ. מחירי מגנט מנוהלים בדף חומרים. השאר ריק אם טרם הוגדר.
         </p>
         <div className={styles.pricingGrid}>
           <label className={styles.field}>
@@ -159,19 +157,6 @@ export function StoreSettingsForm({ dto }: StoreSettingsFormProps) {
               name="woodPriceDisplay"
               value={woodPrice}
               onChange={(e) => setWoodPrice(e.target.value)}
-              dir="ltr"
-              autoComplete="off"
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>מחיר שלט מגנט (₪)</span>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="decimal"
-              name="magnetPriceDisplay"
-              value={magnetPrice}
-              onChange={(e) => setMagnetPrice(e.target.value)}
               dir="ltr"
               autoComplete="off"
             />

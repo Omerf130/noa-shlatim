@@ -6,7 +6,9 @@ import { BuilderProgress } from "@/components/builder/BuilderProgress/BuilderPro
 import { BuilderShell } from "@/components/builder/BuilderShell/BuilderShell";
 import { BuilderStepContent } from "@/components/builder/BuilderStepContent";
 import { useBackgroundCatalogSync } from "@/hooks/useBackgroundCatalogSync";
+import { useMagnetSizeCatalogSync } from "@/hooks/useMagnetSizeCatalogSync";
 import { useMaterialAvailabilitySync } from "@/hooks/useMaterialAvailabilitySync";
+import type { CustomerMagnetCatalog } from "@/lib/store/loadCustomerMagnetCatalog";
 import { revokeObjectUrl } from "@/lib/builder/objectUrl";
 import type { MaterialAvailability } from "@/lib/store/materialAvailability";
 import type { SignBackground } from "@/types/signBackground";
@@ -15,6 +17,7 @@ import { useEffect, useRef } from "react";
 function SignBuilderInner() {
   const { state } = useBuilder();
   useMaterialAvailabilitySync();
+  useMagnetSizeCatalogSync();
   useBackgroundCatalogSync();
   const designRef = useRef(state.design);
 
@@ -44,13 +47,19 @@ function SignBuilderInner() {
 
 type SignBuilderProps = {
   materialAvailability: MaterialAvailability;
+  customerMagnetCatalog: CustomerMagnetCatalog;
   customerBackgrounds: SignBackground[];
 };
 
-export function SignBuilder({ materialAvailability, customerBackgrounds }: SignBuilderProps) {
+export function SignBuilder({
+  materialAvailability,
+  customerMagnetCatalog,
+  customerBackgrounds,
+}: SignBuilderProps) {
   return (
     <BuilderProvider
       materialAvailability={materialAvailability}
+      customerMagnetCatalog={customerMagnetCatalog}
       customerBackgrounds={customerBackgrounds}
     >
       <SignBuilderInner />

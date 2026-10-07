@@ -59,9 +59,13 @@ const decorationSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 });
 
+const magnetSizeIdSchema = z.string().trim().min(1).max(64).optional();
+
 const persistedSignDesignBaseSchema = z.object({
   backgroundId: z.string().trim().min(1),
   material: z.enum(["wood", "magnet"]),
+  /** Required for new magnet orders; optional for legacy persisted designs. */
+  magnetSizeId: magnetSizeIdSchema,
   text: textDesignSchema,
   illustrationTransform: illustrationTransformSchema,
   decorations: z.array(decorationSchema).max(24),

@@ -22,6 +22,9 @@ const commercialSnapshotSchema = new Schema(
     shippingLabel: { type: String, required: true },
     shippingAmountMinor: { type: Number, required: true },
     totalAmountMinor: { type: Number, required: true },
+    magnetSizeId: { type: String, required: false },
+    magnetSizeName: { type: String, required: false },
+    magnetSizeDimensionsLabel: { type: String, required: false },
   },
   { _id: false },
 );

@@ -73,6 +73,8 @@ export type AdminOrderDesignPreviewDto = {
   design: SignDesignState;
   integratedFinalPreview: IntegratedFinalPreviewConfig;
   materialLabel: string;
+  magnetSizeName: string | null;
+  magnetSizeDimensionsLabel: string | null;
   backgroundName: string;
   styleName: string | null;
   signText: string;
@@ -210,6 +212,24 @@ function materialLabelForOrder(order: OrderLeanForAdmin, design: OrderDesignSnap
     return materialLabelFromSnapshot(snapshotMat.data.material);
   }
   return materialLabelFromSnapshot(design?.material);
+}
+
+function magnetSizeLabelsForOrder(
+  order: OrderLeanForAdmin,
+  design: OrderDesignSnapshot | null,
+): { name: string | null; dimensions: string | null } {
+  const snapshotParsed = orderCommercialSnapshotSchema.safeParse(order.commercialSnapshot);
+  if (snapshotParsed.success && snapshotParsed.data.material === "magnet") {
+    const name = snapshotParsed.data.magnetSizeName?.trim();
+    const dimensions = snapshotParsed.data.magnetSizeDimensionsLabel?.trim();
+    if (name) {
+      return { name, dimensions: dimensions || null };
+    }
+  }
+  if (design?.material === "magnet" && design.magnetSizeId) {
+    return { name: design.magnetSizeId, dimensions: null };
+  }
+  return { name: null, dimensions: null };
 }
 
 function findSucceededPaymentAttempt(order: OrderLeanForAdmin) {
@@ -363,9 +383,12 @@ export async function buildAdminOrderDetailDto(
   if (design) {
     const previewProps = buildPersistedSignPreviewProps(design, artworkUrl);
     const background = await loadBackgroundForRenderAsSignBackground(design.backgroundId);
+    const magnetLabels = magnetSizeLabelsForOrder(order, design);
     designPreview = {
       ...previewProps,
       materialLabel: materialLabelFromSnapshot(design.material),
+      magnetSizeName: magnetLabels.name,
+      magnetSizeDimensionsLabel: magnetLabels.dimensions,
       backgroundName: background?.name ?? "—",
       styleName: styleNameFromOrderDesign(design),
       signText: design.text.value,

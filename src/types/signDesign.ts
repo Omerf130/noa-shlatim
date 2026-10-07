@@ -85,6 +85,7 @@ export type SignDesignState = {
   illustrationTransform: IllustrationTransform;
   decorations: DecorationInstance[];
   material: Material | null;
+  magnetSizeId: string | null;
 };
 
 export const defaultTextColor: TextColor = { kind: "solid", hex: "#1f1b18" };
@@ -115,4 +116,5 @@ export const initialSignDesignState: SignDesignState = {
   illustrationTransform: defaultIllustrationTransform,
   decorations: [],
   material: null,
+  magnetSizeId: null,
 };

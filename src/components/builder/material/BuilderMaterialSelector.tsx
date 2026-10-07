@@ -3,8 +3,9 @@
 import { useBuilder } from "@/components/builder/BuilderContext";
 import {
   BUILDER_MATERIALS_UNAVAILABLE_MESSAGE,
-  listEnabledMaterials,
+  listPurchasableMaterials,
 } from "@/lib/builder/materialSelection";
+import { MagnetSizeSelector } from "@/components/builder/material/MagnetSizeSelector";
 import type { Material } from "@/types/signDesign";
 import type { ReactNode } from "react";
 
@@ -44,9 +45,13 @@ export function BuilderMaterialSelector({
   unavailableClass,
   children,
 }: BuilderMaterialSelectorProps) {
-  const { state, dispatch, materialAvailability } = useBuilder();
+  const { state, dispatch, materialAvailability, customerMagnetCatalog } =
+    useBuilder();
   const selected = state.design.material;
-  const enabledKeys = listEnabledMaterials(materialAvailability);
+  const enabledKeys = listPurchasableMaterials(
+    materialAvailability,
+    customerMagnetCatalog.magnetPurchasable,
+  );
   const visible = options.filter((opt) => enabledKeys.includes(opt.value));
 
   if (enabledKeys.length === 0) {
@@ -89,6 +94,13 @@ export function BuilderMaterialSelector({
           );
         })}
       </div>
+      <MagnetSizeSelector
+        rowClass={rowClass}
+        cardClass={cardClass}
+        selectedCardClass={selectedCardClass}
+        titleClass={titleClass}
+        descClass={descClass}
+      />
       {children}
     </>
   );

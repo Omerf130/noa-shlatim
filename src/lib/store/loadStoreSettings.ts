@@ -2,6 +2,7 @@ import { connectDb } from "@/lib/db/connect";
 import {
   STORE_SETTINGS_KEY,
   StoreSettings,
+  type StoreMagnetSize,
   type StoreShippingMethod,
 } from "@/models/StoreSettings";
 
@@ -14,6 +15,7 @@ export type StoreSettingsLean = {
     magnetEnabled?: boolean | null;
   };
   shippingMethods: StoreShippingMethod[];
+  magnetSizes: StoreMagnetSize[];
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -28,6 +30,9 @@ export async function loadStoreSettingsDocument(): Promise<StoreSettingsLean | n
   const methods = [...(doc.shippingMethods ?? [])].sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
   );
+  const magnetSizes = [...(doc.magnetSizes ?? [])].sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+  );
 
   return {
     currency: "ILS",
@@ -38,6 +43,7 @@ export async function loadStoreSettingsDocument(): Promise<StoreSettingsLean | n
       magnetEnabled: doc.pricing?.magnetEnabled !== false,
     },
     shippingMethods: methods as StoreShippingMethod[],
+    magnetSizes: magnetSizes as StoreMagnetSize[],
     createdAt: doc.createdAt ? new Date(doc.createdAt) : undefined,
     updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : undefined,
   };
@@ -49,4 +55,12 @@ export async function loadExistingShippingIds(): Promise<Set<string>> {
     return new Set();
   }
   return new Set(doc.shippingMethods.map((m) => m.id));
+}
+
+export async function loadExistingMagnetSizeIds(): Promise<Set<string>> {
+  const doc = await loadStoreSettingsDocument();
+  if (!doc) {
+    return new Set();
+  }
+  return new Set(doc.magnetSizes.map((s) => s.id));
 }

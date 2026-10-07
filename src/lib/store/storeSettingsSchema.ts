@@ -19,7 +19,6 @@ export type ShippingMethodInput = z.infer<typeof shippingMethodInputSchema>;
 
 export const storeSettingsSaveSchema = z.object({
   woodPrice: z.string(),
-  magnetPrice: z.string(),
   shippingMethods: z.array(shippingMethodInputSchema).max(MAX_SHIPPING_METHODS),
 });
 
@@ -27,7 +26,6 @@ export type StoreSettingsSaveInput = z.infer<typeof storeSettingsSaveSchema>;
 
 export type NormalizedStoreSettingsSave = {
   woodPriceMinor: number | null;
-  magnetPriceMinor: number | null;
   shippingMethods: Array<{
     id: string;
     displayName: string;
@@ -93,9 +91,6 @@ export function normalizeStoreSettingsSave(
   const wood = parseOptionalPrice(input.woodPrice, "מחיר שלט עץ");
   if (!wood.ok) return { ok: false, message: wood.message, field: "woodPrice" };
 
-  const magnet = parseOptionalPrice(input.magnetPrice, "מחיר שלט מגנט");
-  if (!magnet.ok) return { ok: false, message: magnet.message, field: "magnetPrice" };
-
   const seenIds = new Set<string>();
   const normalizedMethods: NormalizedStoreSettingsSave["shippingMethods"] = [];
 
@@ -153,7 +148,6 @@ export function normalizeStoreSettingsSave(
     ok: true,
     data: {
       woodPriceMinor: wood.minor,
-      magnetPriceMinor: magnet.minor,
       shippingMethods: normalizedMethods,
     },
   };

@@ -12,21 +12,35 @@ export function listEnabledMaterials(availability: MaterialAvailability): Materi
   );
 }
 
+export function listPurchasableMaterials(
+  availability: MaterialAvailability,
+  magnetPurchasable: boolean,
+): Material[] {
+  return ORDER.filter((key) => {
+    if (key === "wood") {
+      return availability.woodEnabled;
+    }
+    return availability.magnetEnabled && magnetPurchasable;
+  });
+}
+
 export function isMaterialSelectionValid(
   material: Material | null,
   availability: MaterialAvailability,
+  magnetPurchasable: boolean,
 ): boolean {
   if (!material) {
     return false;
   }
-  return listEnabledMaterials(availability).includes(material);
+  return listPurchasableMaterials(availability, magnetPurchasable).includes(material);
 }
 
 export function resolveSyncedMaterialSelection(
   current: Material | null,
   availability: MaterialAvailability,
+  magnetPurchasable: boolean,
 ): Material | null {
-  const enabled = listEnabledMaterials(availability);
+  const enabled = listPurchasableMaterials(availability, magnetPurchasable);
   if (enabled.length === 0) {
     return null;
   }

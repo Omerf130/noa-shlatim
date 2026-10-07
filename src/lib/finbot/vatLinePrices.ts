@@ -1,5 +1,8 @@
 import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
-import { materialLabelForSnapshot } from "@/lib/orders/commercialSnapshot";
+import {
+  materialLabelForSnapshot,
+  productDescriptionForSnapshot,
+} from "@/lib/orders/commercialSnapshot";
 import { ISRAEL_STANDARD_VAT_RATE } from "@/lib/finbot/vatRate";
 
 export type FinbotIncomeLineItem = {
@@ -92,10 +95,13 @@ export function buildFinbotIncomeLineItems(
   snapshot: OrderCommercialSnapshot,
   vatRate: number = ISRAEL_STANDARD_VAT_RATE,
 ): FinbotIncomeLineItem[] {
-  const materialLabel = materialLabelForSnapshot(snapshot.material);
+  const productName =
+    snapshot.material === "magnet" && snapshot.magnetSizeName?.trim()
+      ? productDescriptionForSnapshot(snapshot)
+      : `שלט לדלת בעיצוב אישי — ${materialLabelForSnapshot(snapshot.material)}`;
   const parts: GrossLinePart[] = [
     {
-      name: `שלט לדלת בעיצוב אישי — ${materialLabel}`,
+      name: productName,
       grossMinor: snapshot.productAmountMinor,
     },
   ];

@@ -34,6 +34,7 @@ export function isDesignWorkspaceComplete(design: SignDesignState): boolean {
   if (!design.backgroundId) return false;
   if (design.text.value.trim().length < 1) return false;
   if (!design.material) return false;
+  if (design.material === "magnet" && !design.magnetSizeId) return false;
   return true;
 }
 
@@ -78,6 +79,9 @@ export function stepValidationHint(
       if (!design.backgroundId) missing.push("רקע");
       if (design.text.value.trim().length < 1) missing.push("טקסט");
       if (!design.material) missing.push("חומר");
+      if (design.material === "magnet" && !design.magnetSizeId) {
+        missing.push("גודל מגנט");
+      }
       if (missing.length > 0) {
         return `השלימו: ${missing.join(" · ")}`;
       }

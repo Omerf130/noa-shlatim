@@ -4,7 +4,9 @@ import {
   setMaterialEnabled,
   type SetMaterialEnabledState,
 } from "@/app/admin/(protected)/materials/actions";
+import { MagnetSizesEditor } from "@/components/admin/materials/MagnetSizesEditor";
 import type { AdminMaterialsPageDto } from "@/lib/store/adminMaterialsDto";
+import Link from "next/link";
 import { useActionState, useCallback, useTransition } from "react";
 import styles from "./AdminMaterialsCards.module.scss";
 
@@ -52,11 +54,23 @@ export function AdminMaterialsCards({ dto }: AdminMaterialsCardsProps) {
                 />
                 <div className={styles.cardCopy}>
                   <h2 className={styles.cardTitle}>{item.displayName}</h2>
-                  <p className={styles.price} dir="ltr">
-                    {item.priceLabel}
-                  </p>
-                  {!item.priceConfigured ? (
-                    <p className={styles.priceHint}>מחיר לא הוגדר — הגדרות חנות</p>
+                  <p className={styles.price}>{item.priceLabel}</p>
+                  {item.priceSubLabel ? (
+                    <p className={styles.priceSub} dir="ltr">
+                      {item.priceSubLabel}
+                    </p>
+                  ) : null}
+                  {item.priceHint ? (
+                    <p className={styles.priceHint}>
+                      {item.key === "wood" ? (
+                        <>
+                          {item.priceHint} —{" "}
+                          <Link href="/admin/store-settings">הגדרות חנות</Link>
+                        </>
+                      ) : (
+                        item.priceHint
+                      )}
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -80,6 +94,19 @@ export function AdminMaterialsCards({ dto }: AdminMaterialsCardsProps) {
                   {item.enabled ? "השבתה" : "הפעלה"}
                 </button>
               </div>
+
+              {item.key === "magnet" ? (
+                <MagnetSizesEditor
+                  key={dto.magnetSizes
+                    .map(
+                      (s) =>
+                        `${s.id}|${s.name}|${s.dimensionsLabel}|${s.price}|${s.enabled}`,
+                    )
+                    .join(";;")}
+                  initialRows={dto.magnetSizes}
+                  legacyMagnetPricingOnly={dto.legacyMagnetPricingOnly}
+                />
+              ) : null}
             </article>
           </li>
         ))}

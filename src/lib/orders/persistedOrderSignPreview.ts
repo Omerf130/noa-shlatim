@@ -23,6 +23,8 @@ export function photoOrderDesignToSignDesignState(
     illustrationTransform: snapshot.illustrationTransform,
     decorations: snapshot.decorations,
     material: snapshot.material,
+    magnetSizeId:
+      snapshot.material === "magnet" ? (snapshot.magnetSizeId ?? null) : null,
   };
 }
 
@@ -43,6 +45,8 @@ export function illustrationOrderDesignToSignDesignState(
     illustrationTransform: snapshot.illustrationTransform,
     decorations: snapshot.decorations,
     material: snapshot.material,
+    magnetSizeId:
+      snapshot.material === "magnet" ? (snapshot.magnetSizeId ?? null) : null,
   };
 }
 

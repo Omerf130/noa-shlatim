@@ -7,10 +7,18 @@ import {
 import { formatMinorForCheckoutDisplay } from "@/lib/money/ils";
 import { computeDraftOrderCommercialAmounts } from "@/lib/orders/computeOrderCommercial";
 import { orderDesignSchema } from "@/lib/orders/orderDesignSchema";
+import { formatCheckoutProductLabel } from "@/lib/checkout/formatProductLabelForCheckout";
 import {
-  resolveMaterialPriceMinor,
-  resolveStoreConfigurationForCheckout,
-} from "@/lib/store/resolveStoreConfigurationForCheckout";
+  findMagnetSizeInCatalog,
+  MagnetSizeNotAvailableError,
+  resolveMagnetSizeCatalog,
+} from "@/lib/store/magnetSizes";
+import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
+import { resolveProductPriceMinor } from "@/lib/store/resolveProductPriceMinor";
+import {
+  isPricingReady,
+  isShippingMethodCustomerReady,
+} from "@/lib/store/storeSettingsCompleteness";
 import type { Material } from "@/types/signDesign";
 
 export type CheckoutShippingMethodOptionDto = {
@@ -41,6 +49,7 @@ export type CheckoutCommercialDto =
       product: {
         material: Material;
         materialLabel: string;
+        productDescription: string;
         amountMinor: number;
         displayAmount: string;
       };
@@ -114,31 +123,44 @@ export async function buildCheckoutCommercialView(params: {
   }
 
   const material = designParsed.data.material;
-  const storeConfig = await resolveStoreConfigurationForCheckout();
-  if (!storeConfig.ok) {
+  const doc = await loadStoreSettingsDocument();
+  if (!doc || !isPricingReady({ ...doc.pricing, magnetSizes: doc.magnetSizes })) {
     return {
       available: false,
       message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
     };
   }
 
+  const pricingInput = { ...doc.pricing, magnetSizes: doc.magnetSizes };
   let productAmountMinor: number;
   try {
-    productAmountMinor = resolveMaterialPriceMinor(storeConfig, material);
-  } catch {
+    productAmountMinor = resolveProductPriceMinor({
+      pricing: pricingInput,
+      material,
+      magnetSizeId: designParsed.data.magnetSizeId,
+    });
+  } catch (err) {
+    if (err instanceof MagnetSizeNotAvailableError) {
+      return {
+        available: false,
+        message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
+      };
+    }
     return {
       available: false,
       message: CHECKOUT_COMMERCIAL_UNAVAILABLE_MESSAGE,
     };
   }
 
-  const shippingMethods: CheckoutShippingMethodOptionDto[] =
-    storeConfig.shippingMethods.map((m) => ({
-      methodId: m.methodId,
-      displayName: m.displayName,
-      amountMinor: m.priceMinor,
-      displayAmount: formatMinorForCheckoutDisplay(m.priceMinor),
-      instructions: m.instructions,
+  const shippingMethods: CheckoutShippingMethodOptionDto[] = doc.shippingMethods
+    .filter(isShippingMethodCustomerReady)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((m) => ({
+      methodId: m.id,
+      displayName: m.displayName.trim(),
+      amountMinor: m.priceMinor!,
+      displayAmount: formatMinorForCheckoutDisplay(m.priceMinor!),
+      instructions: m.instructions?.trim() ?? "",
     }));
 
   const savedId = params.savedShippingMethodId?.trim() || null;
@@ -162,8 +184,18 @@ export async function buildCheckoutCommercialView(params: {
     : null;
 
   const materialLabelText = materialLabel(material);
+  const magnetCatalog = resolveMagnetSizeCatalog(pricingInput);
+  const selectedMagnetSize =
+    material === "magnet" && designParsed.data.magnetSizeId
+      ? findMagnetSizeInCatalog(magnetCatalog, designParsed.data.magnetSizeId)
+      : null;
+  const productDescription = formatCheckoutProductLabel({
+    material,
+    magnetSizeName: selectedMagnetSize?.name,
+    magnetSizeDimensionsLabel: selectedMagnetSize?.dimensionsLabel,
+  });
   let summary = buildSummary({
-    materialLabel: materialLabelText,
+    materialLabel: productDescription,
     productAmountMinor,
     selectedMethod,
   });
@@ -175,8 +207,13 @@ export async function buildCheckoutCommercialView(params: {
     });
     if (computed.ok) {
       const { amounts } = computed;
+      const desc = formatCheckoutProductLabel({
+        material: amounts.material,
+        magnetSizeName: amounts.magnetSizeName,
+        magnetSizeDimensionsLabel: amounts.magnetSizeDimensionsLabel,
+      });
       summary = {
-        productLabel: materialLabelText,
+        productLabel: desc,
         productDisplay: formatMinorForCheckoutDisplay(amounts.productAmountMinor),
         shippingDisplay: formatMinorForCheckoutDisplay(amounts.shippingAmountMinor),
         totalDisplay: formatMinorForCheckoutDisplay(amounts.totalAmountMinor),
@@ -192,6 +229,7 @@ export async function buildCheckoutCommercialView(params: {
     product: {
       material,
       materialLabel: materialLabelText,
+      productDescription,
       amountMinor: productAmountMinor,
       displayAmount: formatMinorForCheckoutDisplay(productAmountMinor),
     },
@@ -215,7 +253,7 @@ export function buildCommercialSummaryForSelection(
   selectedMethod: CheckoutShippingMethodOptionDto,
 ): CheckoutCommercialSummaryDto {
   return buildSummary({
-    materialLabel: commercial.product.materialLabel,
+    materialLabel: commercial.product.productDescription,
     productAmountMinor: commercial.product.amountMinor,
     selectedMethod,
   });

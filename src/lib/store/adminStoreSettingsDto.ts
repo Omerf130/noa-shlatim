@@ -18,7 +18,6 @@ export type AdminStoreSettingsDto = {
   showNotConfiguredBanner: boolean;
   updatedAtLabel: string | null;
   woodPrice: string;
-  magnetPrice: string;
   shippingMethods: AdminShippingMethodDto[];
 };
 
@@ -36,7 +35,7 @@ export function buildAdminStoreSettingsDto(
   const documentExists = doc !== null;
   const readiness = computeStoreSettingsReadiness({
     documentExists,
-    pricing: doc?.pricing,
+    pricing: doc ? { ...doc.pricing, magnetSizes: doc.magnetSizes } : null,
     shippingMethods: doc?.shippingMethods,
   });
 
@@ -45,7 +44,6 @@ export function buildAdminStoreSettingsDto(
     showNotConfiguredBanner: !documentExists,
     updatedAtLabel: formatUpdatedAt(doc?.updatedAt),
     woodPrice: formatMinorToIlsInput(doc?.pricing?.woodPriceMinor),
-    magnetPrice: formatMinorToIlsInput(doc?.pricing?.magnetPriceMinor),
     shippingMethods: (doc?.shippingMethods ?? []).map((m) => ({
       id: m.id,
       displayName: m.displayName ?? "",

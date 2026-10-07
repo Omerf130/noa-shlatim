@@ -14,6 +14,18 @@ const shippingMethodSchema = new Schema(
   { _id: false },
 );
 
+const magnetSizeSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true, default: "" },
+    dimensionsLabel: { type: String, required: false, default: "" },
+    priceMinor: { type: Number, required: false, default: null },
+    enabled: { type: Boolean, required: true, default: true },
+    sortOrder: { type: Number, required: true, default: 0 },
+  },
+  { _id: false },
+);
+
 const storeSettingsSchema = new Schema(
   {
     singletonKey: {
@@ -37,6 +49,10 @@ const storeSettingsSchema = new Schema(
     },
     shippingMethods: {
       type: [shippingMethodSchema],
+      default: [],
+    },
+    magnetSizes: {
+      type: [magnetSizeSchema],
       default: [],
     },
   },
@@ -70,6 +86,15 @@ export type StoreShippingMethod = {
   enabled: boolean;
   priceMinor: number | null;
   instructions: string;
+  sortOrder: number;
+};
+
+export type StoreMagnetSize = {
+  id: string;
+  name: string;
+  dimensionsLabel: string;
+  priceMinor: number | null;
+  enabled: boolean;
   sortOrder: number;
 };
 

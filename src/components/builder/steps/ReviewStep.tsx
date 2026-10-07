@@ -8,7 +8,7 @@ import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import styles from "./ReviewStep.module.scss";
 
 export function ReviewStep() {
-  const { state, dispatch, customerBackgrounds } = useBuilder();
+  const { state, dispatch, customerBackgrounds, customerMagnetCatalog } = useBuilder();
   const { design, ui } = state;
   const {
     submitDraftOrder,
@@ -32,6 +32,10 @@ export function ReviewStep() {
   const bgName = findCustomerBackground(customerBackgrounds, design.backgroundId)?.name;
   const materialLabel =
     design.material === "wood" ? "עץ" : design.material === "magnet" ? "מגנט" : "—";
+  const selectedMagnetSize =
+    design.material === "magnet" && design.magnetSizeId
+      ? customerMagnetCatalog.sizes.find((s) => s.id === design.magnetSizeId)
+      : null;
 
   const isPhoto = design.creationMode === "photo";
   return (
@@ -73,6 +77,19 @@ export function ReviewStep() {
           <dt>חומר</dt>
           <dd>{materialLabel}</dd>
         </div>
+        {selectedMagnetSize ? (
+          <div className={styles.summaryItem}>
+            <dt>גודל מגנט</dt>
+            <dd>
+              {selectedMagnetSize.name}
+              {selectedMagnetSize.dimensionsLabel
+                ? ` · ${selectedMagnetSize.dimensionsLabel}`
+                : ""}
+              {" · "}
+              <span dir="ltr">{selectedMagnetSize.displayPrice}</span>
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       <div className={styles.actions}>

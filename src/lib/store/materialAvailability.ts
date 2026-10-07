@@ -1,3 +1,9 @@
+import {
+  isMagnetPurchasable,
+  MagnetSizeNotAvailableError,
+  resolveMagnetSizePriceMinor,
+} from "@/lib/store/magnetSizes";
+import type { StoreMagnetSize } from "@/models/StoreSettings";
 import type { Material } from "@/types/signDesign";
 
 export type StoreMaterialPricingLike = {
@@ -5,6 +11,7 @@ export type StoreMaterialPricingLike = {
   magnetPriceMinor?: number | null;
   woodEnabled?: boolean | null;
   magnetEnabled?: boolean | null;
+  magnetSizes?: StoreMagnetSize[] | null;
 };
 
 export type MaterialAvailability = {
@@ -58,10 +65,27 @@ export function isPricingReady(pricing: StoreMaterialPricingLike | undefined | n
   if (availability.woodEnabled && !isValidPriceMinor(pricing.woodPriceMinor)) {
     return false;
   }
-  if (availability.magnetEnabled && !isValidPriceMinor(pricing.magnetPriceMinor)) {
+  if (availability.magnetEnabled && !isMagnetPurchasable(pricing)) {
     return false;
   }
   return true;
+}
+
+export function assertMagnetSizeForNewOrder(
+  magnetSizeId: string | undefined | null,
+  pricing: StoreMaterialPricingLike | undefined | null,
+): void {
+  try {
+    resolveMagnetSizePriceMinor(
+      { ...pricing, magnetSizes: pricing?.magnetSizes },
+      magnetSizeId ?? "",
+    );
+  } catch (err) {
+    if (err instanceof MagnetSizeNotAvailableError) {
+      throw err;
+    }
+    throw new MagnetSizeNotAvailableError();
+  }
 }
 
 export function assertMaterialEnabledForNewOrder(

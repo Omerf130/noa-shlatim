@@ -173,6 +173,21 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
               <dt>חומר</dt>
               <dd>{dto.designPreview.materialLabel}</dd>
             </div>
+            {dto.designPreview.materialLabel === "מגנט" &&
+            dto.designPreview.magnetSizeName ? (
+              <>
+                <div>
+                  <dt>גודל</dt>
+                  <dd>{dto.designPreview.magnetSizeName}</dd>
+                </div>
+                {dto.designPreview.magnetSizeDimensionsLabel ? (
+                  <div>
+                    <dt>מידות</dt>
+                    <dd>{dto.designPreview.magnetSizeDimensionsLabel}</dd>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
             <div>
               <dt>רקע</dt>
               <dd>{dto.designPreview.backgroundName}</dd>

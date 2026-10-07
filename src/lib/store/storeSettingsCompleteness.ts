@@ -1,4 +1,4 @@
-import type { StoreShippingMethod } from "@/models/StoreSettings";
+import type { StoreMagnetSize, StoreShippingMethod } from "@/models/StoreSettings";
 
 export type StoreSettingsReadiness = {
   documentExists: boolean;
@@ -12,6 +12,7 @@ export type PricingLike = {
   magnetPriceMinor?: number | null;
   woodEnabled?: boolean | null;
   magnetEnabled?: boolean | null;
+  magnetSizes?: StoreMagnetSize[] | null;
 };
 
 import { isPricingReady } from "@/lib/store/materialAvailability";

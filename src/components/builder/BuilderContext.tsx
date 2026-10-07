@@ -5,6 +5,7 @@ import {
   initialBuilderState,
   type BuilderAction,
 } from "@/lib/builder/builderReducer";
+import type { CustomerMagnetCatalog } from "@/lib/store/loadCustomerMagnetCatalog";
 import type { MaterialAvailability } from "@/lib/store/materialAvailability";
 import type { BuilderState } from "@/types/builder";
 import type { SignBackground } from "@/types/signBackground";
@@ -21,6 +22,7 @@ import {
 type BuilderContextValue = {
   state: BuilderState;
   materialAvailability: MaterialAvailability;
+  customerMagnetCatalog: CustomerMagnetCatalog;
   customerBackgrounds: SignBackground[];
   dispatch: React.Dispatch<BuilderAction>;
   setSourcePhotoFile: (file: File | null) => void;
@@ -34,12 +36,14 @@ export const BuilderContext = createContext<BuilderContextValue | null>(null);
 type BuilderProviderProps = {
   children: ReactNode;
   materialAvailability: MaterialAvailability;
+  customerMagnetCatalog: CustomerMagnetCatalog;
   customerBackgrounds: SignBackground[];
 };
 
 export function BuilderProvider({
   children,
   materialAvailability,
+  customerMagnetCatalog,
   customerBackgrounds,
 }: BuilderProviderProps) {
   const [state, dispatch] = useReducer(builderReducer, initialBuilderState);
@@ -62,6 +66,7 @@ export function BuilderProvider({
     () => ({
       state,
       materialAvailability,
+      customerMagnetCatalog,
       customerBackgrounds,
       dispatch,
       setSourcePhotoFile,
@@ -72,6 +77,7 @@ export function BuilderProvider({
     [
       state,
       materialAvailability,
+      customerMagnetCatalog,
       customerBackgrounds,
       setSourcePhotoFile,
       getSourcePhotoFile,

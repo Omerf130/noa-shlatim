@@ -1,4 +1,6 @@
+import { listCustomerMagnetSizes } from "@/lib/store/magnetSizes";
 import { normalizeMaterialAvailability } from "@/lib/store/materialAvailability";
+import { resolveProductPriceMinor } from "@/lib/store/resolveProductPriceMinor";
 import {
   isPricingReady,
   isShippingMethodCustomerReady,
@@ -38,7 +40,7 @@ export async function resolveStoreConfigurationForCheckout(): Promise<StoreConfi
     return { ok: false, reason: "NOT_CONFIGURED" };
   }
 
-  if (!isPricingReady(doc.pricing)) {
+  if (!isPricingReady({ ...doc.pricing, magnetSizes: doc.magnetSizes })) {
     return { ok: false, reason: "PRICING_INCOMPLETE" };
   }
 
@@ -51,12 +53,12 @@ export async function resolveStoreConfigurationForCheckout(): Promise<StoreConfi
   ) {
     materialPrices.wood = doc.pricing.woodPriceMinor;
   }
-  if (
-    availability.magnetEnabled &&
-    doc.pricing.magnetPriceMinor != null &&
-    Number.isInteger(doc.pricing.magnetPriceMinor)
-  ) {
-    materialPrices.magnet = doc.pricing.magnetPriceMinor;
+  const magnetCatalog = listCustomerMagnetSizes({
+    ...doc.pricing,
+    magnetSizes: doc.magnetSizes,
+  });
+  if (availability.magnetEnabled && magnetCatalog.length === 1) {
+    materialPrices.magnet = magnetCatalog[0]!.priceMinor!;
   }
 
   const shippingMethods = doc.shippingMethods
@@ -81,7 +83,7 @@ export async function resolveStoreConfigurationForCheckout(): Promise<StoreConfi
   };
 }
 
-/** Resolve product unit price for a material (server-only, future checkout). */
+/** @deprecated Prefer resolveProductPriceMinor with full design context for magnet. */
 export function resolveMaterialPriceMinor(
   config: Extract<StoreConfigurationForCheckout, { ok: true }>,
   material: Material,
@@ -92,3 +94,5 @@ export function resolveMaterialPriceMinor(
   }
   return price;
 }
+
+export { resolveProductPriceMinor };

@@ -354,6 +354,26 @@
   color: var(--color-text-muted);
 }
 
+.magnetSizesBlock {
+  margin-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.magnetSizesIntro {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.magnetSizePrice {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .materialUnavailable {
   padding: var(--space-4);
   border-radius: var(--radius-md);

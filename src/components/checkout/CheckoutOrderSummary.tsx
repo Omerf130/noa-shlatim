@@ -45,7 +45,7 @@ export function CheckoutOrderSummary({
       <h2 className={styles.title}>סיכום הזמנה</h2>
       <dl className={styles.lines}>
         <div className={styles.line}>
-          <dt>שלט</dt>
+          <dt>{commercial.product.productDescription}</dt>
           <dd dir="ltr">{productLine}</dd>
         </div>
         <div className={styles.line}>

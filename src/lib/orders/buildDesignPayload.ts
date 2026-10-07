@@ -17,11 +17,18 @@ export function buildPhotoOrderDesignPayload(
     return null;
   }
 
+  if (design.material === "magnet" && !design.magnetSizeId) {
+    return null;
+  }
+
   return {
     creationMode: "photo",
     backgroundId: design.backgroundId,
     photoIllustrationStyleId: design.photoIllustrationStyleId,
     material: design.material,
+    ...(design.material === "magnet"
+      ? { magnetSizeId: design.magnetSizeId! }
+      : {}),
     text: design.text,
     illustrationTransform: design.illustrationTransform,
     decorations: design.decorations,
@@ -40,10 +47,17 @@ export function buildIllustrationOrderDesignPayload(
     return null;
   }
 
+  if (design.material === "magnet" && !design.magnetSizeId) {
+    return null;
+  }
+
   return {
     creationMode: "illustration",
     backgroundId: design.backgroundId,
     material: design.material,
+    ...(design.material === "magnet"
+      ? { magnetSizeId: design.magnetSizeId! }
+      : {}),
     text: design.text,
     illustrationTransform: design.illustrationTransform,
     decorations: design.decorations,

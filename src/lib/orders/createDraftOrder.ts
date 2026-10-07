@@ -5,9 +5,11 @@ import {
   BackgroundNotAvailableError,
 } from "@/lib/backgrounds/loadBackgrounds";
 import {
+  assertMagnetSizeForNewOrder,
   assertMaterialEnabledForNewOrder,
   MaterialNotAvailableError,
 } from "@/lib/store/materialAvailability";
+import { MagnetSizeNotAvailableError } from "@/lib/store/magnetSizes";
 import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
 import type { OrderDesignSnapshot } from "@/lib/orders/orderDesignSchema";
 import { OrderError } from "@/lib/orders/errors";
@@ -127,13 +129,35 @@ export async function createDraftOrder(
   await connectDb();
 
   const settings = await loadStoreSettingsDocument();
+  const pricingInput = settings
+    ? { ...settings.pricing, magnetSizes: settings.magnetSizes }
+    : undefined;
+
   try {
-    assertMaterialEnabledForNewOrder(input.design.material, settings?.pricing);
+    assertMaterialEnabledForNewOrder(input.design.material, pricingInput);
   } catch (err) {
     if (err instanceof MaterialNotAvailableError) {
       throw new OrderError("MATERIAL_UNAVAILABLE", "Material unavailable", 400);
     }
     throw err;
+  }
+
+  if (input.design.material === "wood" && input.design.magnetSizeId) {
+    throw new OrderError("INVALID_DESIGN", "Invalid design", 400);
+  }
+
+  if (input.design.material === "magnet") {
+    if (!input.design.magnetSizeId?.trim()) {
+      throw new OrderError("INVALID_DESIGN", "Invalid design", 400);
+    }
+    try {
+      assertMagnetSizeForNewOrder(input.design.magnetSizeId, pricingInput);
+    } catch (err) {
+      if (err instanceof MagnetSizeNotAvailableError) {
+        throw new OrderError("MAGNET_SIZE_UNAVAILABLE", "Magnet size unavailable", 400);
+      }
+      throw err;
+    }
   }
 
   try {

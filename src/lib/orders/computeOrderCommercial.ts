@@ -1,20 +1,28 @@
 import { computeCheckoutTotals } from "@/lib/checkout/computeCheckoutTotals";
 import {
+  findMagnetSizeInCatalog,
+  MagnetSizeNotAvailableError,
+  resolveMagnetSizeCatalog,
+} from "@/lib/store/magnetSizes";
+import {
   materialLabelForSnapshot,
   type OrderCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshot";
 import { orderDesignSchema } from "@/lib/orders/orderDesignSchema";
+import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
+import { resolveProductPriceMinor } from "@/lib/store/resolveProductPriceMinor";
 import {
-  resolveMaterialPriceMinor,
-  resolveStoreConfigurationForCheckout,
-} from "@/lib/store/resolveStoreConfigurationForCheckout";
+  isPricingReady,
+  isShippingMethodCustomerReady,
+} from "@/lib/store/storeSettingsCompleteness";
 
 export type ComputeLiveCommercialFailureReason =
   | "INVALID_DESIGN"
   | "STORE_NOT_READY"
   | "SHIPPING_NOT_SELECTED"
   | "SHIPPING_UNAVAILABLE"
-  | "INVALID_TOTAL";
+  | "INVALID_TOTAL"
+  | "MAGNET_SIZE_UNAVAILABLE";
 
 export type ComputeLiveCommercialResult =
   | { ok: true; snapshot: OrderCommercialSnapshot }
@@ -27,6 +35,9 @@ export type DraftOrderCommercialAmounts = {
   shippingLabel: string;
   shippingAmountMinor: number;
   totalAmountMinor: number;
+  magnetSizeId?: string;
+  magnetSizeName?: string;
+  magnetSizeDimensionsLabel?: string;
 };
 
 /**
@@ -50,25 +61,55 @@ export async function computeDraftOrderCommercialAmounts(params: {
     return { ok: false, reason: "SHIPPING_NOT_SELECTED" };
   }
 
-  const storeConfig = await resolveStoreConfigurationForCheckout();
-  if (!storeConfig.ok) {
+  const doc = await loadStoreSettingsDocument();
+  if (!doc || !isPricingReady({ ...doc.pricing, magnetSizes: doc.magnetSizes })) {
     return { ok: false, reason: "STORE_NOT_READY" };
   }
 
+  const pricingInput = { ...doc.pricing, magnetSizes: doc.magnetSizes };
   const material = designParsed.data.material;
   let productAmountMinor: number;
+  let magnetSizeId: string | undefined;
+  let magnetSizeName: string | undefined;
+  let magnetSizeDimensionsLabel: string | undefined;
+
   try {
-    productAmountMinor = resolveMaterialPriceMinor(storeConfig, material);
-  } catch {
+    productAmountMinor = resolveProductPriceMinor({
+      pricing: pricingInput,
+      material,
+      magnetSizeId: designParsed.data.magnetSizeId,
+    });
+  } catch (err) {
+    if (err instanceof MagnetSizeNotAvailableError) {
+      return { ok: false, reason: "MAGNET_SIZE_UNAVAILABLE" };
+    }
     return { ok: false, reason: "STORE_NOT_READY" };
   }
 
-  const shippingMethod = storeConfig.shippingMethods.find((m) => m.methodId === shippingId);
+  if (material === "magnet" && designParsed.data.magnetSizeId) {
+    const catalog = resolveMagnetSizeCatalog(pricingInput);
+    const size = findMagnetSizeInCatalog(catalog, designParsed.data.magnetSizeId);
+    if (size) {
+      magnetSizeId = size.id;
+      magnetSizeName = size.name.trim();
+      const dims = size.dimensionsLabel?.trim();
+      if (dims) {
+        magnetSizeDimensionsLabel = dims;
+      }
+    }
+  }
+
+  const shippingMethod = doc.shippingMethods
+    .filter(isShippingMethodCustomerReady)
+    .find((m) => m.id === shippingId);
   if (!shippingMethod) {
     return { ok: false, reason: "SHIPPING_UNAVAILABLE" };
   }
 
-  const totals = computeCheckoutTotals(productAmountMinor, shippingMethod.priceMinor);
+  const totals = computeCheckoutTotals(
+    productAmountMinor,
+    shippingMethod.priceMinor!,
+  );
   if (!totals.ok) {
     return { ok: false, reason: "INVALID_TOTAL" };
   }
@@ -79,9 +120,18 @@ export async function computeDraftOrderCommercialAmounts(params: {
       material,
       productAmountMinor: totals.productAmountMinor,
       shippingMethodId: shippingId,
-      shippingLabel: shippingMethod.displayName,
+      shippingLabel: shippingMethod.displayName.trim(),
       shippingAmountMinor: totals.shippingAmountMinor,
       totalAmountMinor: totals.totalAmountMinor,
+      ...(magnetSizeId
+        ? {
+            magnetSizeId,
+            magnetSizeName,
+            ...(magnetSizeDimensionsLabel
+              ? { magnetSizeDimensionsLabel }
+              : {}),
+          }
+        : {}),
     },
   };
 }
@@ -100,6 +150,15 @@ export function buildCommercialSnapshotFromAmounts(
     shippingLabel: amounts.shippingLabel,
     shippingAmountMinor: amounts.shippingAmountMinor,
     totalAmountMinor: amounts.totalAmountMinor,
+    ...(amounts.magnetSizeId
+      ? {
+          magnetSizeId: amounts.magnetSizeId,
+          magnetSizeName: amounts.magnetSizeName,
+          ...(amounts.magnetSizeDimensionsLabel
+            ? { magnetSizeDimensionsLabel: amounts.magnetSizeDimensionsLabel }
+            : {}),
+        }
+      : {}),
   };
 }
 
