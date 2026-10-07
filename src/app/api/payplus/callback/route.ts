@@ -1,5 +1,5 @@
-import { issueFinbotIncomeForOrder } from "@/lib/finbot/issueFinbotIncomeForOrder";
 import { handlePayPlusCallback } from "@/lib/orders/handlePayPlusCallback";
+import { runPostPaidOrderSideEffects } from "@/lib/orders/runPostPaidOrderSideEffects";
 import { getPayPlusConfig } from "@/lib/payplus/env";
 import { parsePayPlusCallbackPayload } from "@/lib/payplus/parseCallbackPayload";
 import { verifyPayPlusRequestHash } from "@/lib/payplus/verifyPayPlusRequestHash";
@@ -48,11 +48,7 @@ export async function POST(request: Request) {
     }
     if (result.triggerFinbotIssuance) {
       after(async () => {
-        try {
-          await issueFinbotIncomeForOrder({ orderId: result.orderId });
-        } catch (err) {
-          console.error("[payplus/callback] finbot issuance after()", err);
-        }
+        await runPostPaidOrderSideEffects(result.orderId);
       });
     }
     return NextResponse.json({ ok: true }, { status: 200 });

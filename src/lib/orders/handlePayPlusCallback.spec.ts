@@ -2,24 +2,24 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { PayPlusCallbackDecision } from "@/lib/orders/decidePayPlusCallback";
 
-describe("handlePayPlusCallback finbot trigger policy", () => {
-  function shouldTriggerFinbot(
+describe("handlePayPlusCallback post-payment side effects trigger policy", () => {
+  function shouldTriggerPostPaidSideEffects(
     persisted: { ok: true; idempotent: boolean },
     decision: PayPlusCallbackDecision,
   ): boolean {
     return !persisted.idempotent && decision.kind === "mark_paid";
   }
 
-  it("duplicate PayPlus callback does not trigger Finbot", () => {
+  it("duplicate PayPlus callback does not trigger post-payment work", () => {
     assert.equal(
-      shouldTriggerFinbot({ ok: true, idempotent: true }, { kind: "idempotent_ok" }),
+      shouldTriggerPostPaidSideEffects({ ok: true, idempotent: true }, { kind: "idempotent_ok" }),
       false,
     );
   });
 
-  it("new mark_paid triggers Finbot", () => {
+  it("new mark_paid triggers Finbot and owner notification", () => {
     assert.equal(
-      shouldTriggerFinbot(
+      shouldTriggerPostPaidSideEffects(
         { ok: true, idempotent: false },
         {
           kind: "mark_paid",

@@ -60,6 +60,21 @@ const paymentAttemptSchema = new Schema(
   { _id: false },
 );
 
+const ownerPaidNotificationSchema = new Schema(
+  {
+    status: {
+      type: String,
+      required: true,
+      enum: ["pending", "sent", "failed"],
+    },
+    sentAt: { type: String, required: false },
+    lastAttemptAt: { type: String, required: false },
+    attemptCount: { type: Number, required: false, default: 0 },
+    errorMessage: { type: String, required: false },
+  },
+  { _id: false },
+);
+
 const accountingDocumentSchema = new Schema(
   {
     provider: { type: String, required: true, enum: ["finbot"] },
@@ -138,6 +153,7 @@ const orderSchema = new Schema(
     termsAcceptance: { type: termsAcceptanceSchema, required: false },
     payment: { type: paymentSchema, required: false },
     accountingDocument: { type: accountingDocumentSchema, required: false },
+    ownerPaidNotification: { type: ownerPaidNotificationSchema, required: false },
   },
   {
     timestamps: true,
