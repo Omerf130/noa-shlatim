@@ -5,6 +5,7 @@ export type HomeNavLink = {
 
 export const homeNavLinks: HomeNavLink[] = [
   { href: "/", label: "דף הבית" },
+  { href: "/about", label: "מי אנחנו" },
   { href: "#how-it-works", label: "איך זה עובד" },
   { href: "#examples", label: "דוגמאות" },
 ];

@@ -6,6 +6,7 @@ describe("homeNavLinks", () => {
   it("does not include removed materials anchor", () => {
     const hrefs = homeNavLinks.map((l) => l.href);
     assert.equal(hrefs.includes("#materials"), false);
-    assert.equal(hrefs.length, 3);
+    assert.equal(hrefs.includes("/about"), true);
+    assert.equal(hrefs.length, 4);
   });
 });
