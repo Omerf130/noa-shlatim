@@ -215,10 +215,27 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
               <dt>סטטוס תשלום</dt>
               <dd>{dto.paymentSummary.statusLabel}</dd>
             </div>
-            <div>
-              <dt>מחיר מוצר</dt>
-              <dd dir="ltr">{dto.paymentSummary.productAmountLabel}</dd>
-            </div>
+            {dto.paymentSummary.catalogProductAmountLabel ? (
+              <div>
+                <dt>מוצרים</dt>
+                <dd dir="ltr">{dto.paymentSummary.catalogProductAmountLabel}</dd>
+              </div>
+            ) : (
+              <div>
+                <dt>מחיר מוצר</dt>
+                <dd dir="ltr">{dto.paymentSummary.productAmountLabel}</dd>
+              </div>
+            )}
+            {dto.paymentSummary.appliedPromotions.map((promo) => (
+              <div key={`${promo.customerLabel}-${promo.applicationCount}`}>
+                <dt>
+                  {promo.applicationCount > 1
+                    ? `${promo.customerLabel} ×${promo.applicationCount}`
+                    : promo.customerLabel}
+                </dt>
+                <dd dir="ltr">{promo.savingsLabel}</dd>
+              </div>
+            ))}
             <div>
               <dt>משלוח</dt>
               <dd>{dto.paymentSummary.shippingMethodLabel}</dd>

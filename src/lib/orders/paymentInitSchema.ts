@@ -3,6 +3,7 @@ import { z } from "zod";
 export const paymentInitBodySchema = z
   .object({
     termsAccepted: z.literal(true),
+    acknowledgedTotalAmountMinor: z.number().int().min(0).optional(),
   })
   .strict();
 

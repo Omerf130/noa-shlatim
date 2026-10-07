@@ -1,6 +1,6 @@
 import { TermsDocument } from "@/components/legal/TermsDocument/TermsDocument";
+import { CustomerPublicTopChrome } from "@/components/layout/CustomerPublicTopChrome";
 import { Footer } from "@/components/layout/Footer/Footer";
-import { Header } from "@/components/layout/Header/Header";
 import { TERMS_PAGE_TITLE } from "@/lib/legal/terms";
 import { resolveSiteContent } from "@/lib/siteContent/resolveSiteContent";
 import type { Metadata } from "next";
@@ -20,7 +20,7 @@ export default async function TermsPage() {
       <a href="#main" className="skip-link">
         דלג לתוכן
       </a>
-      <Header primaryCtaLabel={global.primaryCtaLabel} />
+      <CustomerPublicTopChrome primaryCtaLabel={global.primaryCtaLabel} />
       <main id="main">
         <TermsDocument />
       </main>

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePublicPromotionBannerSurfaces } from "@/lib/promotions/revalidatePublicPromotionBanner";
 import { revalidatePath } from "next/cache";
 import { requireAdminSession } from "@/lib/auth/session";
 import { connectDb } from "@/lib/db/connect";
@@ -77,6 +78,7 @@ export async function createPromotionAction(
   await Promotion.create(normalized.data);
 
   revalidatePath("/admin/promotions");
+  revalidatePublicPromotionBannerSurfaces();
 
   return {
     ok: true,
@@ -136,6 +138,7 @@ export async function updatePromotionAction(
 
   revalidatePath("/admin/promotions");
   revalidatePath(`/admin/promotions/${promotionId}`);
+  revalidatePublicPromotionBannerSurfaces();
 
   return {
     ok: true,
@@ -171,6 +174,7 @@ export async function setPromotionEnabled(
 
   revalidatePath("/admin/promotions");
   revalidatePath(`/admin/promotions/${promotionId.trim()}`);
+  revalidatePublicPromotionBannerSurfaces();
 
   return { ok: true };
 }

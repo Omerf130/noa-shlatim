@@ -194,10 +194,38 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
       </ul>
 
       <aside className={styles.summary} aria-label="סיכום סל">
-        <div className={styles.summaryRow}>
-          <span>סכום ביניים</span>
-          <strong dir="ltr">{detail.subtotalLabel}</strong>
-        </div>
+        {detail.discountMinor > 0 ? (
+          <>
+            <div className={styles.summaryRow}>
+              <span>מוצרים</span>
+              <strong dir="ltr">{detail.catalogSubtotalLabel}</strong>
+            </div>
+            {detail.appliedPromotions.map((promo) => (
+              <div className={styles.summaryRow} key={promo.customerLabel}>
+                <span>
+                  {promo.applicationCount > 1
+                    ? `${promo.customerLabel} ×${promo.applicationCount}`
+                    : promo.customerLabel}
+                </span>
+                <strong dir="ltr">{promo.savingsLabel}</strong>
+              </div>
+            ))}
+            <div className={styles.summaryRow}>
+              <span>סה״כ מוצרים</span>
+              <strong dir="ltr">{detail.productTotalLabel}</strong>
+            </div>
+            {detail.promotionMessage ? (
+              <p className={styles.promotionMessage} role="status">
+                {detail.promotionMessage}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <div className={styles.summaryRow}>
+            <span>סכום ביניים</span>
+            <strong dir="ltr">{detail.subtotalLabel}</strong>
+          </div>
+        )}
         <p className={styles.shippingNote}>משלוח יחושב בשלב ההזמנה</p>
 
         <Button

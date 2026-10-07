@@ -16,7 +16,9 @@ import {
   type OrderDesignSnapshot,
 } from "@/lib/orders/orderDesignSchema";
 import {
+  commercialSnapshotDiscountMinor,
   commercialSnapshotDisplayLines,
+  commercialSnapshotPromotionsApplied,
   parseOrderCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshotAccess";
 import { orderCommercialSnapshotSchema } from "@/lib/orders/commercialSnapshot";
@@ -107,9 +109,18 @@ export type AdminOrderAccountingDocumentDto = {
   canRetry: boolean;
 };
 
+export type AdminOrderPaymentPromotionLineDto = {
+  customerLabel: string;
+  applicationCount: number;
+  savingsLabel: string;
+};
+
 export type AdminOrderPaymentSummaryDto = {
   statusLabel: AdminOrderStatusLabel | "—";
   productAmountLabel: string;
+  catalogProductAmountLabel: string | null;
+  discountAmountLabel: string | null;
+  appliedPromotions: AdminOrderPaymentPromotionLineDto[];
   shippingMethodLabel: string;
   shippingAmountLabel: string;
   totalLabel: string;
@@ -363,10 +374,25 @@ export function buildAdminOrderPaymentSummaryDto(
   const snapshot = snapshotParsed.snapshot;
   const terms = order.termsAcceptance;
   const succeeded = findSucceededPaymentAttempt(order);
+  const discountMinor = commercialSnapshotDiscountMinor(snapshotParsed);
+  const promotions = commercialSnapshotPromotionsApplied(snapshotParsed);
 
   return {
     statusLabel: adminOrderStatusLabel(order.status),
     productAmountLabel: formatMinorToIlsDisplay(snapshot.productAmountMinor),
+    catalogProductAmountLabel:
+      discountMinor > 0
+        ? formatMinorToIlsDisplay(snapshot.productAmountMinor)
+        : null,
+    discountAmountLabel:
+      discountMinor > 0
+        ? `-${formatMinorToIlsDisplay(discountMinor)}`
+        : null,
+    appliedPromotions: promotions.map((p) => ({
+      customerLabel: p.customerLabel,
+      applicationCount: p.applicationCount,
+      savingsLabel: `-${formatMinorToIlsDisplay(p.savingsMinor)}`,
+    })),
     shippingMethodLabel: snapshot.shippingLabel,
     shippingAmountLabel: formatMinorToIlsDisplay(snapshot.shippingAmountMinor),
     totalLabel: formatMinorToIlsDisplay(snapshot.totalAmountMinor),

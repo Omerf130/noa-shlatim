@@ -1,6 +1,6 @@
 import { CartPageClient } from "@/components/cart/CartPageClient";
+import { CustomerPublicTopChrome } from "@/components/layout/CustomerPublicTopChrome";
 import { Footer } from "@/components/layout/Footer/Footer";
-import { Header } from "@/components/layout/Header/Header";
 import { getCartDetailForRequest } from "@/lib/cart/getCartDetailForRequest";
 import { resolveSiteContent } from "@/lib/siteContent/resolveSiteContent";
 import type { Metadata } from "next";
@@ -25,7 +25,7 @@ export default async function CartPage() {
       <a href="#main" className="skip-link">
         דלג לתוכן
       </a>
-      <Header primaryCtaLabel={global.primaryCtaLabel} />
+      <CustomerPublicTopChrome primaryCtaLabel={global.primaryCtaLabel} />
       <main id="main" className={styles.main}>
         <div className={styles.inner}>
           <header className={styles.pageHeader}>

@@ -4,7 +4,11 @@ import {
   productDescriptionForSnapshot,
 } from "@/lib/orders/commercialSnapshot";
 import {
+  allocateDiscountedProductGrossParts,
+} from "@/lib/orders/commercialSnapshotPromotion";
+import {
   orderCommercialSnapshotV2Schema,
+  type CommercialSnapshotPromotionApplied,
   type OrderCommercialSnapshotV2,
   type CommercialSnapshotV2Line,
 } from "@/lib/orders/commercialSnapshotV2";
@@ -39,6 +43,32 @@ export function commercialSnapshotTotalMinor(parsed: ParsedCommercialSnapshot): 
 
 export function commercialSnapshotProductMinor(parsed: ParsedCommercialSnapshot): number {
   return parsed.snapshot.productAmountMinor;
+}
+
+export function commercialSnapshotDiscountMinor(
+  parsed: ParsedCommercialSnapshot,
+): number {
+  if (parsed.version === 1) {
+    return 0;
+  }
+  return parsed.snapshot.discountAmountMinor ?? 0;
+}
+
+export function commercialSnapshotPromotionsApplied(
+  parsed: ParsedCommercialSnapshot,
+): CommercialSnapshotPromotionApplied[] {
+  if (parsed.version === 1) {
+    return [];
+  }
+  return parsed.snapshot.promotionsApplied ?? [];
+}
+
+export function netProductAmountMinorFromSnapshot(
+  parsed: ParsedCommercialSnapshot,
+): number {
+  return (
+    parsed.snapshot.productAmountMinor - commercialSnapshotDiscountMinor(parsed)
+  );
 }
 
 export function commercialSnapshotCurrency(parsed: ParsedCommercialSnapshot): "ILS" {
@@ -106,11 +136,37 @@ export function commercialSnapshotGrossParts(parsed: ParsedCommercialSnapshot): 
   grossMinor: number;
   quantity: number;
 }> {
-  const lines = commercialSnapshotDisplayLines(parsed).map((line) => ({
-    name: line.description,
-    grossMinor: line.lineTotalMinor,
-    quantity: line.quantity,
-  }));
+  if (parsed.version === 1) {
+    const s = parsed.snapshot;
+    const parts: Array<{ name: string; grossMinor: number; quantity: number }> = [
+      {
+        name: productDescriptionForSnapshot(s),
+        grossMinor: s.productAmountMinor,
+        quantity: 1,
+      },
+    ];
+    if (s.shippingAmountMinor > 0) {
+      parts.push({
+        name: s.shippingLabel.trim(),
+        grossMinor: s.shippingAmountMinor,
+        quantity: 1,
+      });
+    }
+    return parts;
+  }
+
+  const snap = parsed.snapshot;
+  const discount = commercialSnapshotDiscountMinor(parsed);
+  const productParts = allocateDiscountedProductGrossParts({
+    lines: snap.lines.map((line) => ({
+      description: line.description,
+      lineTotalMinor: line.lineTotalMinor,
+      quantity: line.quantity,
+    })),
+    productAmountMinor: snap.productAmountMinor,
+    discountAmountMinor: discount,
+  });
+  const lines = [...productParts];
   const shipping = commercialSnapshotShipping(parsed);
   if (shipping.amountMinor > 0) {
     lines.push({

@@ -1,3 +1,4 @@
+import { computeCheckoutTotals } from "@/lib/checkout/computeCheckoutTotals";
 import {
   buildSummary,
   loadCheckoutShippingMethodOptions,
@@ -16,8 +17,13 @@ import {
   parseOrderCommercialSnapshot,
   type ParsedCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshotAccess";
-import { computeLiveCommercialSnapshotV2ForOrder } from "@/lib/orders/computeLiveCommercialForOrder";
+import {
+  buildCheckoutCommercialSummaryFromFrozenV2,
+  buildCheckoutCommercialSummaryWithPromotions,
+} from "@/lib/promotions/buildCheckoutPromotionSummary";
+import { resolveLivePromotionPricing } from "@/lib/promotions/resolvePromotionPricing";
 import { computeLiveCheckoutLinePricing } from "@/lib/orders/computeLiveCheckoutLinePricing";
+import { loadStoreSettingsDocument } from "@/lib/store/loadStoreSettings";
 import type { OrderCommercialSnapshotV2 } from "@/lib/orders/commercialSnapshotV2";
 import { productDescriptionForSnapshot } from "@/lib/orders/commercialSnapshot";
 import type { OrderLikeForResolveItems } from "@/lib/orders/resolveOrderItems";
@@ -85,20 +91,37 @@ function buildMultiV2Dto(params: {
   priceSource: "live" | "frozen";
 }): Extract<CheckoutCommercialDto, { available: true; pricingMode: "multi_v2" }> {
   const useFrozenTotals = params.priceSource === "frozen" && params.selectedMethod;
-  const summary = useFrozenTotals
-    ? {
-        productLabel: "מוצרים",
-        productDisplay: formatMinorForCheckoutDisplay(params.snapshot.productAmountMinor),
-        shippingDisplay: formatMinorForCheckoutDisplay(params.snapshot.shippingAmountMinor),
-        totalDisplay: formatMinorForCheckoutDisplay(params.snapshot.totalAmountMinor),
-        productAmountMinor: params.snapshot.productAmountMinor,
-        shippingAmountMinor: params.snapshot.shippingAmountMinor,
-        totalAmountMinor: params.snapshot.totalAmountMinor,
-      }
-    : summaryForMultiV2({
-        productAmountMinor: params.snapshot.productAmountMinor,
-        selectedMethod: params.selectedMethod,
-      });
+  const hasFrozenPromotion =
+    (params.snapshot.discountAmountMinor ?? 0) > 0 ||
+    (params.snapshot.promotionsApplied?.length ?? 0) > 0;
+
+  const summary =
+    params.priceSource === "frozen" && hasFrozenPromotion
+      ? buildCheckoutCommercialSummaryFromFrozenV2({
+          snapshot: params.snapshot,
+          selectedMethod: params.selectedMethod,
+          usePersistedShippingTotals: Boolean(useFrozenTotals),
+        })
+      : useFrozenTotals
+        ? {
+            productLabel: "מוצרים",
+            productDisplay: formatMinorForCheckoutDisplay(
+              params.snapshot.productAmountMinor,
+            ),
+            shippingDisplay: formatMinorForCheckoutDisplay(
+              params.snapshot.shippingAmountMinor,
+            ),
+            totalDisplay: formatMinorForCheckoutDisplay(
+              params.snapshot.totalAmountMinor,
+            ),
+            productAmountMinor: params.snapshot.productAmountMinor,
+            shippingAmountMinor: params.snapshot.shippingAmountMinor,
+            totalAmountMinor: params.snapshot.totalAmountMinor,
+          }
+        : summaryForMultiV2({
+            productAmountMinor: params.snapshot.productAmountMinor,
+            selectedMethod: params.selectedMethod,
+          });
 
   return {
     available: true,
@@ -198,23 +221,10 @@ export async function buildCheckoutCommercialForOrder(params: {
   const { selectionValid, selectedShippingMethodId, staleSelectionMessage, selectedMethod } =
     resolveShippingSelection(shippingMethods, params.savedShippingMethodId);
 
-  if (selectedMethod) {
-    const liveFull = await computeLiveCommercialSnapshotV2ForOrder({
-      order: params.order,
-      shippingMethodId: selectedShippingMethodId,
-    });
-    if (liveFull.ok) {
-      return buildMultiV2Dto({
-        snapshot: liveFull.snapshot,
-        shippingMethods,
-        selectionValid,
-        selectedShippingMethodId,
-        staleSelectionMessage,
-        selectedMethod,
-        priceSource: "live",
-      });
-    }
-  }
+  const storeDoc = await loadStoreSettingsDocument();
+  const pricingInput = storeDoc
+    ? { ...storeDoc.pricing, magnetSizes: storeDoc.magnetSizes }
+    : null;
 
   const lineItems: CheckoutLineCommercialDto[] = livePricing.lines.map((line) => ({
     lineId: line.lineId,
@@ -226,6 +236,54 @@ export async function buildCheckoutCommercialForOrder(params: {
     lineTotalDisplay: formatMinorForCheckoutDisplay(line.lineTotalMinor),
   }));
 
+  const promotionPricing =
+    pricingInput != null
+      ? await resolveLivePromotionPricing({
+          lines: livePricing.lines.map((line) => ({
+            material: line.material,
+            magnetSizeId: line.magnetSizeId,
+            quantity: line.quantity,
+            unitPriceMinor: line.unitPriceMinor,
+            lineTotalMinor: line.lineTotalMinor,
+          })),
+          pricingInput,
+        })
+      : null;
+
+  const summary =
+    promotionPricing != null
+      ? buildCheckoutCommercialSummaryWithPromotions({
+          promotionPricing,
+          selectedMethod,
+        })
+      : {
+          productLabel: "מוצרים",
+          productDisplay: formatMinorForCheckoutDisplay(livePricing.productAmountMinor),
+          shippingDisplay: CHECKOUT_SHIPPING_LINE_PENDING,
+          totalDisplay: selectedMethod
+            ? null
+            : null,
+          productAmountMinor: livePricing.productAmountMinor,
+          shippingAmountMinor: null as number | null,
+          totalAmountMinor: null as number | null,
+        };
+
+  if (promotionPricing == null && selectedMethod) {
+    const totals = computeCheckoutTotals(
+      livePricing.productAmountMinor,
+      selectedMethod.amountMinor,
+    );
+    if (totals.ok) {
+      Object.assign(summary, {
+        shippingDisplay: formatMinorForCheckoutDisplay(selectedMethod.amountMinor),
+        totalDisplay: formatMinorForCheckoutDisplay(totals.totalAmountMinor),
+        productAmountMinor: totals.productAmountMinor,
+        shippingAmountMinor: totals.shippingAmountMinor,
+        totalAmountMinor: totals.totalAmountMinor,
+      });
+    }
+  }
+
   return {
     available: true,
     pricingMode: "multi_v2",
@@ -235,15 +293,7 @@ export async function buildCheckoutCommercialForOrder(params: {
     selectedShippingMethodId,
     selectionValid,
     staleSelectionMessage,
-    summary: {
-      productLabel: "מוצרים",
-      productDisplay: formatMinorForCheckoutDisplay(livePricing.productAmountMinor),
-      shippingDisplay: CHECKOUT_SHIPPING_LINE_PENDING,
-      totalDisplay: null,
-      productAmountMinor: livePricing.productAmountMinor,
-      shippingAmountMinor: null,
-      totalAmountMinor: null,
-    },
+    summary,
   };
 }
 

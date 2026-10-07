@@ -10,6 +10,7 @@ export type OrderErrorCode =
   | "PAYMENT_INVALID_STATE"
   | "PAYMENT_NOT_READY"
   | "PAYPLUS_LINK_FAILED"
+  | "COMMERCIAL_TOTAL_CHANGED"
   | "MATERIAL_UNAVAILABLE"
   | "MAGNET_SIZE_UNAVAILABLE"
   | "BACKGROUND_UNAVAILABLE";
@@ -38,6 +39,8 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
   PAYMENT_NOT_READY: "יש להשלים את פרטי ההזמנה לפני תשלום.",
   PAYPLUS_LINK_FAILED:
     "לא הצלחנו לפתוח את דף התשלום. נסו שוב בעוד רגע.",
+  COMMERCIAL_TOTAL_CHANGED:
+    "המחיר התעדכן לפני התשלום. בדקו את הסכום המעודכן ונסו שוב.",
   MATERIAL_UNAVAILABLE:
     "החומר שבחרתם אינו זמין כרגע. בחרו חומר אחר והמשיכו.",
   MAGNET_SIZE_UNAVAILABLE:

@@ -241,6 +241,7 @@ export async function initiateOrderPayment(params: {
   orderId: string;
   order: OrderLeanForPayment;
   fetchFn?: PayPlusFetchFn;
+  acknowledgedTotalAmountMinor?: number | null;
 }): Promise<InitiateOrderPaymentResult> {
   const orderId = params.orderId;
   const nowMs = Date.now();
@@ -309,6 +310,20 @@ export async function initiateOrderPayment(params: {
       return {
         ok: false,
         error: new OrderError("PAYMENT_NOT_READY", "Not ready", 400),
+      };
+    }
+    const acknowledged = params.acknowledgedTotalAmountMinor;
+    if (
+      acknowledged != null &&
+      acknowledged !== computed.snapshot.totalAmountMinor
+    ) {
+      return {
+        ok: false,
+        error: new OrderError(
+          "COMMERCIAL_TOTAL_CHANGED",
+          "Total changed",
+          409,
+        ),
       };
     }
     snapshotForPayment = computed.snapshot;

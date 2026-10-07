@@ -10,6 +10,7 @@ import {
   TERMS_VERSION,
 } from "@/lib/legal/terms";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import styles from "./CheckoutCustomerForm.module.scss";
 
@@ -62,6 +63,7 @@ export function CheckoutCustomerForm({
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [paymentState, setPaymentState] = useState<PaymentState>("idle");
+  const router = useRouter();
 
   const persistCheckoutDetails = useCallback(async (): Promise<
     SaveResponse | { ok: false; message: string }
@@ -165,15 +167,26 @@ export function CheckoutCustomerForm({
       onShippingSelectionChange?.(saveData.selectedShippingMethodId);
       setSaveState("success");
 
+      const acknowledgedTotalAmountMinor =
+        saveData.commercial.summary.totalAmountMinor ?? undefined;
+
       const initRes = await fetch(`/api/orders/${orderId}/payment/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ termsAccepted: true }),
+        body: JSON.stringify({
+          termsAccepted: true,
+          ...(acknowledgedTotalAmountMinor != null
+            ? { acknowledgedTotalAmountMinor }
+            : {}),
+        }),
       });
       const initData = (await initRes.json()) as PaymentInitResponse;
 
       if (!initData.ok) {
         setFieldError(initData.message);
+        if (initData.code === "COMMERCIAL_TOTAL_CHANGED") {
+          router.refresh();
+        }
         return;
       }
 
@@ -192,6 +205,7 @@ export function CheckoutCustomerForm({
     persistCheckoutDetails,
     selectedShippingMethodId,
     termsAccepted,
+    router,
   ]);
 
   const formDisabled = !canSaveCommercialCheckout;

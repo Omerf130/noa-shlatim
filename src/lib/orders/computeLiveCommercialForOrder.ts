@@ -1,4 +1,5 @@
 import { computeCheckoutTotals } from "@/lib/checkout/computeCheckoutTotals";
+import { resolveLivePromotionPricing } from "@/lib/promotions/resolvePromotionPricing";
 import { formatCheckoutProductLabel } from "@/lib/checkout/formatProductLabelForCheckout";
 import type { OrderCommercialSnapshotV2 } from "@/lib/orders/commercialSnapshotV2";
 import { parseCartLineDesign } from "@/lib/cart/parseCartLineDesign";
@@ -141,8 +142,24 @@ export async function computeLiveCommercialSnapshotV2ForOrder(params: {
     return { ok: false, reason: "SHIPPING_UNAVAILABLE" };
   }
 
+  const pricedLines = snapshotLines.map((line) => ({
+    material: line.material,
+    magnetSizeId: line.magnetSizeId,
+    quantity: line.quantity,
+    unitPriceMinor: line.unitPriceMinor,
+    lineTotalMinor: line.lineTotalMinor,
+  }));
+
+  const promotionPricing = await resolveLivePromotionPricing({
+    lines: pricedLines,
+    pricingInput,
+  });
+
+  const discountAmountMinor = promotionPricing.discountMinor;
+  const netProductMinor = promotionPricing.productTotalMinor;
+
   const totals = computeCheckoutTotals(
-    productAmountMinor,
+    netProductMinor,
     shippingMethod.priceMinor!,
   );
   if (!totals.ok) {
@@ -154,7 +171,9 @@ export async function computeLiveCommercialSnapshotV2ForOrder(params: {
     currency: "ILS",
     capturedAt: params.capturedAt ?? new Date().toISOString(),
     lines: snapshotLines,
-    productAmountMinor: totals.productAmountMinor,
+    productAmountMinor,
+    discountAmountMinor,
+    promotionsApplied: promotionPricing.frozenApplications,
     shippingMethodId: shippingIdRequired,
     shippingLabel: shippingMethod.displayName.trim(),
     shippingAmountMinor: totals.shippingAmountMinor,

@@ -39,6 +39,12 @@ export type CheckoutLineCommercialDto = {
   lineTotalDisplay: string;
 };
 
+export type CheckoutPromotionSummaryLineDto = {
+  customerLabel: string;
+  applicationCount: number;
+  savingsDisplay: string;
+};
+
 export type CheckoutCommercialSummaryDto = {
   productLabel: string;
   productDisplay: string;
@@ -47,6 +53,14 @@ export type CheckoutCommercialSummaryDto = {
   productAmountMinor: number;
   shippingAmountMinor: number | null;
   totalAmountMinor: number | null;
+  catalogProductAmountMinor?: number;
+  catalogProductDisplay?: string;
+  discountMinor?: number;
+  discountDisplay?: string;
+  netProductAmountMinor?: number;
+  netProductDisplay?: string;
+  appliedPromotions?: CheckoutPromotionSummaryLineDto[];
+  promotionMessage?: string | null;
 };
 
 export type CheckoutCommercialDto =

@@ -1,4 +1,5 @@
 import { SignBuilder } from "@/components/builder/SignBuilder/SignBuilder";
+import { PromotionBannerServer } from "@/components/promotions/PromotionBannerServer";
 import { loadEnabledBackgroundsForCustomer } from "@/lib/backgrounds/loadBackgrounds";
 import { loadCustomerMagnetCatalog } from "@/lib/store/loadCustomerMagnetCatalog";
 import { loadCustomerMaterialAvailability } from "@/lib/store/loadCustomerMaterialAvailability";
@@ -18,10 +19,13 @@ export default async function CreatePage() {
       loadEnabledBackgroundsForCustomer(),
     ]);
   return (
-    <SignBuilder
-      materialAvailability={materialAvailability}
-      customerMagnetCatalog={customerMagnetCatalog}
-      customerBackgrounds={customerBackgrounds}
-    />
+    <>
+      <PromotionBannerServer />
+      <SignBuilder
+        materialAvailability={materialAvailability}
+        customerMagnetCatalog={customerMagnetCatalog}
+        customerBackgrounds={customerBackgrounds}
+      />
+    </>
   );
 }

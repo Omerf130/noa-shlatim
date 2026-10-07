@@ -20,6 +20,7 @@ export type LiveCheckoutLinePricing = {
   unitPriceMinor: number;
   lineTotalMinor: number;
   material: "wood" | "magnet";
+  magnetSizeId?: string;
   magnetSizeName: string | null;
   magnetSizeDimensionsLabel: string | null;
 };
@@ -92,6 +93,9 @@ export async function computeLiveCheckoutLinePricing(params: {
       unitPriceMinor,
       lineTotalMinor,
       material: design.material,
+      ...(design.material === "magnet" && design.magnetSizeId
+        ? { magnetSizeId: design.magnetSizeId }
+        : {}),
       magnetSizeName,
       magnetSizeDimensionsLabel,
     });

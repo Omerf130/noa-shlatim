@@ -27,6 +27,11 @@ export function CheckoutOrderSummary({
       : null;
 
     const summary = commercial.summary;
+    const hasPromotionBreakdown =
+      (summary.discountMinor ?? 0) > 0 &&
+      summary.catalogProductDisplay != null &&
+      summary.netProductDisplay != null;
+
     const shippingLine =
       commercial.priceSource === "frozen"
         ? summary.shippingDisplay
@@ -36,10 +41,9 @@ export function CheckoutOrderSummary({
 
     let totalLine = summary.totalDisplay;
     if (commercial.priceSource === "live" && selected) {
-      const totals = computeCheckoutTotals(
-        summary.productAmountMinor,
-        selected.amountMinor,
-      );
+      const productMinor =
+        summary.netProductAmountMinor ?? summary.productAmountMinor;
+      const totals = computeCheckoutTotals(productMinor, selected.amountMinor);
       if (totals.ok) {
         totalLine = formatMinorForCheckoutDisplay(totals.totalAmountMinor);
       }
@@ -49,10 +53,33 @@ export function CheckoutOrderSummary({
       <section className={styles.summary} aria-label="סיכום מחיר">
         <h2 className={styles.title}>סיכום הזמנה</h2>
         <dl className={styles.lines}>
-          <div className={styles.line}>
-            <dt>מוצרים</dt>
-            <dd dir="ltr">{summary.productDisplay}</dd>
-          </div>
+          {hasPromotionBreakdown ? (
+            <>
+              <div className={styles.line}>
+                <dt>מוצרים</dt>
+                <dd dir="ltr">{summary.catalogProductDisplay}</dd>
+              </div>
+              {(summary.appliedPromotions ?? []).map((promo) => (
+                <div className={styles.line} key={promo.customerLabel}>
+                  <dt>
+                    {promo.applicationCount > 1
+                      ? `${promo.customerLabel} ×${promo.applicationCount}`
+                      : promo.customerLabel}
+                  </dt>
+                  <dd dir="ltr">{promo.savingsDisplay}</dd>
+                </div>
+              ))}
+              <div className={styles.line}>
+                <dt>סה״כ מוצרים</dt>
+                <dd dir="ltr">{summary.netProductDisplay}</dd>
+              </div>
+            </>
+          ) : (
+            <div className={styles.line}>
+              <dt>מוצרים</dt>
+              <dd dir="ltr">{summary.productDisplay}</dd>
+            </div>
+          )}
           <div className={styles.line}>
             <dt>משלוח</dt>
             <dd>{shippingLine}</dd>
@@ -64,6 +91,11 @@ export function CheckoutOrderSummary({
             </div>
           )}
         </dl>
+        {summary.promotionMessage ? (
+          <p className={styles.promotionNote} role="status">
+            {summary.promotionMessage}
+          </p>
+        ) : null}
       </section>
     );
   }

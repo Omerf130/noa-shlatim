@@ -1,13 +1,9 @@
-import type { ParsedCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import {
+  commercialSnapshotGrossParts,
   commercialSnapshotTotalMinor,
   parseOrderCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshotAccess";
-import {
-  materialLabelForSnapshot,
-  productDescriptionForSnapshot,
-  type OrderCommercialSnapshot,
-} from "@/lib/orders/commercialSnapshot";
+import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
 import { ISRAEL_STANDARD_VAT_RATE } from "@/lib/finbot/vatRate";
 
 export type FinbotIncomeLineItem = {
@@ -95,43 +91,6 @@ function buildPreVatLinesFromGrossParts(
   throw new Error("FINBOT_VAT_ROUNDING_MISMATCH");
 }
 
-function grossPartsFromV1(snapshot: OrderCommercialSnapshot): GrossLinePart[] {
-  const productName =
-    snapshot.material === "magnet" && snapshot.magnetSizeName?.trim()
-      ? productDescriptionForSnapshot(snapshot)
-      : `שלט לדלת בעיצוב אישי — ${materialLabelForSnapshot(snapshot.material)}`;
-  const parts: GrossLinePart[] = [
-    { name: productName, grossMinor: snapshot.productAmountMinor, quantity: 1 },
-  ];
-  if (snapshot.shippingAmountMinor > 0) {
-    parts.push({
-      name: snapshot.shippingLabel.trim(),
-      grossMinor: snapshot.shippingAmountMinor,
-      quantity: 1,
-    });
-  }
-  return parts;
-}
-
-function grossPartsFromParsed(parsed: ParsedCommercialSnapshot): GrossLinePart[] {
-  if (parsed.version === 1) {
-    return grossPartsFromV1(parsed.snapshot);
-  }
-  const parts: GrossLinePart[] = parsed.snapshot.lines.map((line) => ({
-    name: line.description,
-    grossMinor: line.lineTotalMinor,
-    quantity: line.quantity,
-  }));
-  if (parsed.snapshot.shippingAmountMinor > 0) {
-    parts.push({
-      name: parsed.snapshot.shippingLabel.trim(),
-      grossMinor: parsed.snapshot.shippingAmountMinor,
-      quantity: 1,
-    });
-  }
-  return parts;
-}
-
 /**
  * Build Finbot line items from frozen snapshot. Pre-VAT unit prices; gross total matches snapshot.
  */
@@ -144,7 +103,7 @@ export function buildFinbotIncomeLineItems(
     throw new Error("INVALID_COMMERCIAL_SNAPSHOT");
   }
 
-  const parts = grossPartsFromParsed(parsed);
+  const parts = commercialSnapshotGrossParts(parsed);
   const totalGrossMinor = commercialSnapshotTotalMinor(parsed);
   const sumParts = parts.reduce((s, p) => s + p.grossMinor, 0);
   if (totalGrossMinor !== sumParts) {

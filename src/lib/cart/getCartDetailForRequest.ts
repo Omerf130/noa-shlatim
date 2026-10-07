@@ -1,11 +1,13 @@
 import { authorizeCartFromCookie } from "@/lib/cart/authorizeCartAccess";
 import {
+  applyPromotionPricingToCartDetail,
   assertSafeCartDetailDto,
   buildCartDetailDto,
   buildCartLineDetailDto,
   EMPTY_CART_DETAIL,
   type CartDetailDto,
 } from "@/lib/cart/cartDetailDto";
+import { resolveLivePromotionPricing } from "@/lib/promotions/resolvePromotionPricing";
 import { parseCartLineDesign } from "@/lib/cart/parseCartLineDesign";
 import { resolveCartLineAvailability } from "@/lib/cart/resolveCartLineAvailability";
 import { resolveCartLinePricing } from "@/lib/cart/resolveCartLinePricing";
@@ -101,11 +103,46 @@ export async function getCartDetailForRequest(
     totalQuantity += normalizedCartItemQuantity(item.quantity);
   }
 
-  const dto = buildCartDetailDto({
+  let dto = buildCartDetailDto({
     status: authorized.cart.status,
     lines,
     totalQuantity,
   });
+
+  if (dto.canCheckout) {
+    const pricedLines = lines
+      .filter(
+        (line) =>
+          line.availability === "available" &&
+          line.unitPriceMinor != null &&
+          line.lineTotalMinor != null,
+      )
+      .map((line) => ({
+        material: line.material,
+        magnetSizeId: line.magnetSizeId,
+        quantity: line.quantity,
+        unitPriceMinor: line.unitPriceMinor!,
+        lineTotalMinor: line.lineTotalMinor!,
+      }));
+
+    const promotionPricing = await resolveLivePromotionPricing({
+      lines: pricedLines,
+      pricingInput,
+    });
+
+    dto = applyPromotionPricingToCartDetail(dto, {
+      catalogSubtotalMinor: promotionPricing.catalogSubtotalMinor,
+      discountMinor: promotionPricing.discountMinor,
+      productTotalMinor: promotionPricing.productTotalMinor,
+      applications: promotionPricing.applications.map((a) => ({
+        customerLabel: a.customerLabel,
+        applicationCount: a.applicationCount,
+        savingsLabel: a.savingsLabel,
+      })),
+      promotionMessage: promotionPricing.promotionMessage,
+    });
+  }
+
   assertSafeCartDetailDto(dto);
   return dto;
 }

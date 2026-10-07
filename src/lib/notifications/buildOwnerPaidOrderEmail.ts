@@ -5,7 +5,9 @@ import {
 } from "@/lib/admin/orders/formatOrderReference";
 import { formatMinorToIlsDisplay } from "@/lib/money/ils";
 import {
+  commercialSnapshotDiscountMinor,
   commercialSnapshotDisplayLines,
+  commercialSnapshotPromotionsApplied,
   commercialSnapshotShipping,
   commercialSnapshotTotalMinor,
   parseOrderCommercialSnapshot,
@@ -52,6 +54,55 @@ function formatLineRowsHtml(
   return { htmlRows, textLines };
 }
 
+function formatPaidCommercialSummary(parsed: ReturnType<typeof parseOrderCommercialSnapshot>) {
+  if (!parsed) {
+    return { htmlRows: "", textLines: [] as string[] };
+  }
+  const productMinor = parsed.snapshot.productAmountMinor;
+  const discountMinor = commercialSnapshotDiscountMinor(parsed);
+  const shipping = commercialSnapshotShipping(parsed);
+  const totalMinor = commercialSnapshotTotalMinor(parsed);
+  const promos = commercialSnapshotPromotionsApplied(parsed);
+
+  const htmlRows: string[] = [];
+  const textLines: string[] = [];
+
+  htmlRows.push(
+    `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>מוצרים:</strong> ${escapeHtml(formatMinorToIlsDisplay(productMinor))}</td></tr>`,
+  );
+  textLines.push(`מוצרים: ${formatMinorToIlsDisplay(productMinor)}`);
+
+  for (const promo of promos) {
+    const label =
+      promo.applicationCount > 1
+        ? `${promo.customerLabel} ×${promo.applicationCount}`
+        : promo.customerLabel;
+    htmlRows.push(
+      `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(`-${formatMinorToIlsDisplay(promo.savingsMinor)}`)}</td></tr>`,
+    );
+    textLines.push(`${label}: -${formatMinorToIlsDisplay(promo.savingsMinor)}`);
+  }
+
+  if (discountMinor > 0 && promos.length === 0) {
+    htmlRows.push(
+      `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>הנחה:</strong> ${escapeHtml(`-${formatMinorToIlsDisplay(discountMinor)}`)}</td></tr>`,
+    );
+    textLines.push(`הנחה: -${formatMinorToIlsDisplay(discountMinor)}`);
+  }
+
+  htmlRows.push(
+    `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>משלוח:</strong> ${escapeHtml(formatMinorToIlsDisplay(shipping.amountMinor))}</td></tr>`,
+  );
+  textLines.push(`משלוח: ${formatMinorToIlsDisplay(shipping.amountMinor)}`);
+
+  htmlRows.push(
+    `<tr><td style="padding:0 16px 10px;font-size:14px;"><strong>סה"כ ששולם:</strong> ${escapeHtml(formatMinorToIlsDisplay(totalMinor))}</td></tr>`,
+  );
+  textLines.push(`סה"כ ששולם: ${formatMinorToIlsDisplay(totalMinor)}`);
+
+  return { htmlRows: htmlRows.join(""), textLines };
+}
+
 export function buildOwnerPaidOrderEmail(params: {
   orderId: string;
   customer: { fullName: string; phone: string; email: string };
@@ -75,6 +126,7 @@ export function buildOwnerPaidOrderEmail(params: {
       : `${parsed.snapshot.lines.length} פריטים`;
 
   const lineRows = formatLineRowsHtml(params.snapshot);
+  const commercialSummary = formatPaidCommercialSummary(parsed);
 
   const name = escapeHtml(params.customer.fullName.trim());
   const phone = escapeHtml(params.customer.phone.trim());
@@ -117,6 +169,8 @@ export function buildOwnerPaidOrderEmail(params: {
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>אימייל:</strong> <span dir="ltr">${email}</span></td></tr>
                 <tr><td style="padding:0 16px 10px;font-size:14px;"><strong>פריטים:</strong></td></tr>
                 ${lineRows.htmlRows}
+                <tr><td style="padding:0 16px 10px;font-size:14px;"><strong>סיכום מחיר:</strong></td></tr>
+                ${commercialSummary.htmlRows}
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>סכום ששולם:</strong> ${escapeHtml(totalLabel)}</td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>סיכום:</strong> ${escapeHtml(materialSummary)}</td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>משלוח:</strong> ${escapeHtml(shipping.label)} (${escapeHtml(formatMinorToIlsDisplay(shipping.amountMinor))})</td></tr>
@@ -155,6 +209,9 @@ export function buildOwnerPaidOrderEmail(params: {
     "",
     "פריטים:",
     ...lineRows.textLines,
+    "",
+    "סיכום מחיר:",
+    ...commercialSummary.textLines,
     "",
     `סכום ששולם: ${totalLabel}`,
     `משלוח: ${shipping.label} (${formatMinorToIlsDisplay(shipping.amountMinor)})`,

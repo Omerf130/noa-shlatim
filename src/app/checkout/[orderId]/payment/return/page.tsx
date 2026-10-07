@@ -1,4 +1,5 @@
 import { CheckoutPaymentReturnView } from "@/components/checkout/CheckoutPaymentReturnView";
+import { PromotionBannerServer } from "@/components/promotions/PromotionBannerServer";
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
 import { formatOrderReference } from "@/lib/admin/orders/formatOrderReference";
 import { computeCheckoutPaymentUiState } from "@/lib/orders/checkoutPaymentReturnState";
@@ -51,7 +52,9 @@ export default async function CheckoutPaymentReturnPage({
   }
 
   return (
-    <main className={styles.main} dir="rtl">
+    <>
+      <PromotionBannerServer />
+      <main className={styles.main} dir="rtl">
       <div className={styles.inner}>
         <CheckoutPaymentReturnView
           orderId={context.orderId}
@@ -62,6 +65,7 @@ export default async function CheckoutPaymentReturnPage({
           showCheckoutLink={context.showCheckoutLink}
         />
       </div>
-    </main>
+      </main>
+    </>
   );
 }

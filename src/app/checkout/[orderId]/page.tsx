@@ -1,4 +1,5 @@
 import { CheckoutPageContent } from "@/components/checkout/CheckoutPageContent";
+import { PromotionBannerServer } from "@/components/promotions/PromotionBannerServer";
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
 import { buildCheckoutPageFromOrder } from "@/lib/checkout/buildCheckoutPageFromOrder";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
@@ -45,5 +46,10 @@ export default async function CheckoutPage({
     notFound();
   }
 
-  return <CheckoutPageContent dto={dto!} />;
+  return (
+    <>
+      <PromotionBannerServer />
+      <CheckoutPageContent dto={dto!} />
+    </>
+  );
 }

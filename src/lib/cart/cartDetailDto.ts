@@ -23,17 +23,56 @@ export type CartLineDetailDto = {
   unavailableReason?: string;
 };
 
+export type CartAppliedPromotionDto = {
+  customerLabel: string;
+  applicationCount: number;
+  savingsLabel: string;
+};
+
 export type CartDetailDto = {
   ok: true;
   status: CartDetailStatus;
   lines: CartLineDetailDto[];
   lineCount: number;
   totalQuantity: number;
+  /** Catalog sum of available line totals (before promotions). Same as catalogSubtotalMinor. */
   subtotalMinor: number;
   subtotalLabel: string;
+  catalogSubtotalMinor: number;
+  catalogSubtotalLabel: string;
+  discountMinor: number;
+  discountLabel: string;
+  productTotalMinor: number;
+  productTotalLabel: string;
+  appliedPromotions: CartAppliedPromotionDto[];
+  promotionMessage: string | null;
   currency: "ILS";
   canCheckout: boolean;
 };
+
+function emptyPromotionPricingFields(catalogMinor: number): Pick<
+  CartDetailDto,
+  | "catalogSubtotalMinor"
+  | "catalogSubtotalLabel"
+  | "discountMinor"
+  | "discountLabel"
+  | "productTotalMinor"
+  | "productTotalLabel"
+  | "appliedPromotions"
+  | "promotionMessage"
+> {
+  const label = formatMinorForCheckoutDisplay(catalogMinor);
+  return {
+    catalogSubtotalMinor: catalogMinor,
+    catalogSubtotalLabel: label,
+    discountMinor: 0,
+    discountLabel: formatMinorForCheckoutDisplay(0),
+    productTotalMinor: catalogMinor,
+    productTotalLabel: label,
+    appliedPromotions: [],
+    promotionMessage: null,
+  };
+}
 
 export const EMPTY_CART_DETAIL: CartDetailDto = {
   ok: true,
@@ -43,6 +82,7 @@ export const EMPTY_CART_DETAIL: CartDetailDto = {
   totalQuantity: 0,
   subtotalMinor: 0,
   subtotalLabel: formatMinorForCheckoutDisplay(0),
+  ...emptyPromotionPricingFields(0),
   currency: "ILS",
   canCheckout: false,
 };
@@ -66,6 +106,8 @@ export function buildCartDetailDto(params: {
     hasAvailableLine &&
     params.lines.every((l) => l.availability === "available");
 
+  const catalogLabel = formatMinorForCheckoutDisplay(subtotalMinor);
+
   return {
     ok: true,
     status: params.status,
@@ -73,9 +115,41 @@ export function buildCartDetailDto(params: {
     lineCount: params.lines.length,
     totalQuantity: params.totalQuantity,
     subtotalMinor,
-    subtotalLabel: formatMinorForCheckoutDisplay(subtotalMinor),
+    subtotalLabel: catalogLabel,
+    ...emptyPromotionPricingFields(subtotalMinor),
     currency: "ILS",
     canCheckout,
+  };
+}
+
+export function applyPromotionPricingToCartDetail(
+  dto: CartDetailDto,
+  pricing: {
+    catalogSubtotalMinor: number;
+    discountMinor: number;
+    productTotalMinor: number;
+    applications: CartAppliedPromotionDto[];
+    promotionMessage: string | null;
+  },
+): CartDetailDto {
+  const catalogLabel = formatMinorForCheckoutDisplay(pricing.catalogSubtotalMinor);
+  const discountLabel =
+    pricing.discountMinor > 0
+      ? `-${formatMinorForCheckoutDisplay(pricing.discountMinor)}`
+      : formatMinorForCheckoutDisplay(0);
+
+  return {
+    ...dto,
+    subtotalMinor: pricing.catalogSubtotalMinor,
+    subtotalLabel: catalogLabel,
+    catalogSubtotalMinor: pricing.catalogSubtotalMinor,
+    catalogSubtotalLabel: catalogLabel,
+    discountMinor: pricing.discountMinor,
+    discountLabel,
+    productTotalMinor: pricing.productTotalMinor,
+    productTotalLabel: formatMinorForCheckoutDisplay(pricing.productTotalMinor),
+    appliedPromotions: pricing.applications,
+    promotionMessage: pricing.promotionMessage,
   };
 }
 
@@ -119,7 +193,7 @@ export function buildCartLineDetailDto(params: {
 }
 
 const FORBIDDEN_DTO_KEYS =
-  /accessToken|tokenHash|pathname|addIdempotencyKey|access_token/i;
+  /accessToken|tokenHash|pathname|addIdempotencyKey|access_token|promotionId|internalName|bannerSortOrder/i;
 
 /** Ensures cart detail JSON never leaks storage or auth internals. */
 export function assertSafeCartDetailDto(dto: CartDetailDto): void {

@@ -29,8 +29,11 @@ export async function POST(request: Request, context: RouteContext) {
       mode: "payment_init",
     });
 
+    const initBody = parsePaymentInitBody(body)!;
+
     const result = await initiateOrderPayment({
       orderId,
+      acknowledgedTotalAmountMinor: initBody.acknowledgedTotalAmountMinor ?? null,
       order: {
         status: auth.order.status,
         design: auth.order.design,
