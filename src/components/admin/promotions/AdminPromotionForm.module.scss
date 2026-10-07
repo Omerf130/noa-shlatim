@@ -1,0 +1,136 @@
+.form {
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border, #eaecf0);
+  border-radius: var(--radius-md, 8px);
+  font-size: 1rem;
+}
+
+.textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border, #eaecf0);
+  border-radius: var(--radius-md, 8px);
+  font-size: 1rem;
+  min-height: 4rem;
+  resize: vertical;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #667085);
+}
+
+.requirementRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.select {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+}
+
+.qtyInput {
+  width: 4.5rem;
+}
+
+.rowWarning {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #b54708;
+}
+
+.addRowBtn {
+  align-self: flex-start;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-border, #eaecf0);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  cursor: pointer;
+}
+
+.removeRowBtn {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #667085);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9375rem;
+}
+
+.feedback {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.feedbackError {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b42318;
+}
+
+.feedbackOk {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #027a48;
+}
+
+.feedbackWarn {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b54708;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.backLink {
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #667085);
+  text-decoration: none;
+}

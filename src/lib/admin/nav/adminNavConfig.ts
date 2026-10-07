@@ -4,6 +4,7 @@ import {
   Image,
   LayoutDashboard,
   Package,
+  Percent,
   Settings,
   ShoppingBag,
   Store,
@@ -58,6 +59,14 @@ export const ADMIN_NAV_ENTRIES: AdminNavEntry[] = [
     label: "חומרים",
     href: "/admin/materials",
     icon: Package,
+    match: "prefix",
+  },
+  {
+    kind: "live",
+    id: "promotions",
+    label: "מבצעים",
+    href: "/admin/promotions",
+    icon: Percent,
     match: "prefix",
   },
   {
