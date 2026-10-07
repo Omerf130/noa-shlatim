@@ -27,7 +27,11 @@ import {
   defaultTextDesign,
   initialSignDesignState,
 } from "@/types/signDesign";
-import { initialBuilderUiState, initialFinalSignArtworkUi } from "@/types/builder";
+import {
+  initialBuilderUiState,
+  initialDesignWorkspaceUi,
+  initialFinalSignArtworkUi,
+} from "@/types/builder";
 import { getNextStep, getPrevStep } from "./steps";
 import { revokeObjectUrl } from "./objectUrl";
 import { revokeIllustrationIfNeeded } from "./revokeIllustrationUrl";
@@ -69,7 +73,8 @@ export type BuilderAction =
   | { type: "FINAL_SIGN_SUCCESS"; objectUrl: string }
   | { type: "FINAL_SIGN_ERROR"; errorCode: string; userMessage: string }
   | { type: "FINAL_SIGN_SHOW_DRAFT" }
-  | { type: "FINAL_SIGN_SHOW_FINAL" };
+  | { type: "FINAL_SIGN_SHOW_FINAL" }
+  | { type: "RESET_BUILDER_SESSION" };
 
 export const initialBuilderState: BuilderState = {
   design: initialSignDesignState,
@@ -654,6 +659,25 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
           },
         },
       };
+
+    case "RESET_BUILDER_SESSION": {
+      revokeDesignUrls(state.design);
+      revokeFinalSignArtworkUrl(state.ui);
+      return {
+        design: {
+          ...initialSignDesignState,
+          text: { ...defaultTextDesign },
+          illustrationTransform: { ...defaultIllustrationTransform },
+          decorations: [],
+        },
+        ui: {
+          ...initialBuilderUiState,
+          finalSignArtwork: { ...initialFinalSignArtworkUi },
+          designWorkspace: { ...initialDesignWorkspaceUi },
+          aiIllustration: { status: "idle" },
+        },
+      };
+    }
 
     default:
       return state;

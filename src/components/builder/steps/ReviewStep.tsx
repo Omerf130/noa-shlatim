@@ -2,7 +2,7 @@
 
 import { useBuilder } from "@/components/builder/BuilderContext";
 import { Button } from "@/components/ui/Button/Button";
-import { useCreateDraftOrder } from "@/hooks/useCreateDraftOrder";
+import { useAddToCart } from "@/hooks/useAddToCart";
 import { findCustomerBackground } from "@/lib/builder/backgroundSelection";
 import { getIllustrationStyleById } from "@/data/illustrationStyles";
 import styles from "./ReviewStep.module.scss";
@@ -11,11 +11,13 @@ export function ReviewStep() {
   const { state, dispatch, customerBackgrounds, customerMagnetCatalog } = useBuilder();
   const { design, ui } = state;
   const {
-    submitDraftOrder,
+    submitAddToCart,
+    startNewSign,
     isSubmitting,
     errorMessage,
-    canSubmitDraftOrder,
-  } = useCreateDraftOrder();
+    addSuccess,
+    canAddToCart,
+  } = useAddToCart();
 
   const pathLabel =
     design.creationMode === "photo" ? "מתמונה רגילה" : "מאיור קיים";
@@ -38,78 +40,109 @@ export function ReviewStep() {
       : null;
 
   const isPhoto = design.creationMode === "photo";
+  const addedToCart = addSuccess !== null;
+
   return (
     <div className={styles.review}>
       <header className={styles.header}>
-        <h2 className={styles.title}>השלט שלכם מוכן</h2>
-        <p className={styles.subtitle}>נראה מעולה — אפשר לערוך או להמשיך כשתרצו.</p>
+        <h2 className={styles.title}>
+          {addedToCart ? "השלט נוסף לסל" : "השלט שלכם מוכן"}
+        </h2>
+        <p className={styles.subtitle}>
+          {addedToCart
+            ? "אפשר להמשיך וליצור שלט נוסף."
+            : "נראה מעולה — אפשר לערוך או להמשיך כשתרצו."}
+        </p>
       </header>
 
-      <dl className={styles.summary} aria-label="סיכום קצר">
-        <div className={styles.summaryItem}>
-          <dt>דרך</dt>
-          <dd>{pathLabel}</dd>
-        </div>
-        {isPhoto && styleName && (
+      {!addedToCart ? (
+        <dl className={styles.summary} aria-label="סיכום קצר">
           <div className={styles.summaryItem}>
-            <dt>סגנון איור</dt>
-            <dd>
-              {styleName}
-              {integratedFinalKind ? ` · ${integratedFinalKind}` : ""}
-            </dd>
+            <dt>דרך</dt>
+            <dd>{pathLabel}</dd>
           </div>
-        )}
-        {!isPhoto && integratedFinalKind && (
+          {isPhoto && styleName && (
+            <div className={styles.summaryItem}>
+              <dt>סגנון איור</dt>
+              <dd>
+                {styleName}
+                {integratedFinalKind ? ` · ${integratedFinalKind}` : ""}
+              </dd>
+            </div>
+          )}
+          {!isPhoto && integratedFinalKind && (
+            <div className={styles.summaryItem}>
+              <dt>סוג שלט</dt>
+              <dd>{integratedFinalKind}</dd>
+            </div>
+          )}
           <div className={styles.summaryItem}>
-            <dt>סוג שלט</dt>
-            <dd>{integratedFinalKind}</dd>
+            <dt>רקע</dt>
+            <dd>{bgName ?? "—"}</dd>
           </div>
-        )}
-        <div className={styles.summaryItem}>
-          <dt>רקע</dt>
-          <dd>{bgName ?? "—"}</dd>
-        </div>
-        <div className={styles.summaryItem}>
-          <dt>טקסט</dt>
-          <dd>{design.text.value || "—"}</dd>
-        </div>
-        <div className={styles.summaryItem}>
-          <dt>חומר</dt>
-          <dd>{materialLabel}</dd>
-        </div>
-        {selectedMagnetSize ? (
           <div className={styles.summaryItem}>
-            <dt>גודל מגנט</dt>
-            <dd>
-              {selectedMagnetSize.name}
-              {selectedMagnetSize.dimensionsLabel
-                ? ` · ${selectedMagnetSize.dimensionsLabel}`
-                : ""}
-              {" · "}
-              <span dir="ltr">{selectedMagnetSize.displayPrice}</span>
-            </dd>
+            <dt>טקסט</dt>
+            <dd>{design.text.value || "—"}</dd>
           </div>
-        ) : null}
-      </dl>
+          <div className={styles.summaryItem}>
+            <dt>חומר</dt>
+            <dd>{materialLabel}</dd>
+          </div>
+          {selectedMagnetSize ? (
+            <div className={styles.summaryItem}>
+              <dt>גודל מגנט</dt>
+              <dd>
+                {selectedMagnetSize.name}
+                {selectedMagnetSize.dimensionsLabel
+                  ? ` · ${selectedMagnetSize.dimensionsLabel}`
+                  : ""}
+                {" · "}
+                <span dir="ltr">{selectedMagnetSize.displayPrice}</span>
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : (
+        <div
+          className={styles.successPanel}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <p className={styles.successTitle}>השלט נוסף לסל</p>
+          <p className={styles.successDetail}>
+            {addSuccess.totalQuantity === 1
+              ? "פריט אחד בסל."
+              : `${addSuccess.totalQuantity} פריטים בסל.`}
+          </p>
+        </div>
+      )}
 
       <div className={styles.actions}>
-        <Button
-          variant="secondary"
-          disabled={isSubmitting}
-          onClick={() => dispatch({ type: "GO_TO_STEP", stepId: "design" })}
-        >
-          חזרה לעריכה
-        </Button>
-        <Button
-          disabled={!canSubmitDraftOrder || isSubmitting}
-          onClick={() => void submitDraftOrder()}
-        >
-          {isSubmitting ? "שומרים את ההזמנה…" : "להמשך להזמנה"}
-        </Button>
+        {addedToCart ? (
+          <Button onClick={startNewSign}>יצירת שלט נוסף</Button>
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              disabled={isSubmitting}
+              onClick={() => dispatch({ type: "GO_TO_STEP", stepId: "design" })}
+            >
+              חזרה לעריכה
+            </Button>
+            <Button
+              disabled={!canAddToCart || isSubmitting}
+              aria-busy={isSubmitting}
+              onClick={() => void submitAddToCart()}
+            >
+              {isSubmitting ? "מוסיף לסל…" : "הוספה לסל"}
+            </Button>
+          </>
+        )}
       </div>
 
       {errorMessage ? (
-        <p className={styles.checkoutMessage} role="alert">
+        <p className={styles.errorMessage} role="alert">
           {errorMessage}
         </p>
       ) : null}

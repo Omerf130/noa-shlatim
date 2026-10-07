@@ -29,6 +29,8 @@ type BuilderContextValue = {
   getSourcePhotoFile: () => File | null;
   setFinalArtworkBlob: (blob: Blob | null) => void;
   getFinalArtworkBlob: () => Blob | null;
+  /** Full Builder reset for a new sign (does not touch server Cart). */
+  resetBuilderSession: () => void;
 };
 
 export const BuilderContext = createContext<BuilderContextValue | null>(null);
@@ -62,6 +64,12 @@ export function BuilderProvider({
 
   const getFinalArtworkBlob = useCallback(() => finalArtworkBlobRef.current, []);
 
+  const resetBuilderSession = useCallback(() => {
+    dispatch({ type: "RESET_BUILDER_SESSION" });
+    sourcePhotoFileRef.current = null;
+    finalArtworkBlobRef.current = null;
+  }, []);
+
   const value = useMemo(
     () => ({
       state,
@@ -73,6 +81,7 @@ export function BuilderProvider({
       getSourcePhotoFile,
       setFinalArtworkBlob,
       getFinalArtworkBlob,
+      resetBuilderSession,
     }),
     [
       state,
@@ -83,6 +92,7 @@ export function BuilderProvider({
       getSourcePhotoFile,
       setFinalArtworkBlob,
       getFinalArtworkBlob,
+      resetBuilderSession,
     ],
   );
 
