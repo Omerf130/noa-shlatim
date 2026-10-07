@@ -117,6 +117,38 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+const orderItemAssetsSchema = new Schema(
+  {
+    originalImage: { type: storedAssetSchema, required: false },
+    finalArtwork: { type: storedAssetSchema, required: false },
+  },
+  { _id: false },
+);
+
+const orderItemSchema = new Schema(
+  {
+    lineId: { type: String, required: true, trim: true },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 20,
+      validate: {
+        validator: (v: number) => Number.isInteger(v),
+        message: "quantity must be an integer",
+      },
+    },
+    creationMode: {
+      type: String,
+      required: true,
+      enum: ["photo", "illustration"],
+    },
+    design: { type: Schema.Types.Mixed, required: true },
+    assets: { type: orderItemAssetsSchema, required: false, default: {} },
+  },
+  { _id: false },
+);
+
 const orderSchema = new Schema(
   {
     status: {
@@ -124,24 +156,28 @@ const orderSchema = new Schema(
       enum: ORDER_STATUSES,
       required: true,
     },
+    /** Legacy single-item field — optional for future multi-item (items[]) Orders. */
     creationMode: {
       type: String,
       enum: ["photo", "illustration"],
-      required: true,
+      required: false,
     },
     draftIdempotencyKey: {
       type: String,
       required: true,
       unique: true,
     },
+    /** Legacy single-item field — optional for future multi-item (items[]) Orders. */
     design: {
       type: Schema.Types.Mixed,
-      required: true,
+      required: false,
     },
     assets: {
       originalImage: { type: storedAssetSchema, required: false },
       finalArtwork: { type: storedAssetSchema, required: false },
     },
+    /** Multi-item Orders (Cart conversion in C6+). Legacy Orders omit this. */
+    items: { type: [orderItemSchema], required: false, default: undefined },
     checkoutAccessTokenHash: { type: String, required: false },
     customer: {
       fullName: { type: String, required: false },
@@ -176,6 +212,13 @@ export type OrderStoredAsset = {
   pathname: string;
   contentType: string;
   sizeBytes: number;
+};
+
+export type OrderItemDocument = InferSchemaType<typeof orderItemSchema>;
+
+export type OrderItemAssets = {
+  originalImage?: OrderStoredAsset;
+  finalArtwork?: OrderStoredAsset;
 };
 
 export const Order =
