@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminOrderAccountingSection } from "@/components/admin/orders/AdminOrderAccountingSection";
 import { AdminOrderPreview } from "@/components/admin/orders/AdminOrderPreview";
 import { AdminStatusBadge } from "@/components/admin/ui/AdminStatusBadge";
 import type { AdminOrderDetailDto } from "@/lib/admin/orders/adminOrderDtos";
@@ -66,6 +67,13 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
           </p>
         )}
       </section>
+
+      {dto.accountingDocument && (
+        <AdminOrderAccountingSection
+          orderId={dto.orderId}
+          accounting={dto.accountingDocument}
+        />
+      )}
 
       {dto.paymentSummary && (
         <section className={styles.section} aria-labelledby="payment-heading">

@@ -54,6 +54,30 @@ const paymentAttemptSchema = new Schema(
     payplusTransactionUid: { type: String, required: false },
     statusCode: { type: String, required: false },
     failureReason: { type: String, required: false },
+    payplusCardLastFourDigits: { type: String, required: false },
+    payplusNumberOfPayments: { type: Number, required: false },
+  },
+  { _id: false },
+);
+
+const accountingDocumentSchema = new Schema(
+  {
+    provider: { type: String, required: true, enum: ["finbot"] },
+    type: { type: String, required: true, enum: ["tax_invoice_receipt"] },
+    status: {
+      type: String,
+      required: true,
+      enum: ["pending", "issued", "failed", "uncertain"],
+    },
+    documentUrl: { type: String, required: false },
+    documentNumber: { type: String, required: false },
+    issuedAt: { type: String, required: false },
+    lastAttemptAt: { type: String, required: false },
+    attemptCount: { type: Number, required: false, default: 0 },
+    externalRef: { type: String, required: false },
+    payplusTransactionUid: { type: String, required: false },
+    errorCode: { type: String, required: false },
+    errorMessage: { type: String, required: false },
   },
   { _id: false },
 );
@@ -113,6 +137,7 @@ const orderSchema = new Schema(
     commercialSnapshot: { type: commercialSnapshotSchema, required: false },
     termsAcceptance: { type: termsAcceptanceSchema, required: false },
     payment: { type: paymentSchema, required: false },
+    accountingDocument: { type: accountingDocumentSchema, required: false },
   },
   {
     timestamps: true,

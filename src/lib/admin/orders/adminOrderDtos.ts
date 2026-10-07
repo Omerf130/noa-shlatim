@@ -85,6 +85,16 @@ export function adminCreationModeLabel(mode: AdminCreationMode): string {
   return mode === "photo" ? "תמונה" : "איור קיים";
 }
 
+export type AdminOrderAccountingDocumentDto = {
+  statusKey: "pending" | "issued" | "failed" | "uncertain" | "none";
+  statusLabel: string;
+  documentNumber: string | null;
+  issuedAtLabel: string | null;
+  documentUrl: string | null;
+  errorMessage: string | null;
+  canRetry: boolean;
+};
+
 export type AdminOrderPaymentSummaryDto = {
   statusLabel: AdminOrderStatusLabel | "—";
   productAmountLabel: string;
@@ -121,6 +131,7 @@ export type AdminOrderDetailDto = {
     artworkUrl: string | null;
   };
   paymentSummary: AdminOrderPaymentSummaryDto | null;
+  accountingDocument: AdminOrderAccountingDocumentDto | null;
 };
 
 type OrderLeanForAdmin = {
@@ -145,6 +156,13 @@ type OrderLeanForAdmin = {
       payplusTransactionUid?: string;
       completedAt?: string;
     }>;
+  };
+  accountingDocument?: {
+    status?: string;
+    documentNumber?: string;
+    documentUrl?: string;
+    issuedAt?: string;
+    errorMessage?: string;
   };
   createdAt?: Date;
   updatedAt?: Date;
@@ -196,6 +214,74 @@ function materialLabelForOrder(order: OrderLeanForAdmin, design: OrderDesignSnap
 
 function findSucceededPaymentAttempt(order: OrderLeanForAdmin) {
   return order.payment?.attempts?.find((a) => a.status === "succeeded") ?? null;
+}
+
+export function buildAdminOrderAccountingDocumentDto(
+  order: OrderLeanForAdmin,
+): AdminOrderAccountingDocumentDto | null {
+  if (order.status !== "paid") {
+    return null;
+  }
+
+  const doc = order.accountingDocument;
+  if (!doc?.status) {
+    return {
+      statusKey: "none",
+      statusLabel: "ממתין להפקה",
+      documentNumber: null,
+      issuedAtLabel: null,
+      documentUrl: null,
+      errorMessage: null,
+      canRetry: false,
+    };
+  }
+
+  switch (doc.status) {
+    case "pending":
+      return {
+        statusKey: "pending",
+        statusLabel: "ממתין להפקה",
+        documentNumber: null,
+        issuedAtLabel: null,
+        documentUrl: null,
+        errorMessage: null,
+        canRetry: false,
+      };
+    case "issued":
+      return {
+        statusKey: "issued",
+        statusLabel: "הופק בהצלחה",
+        documentNumber: doc.documentNumber?.trim() || null,
+        issuedAtLabel: doc.issuedAt ? formatAdminDateTime(doc.issuedAt) : null,
+        documentUrl: doc.documentUrl?.trim() || null,
+        errorMessage: null,
+        canRetry: false,
+      };
+    case "failed":
+      return {
+        statusKey: "failed",
+        statusLabel: "שגיאה בהפקת המסמך",
+        documentNumber: null,
+        issuedAtLabel: null,
+        documentUrl: null,
+        errorMessage: doc.errorMessage?.trim() || "שגיאה בהפקת המסמך",
+        canRetry: true,
+      };
+    case "uncertain":
+      return {
+        statusKey: "uncertain",
+        statusLabel: "נדרש אימות",
+        documentNumber: null,
+        issuedAtLabel: null,
+        documentUrl: null,
+        errorMessage:
+          doc.errorMessage?.trim() ||
+          "ייתכן שהמסמך כבר הופק ב-Finbot. יש לאמת במערכת Finbot לפני הפקה נוספת.",
+        canRetry: false,
+      };
+    default:
+      return null;
+  }
 }
 
 export function buildAdminOrderPaymentSummaryDto(
@@ -311,6 +397,7 @@ export async function buildAdminOrderDetailDto(
       artworkUrl: order.assets?.finalArtwork ? artworkUrl : null,
     },
     paymentSummary: buildAdminOrderPaymentSummaryDto(order),
+    accountingDocument: buildAdminOrderAccountingDocumentDto(order),
   };
 }
 

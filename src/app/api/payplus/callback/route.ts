@@ -1,7 +1,9 @@
+import { issueFinbotIncomeForOrder } from "@/lib/finbot/issueFinbotIncomeForOrder";
 import { handlePayPlusCallback } from "@/lib/orders/handlePayPlusCallback";
 import { getPayPlusConfig } from "@/lib/payplus/env";
 import { parsePayPlusCallbackPayload } from "@/lib/payplus/parseCallbackPayload";
 import { verifyPayPlusRequestHash } from "@/lib/payplus/verifyPayPlusRequestHash";
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -43,6 +45,15 @@ export async function POST(request: Request) {
     const result = await handlePayPlusCallback(parsed.payload);
     if (!result.ok) {
       return NextResponse.json({ ok: false }, { status: result.httpStatus });
+    }
+    if (result.triggerFinbotIssuance) {
+      after(async () => {
+        try {
+          await issueFinbotIncomeForOrder({ orderId: result.orderId });
+        } catch (err) {
+          console.error("[payplus/callback] finbot issuance after()", err);
+        }
+      });
     }
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {

@@ -54,6 +54,7 @@ function payload(params: {
 }): PayPlusCallbackPayload {
   return {
     transactionType: "Charge",
+    cardDetailsForPersistence: {},
     transaction: {
       uid: params.txUid ?? TX_UID,
       payment_request_uid: params.pageUid ?? PAGE_UID_A,

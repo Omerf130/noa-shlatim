@@ -7,7 +7,13 @@ import { connectDb } from "@/lib/db/connect";
 import { Order } from "@/models/Order";
 
 export type HandlePayPlusCallbackResult =
-  | { ok: true; httpStatus: 200; idempotent: boolean }
+  | {
+      ok: true;
+      httpStatus: 200;
+      idempotent: boolean;
+      orderId: string;
+      triggerFinbotIssuance: boolean;
+    }
   | { ok: false; httpStatus: 400; reason: string };
 
 function toOrderForCallback(
@@ -48,10 +54,23 @@ export async function handlePayPlusCallback(
     return { ok: false, httpStatus: 400, reason: decision.reason };
   }
 
-  const persisted = await persistPayPlusCallbackDecision(decision, completedAt);
+  const persisted = await persistPayPlusCallbackDecision(
+    decision,
+    completedAt,
+    payload.cardDetailsForPersistence,
+  );
   if (!persisted.ok) {
     return { ok: false, httpStatus: 400, reason: persisted.reason };
   }
 
-  return { ok: true, httpStatus: 200, idempotent: persisted.idempotent };
+  const triggerFinbotIssuance =
+    !persisted.idempotent && decision.kind === "mark_paid";
+
+  return {
+    ok: true,
+    httpStatus: 200,
+    idempotent: persisted.idempotent,
+    orderId,
+    triggerFinbotIssuance,
+  };
 }

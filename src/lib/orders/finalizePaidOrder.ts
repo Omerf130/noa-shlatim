@@ -1,6 +1,7 @@
 import { connectDb } from "@/lib/db/connect";
 import type { PayPlusCallbackDecision } from "@/lib/orders/decidePayPlusCallback";
 import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
+import type { PayPlusCallbackCardDetailsPersistable } from "@/lib/payplus/parseCallbackPayload";
 import { Order } from "@/models/Order";
 
 export type PersistPayPlusCallbackResult =
@@ -10,6 +11,7 @@ export type PersistPayPlusCallbackResult =
 export async function persistPayPlusCallbackDecision(
   decision: PayPlusCallbackDecision,
   completedAt: string,
+  cardDetails?: PayPlusCallbackCardDetailsPersistable,
 ): Promise<PersistPayPlusCallbackResult> {
   if (decision.kind === "idempotent_ok") {
     return { ok: true, idempotent: true };
@@ -44,6 +46,16 @@ export async function persistPayPlusCallbackDecision(
       return { ok: false, reason: "CONFLICT" };
     }
 
+    const attemptCardSet: Record<string, unknown> = {};
+    if (cardDetails?.payplusCardLastFourDigits) {
+      attemptCardSet["payment.attempts.$[elem].payplusCardLastFourDigits"] =
+        cardDetails.payplusCardLastFourDigits;
+    }
+    if (cardDetails?.payplusNumberOfPayments !== undefined) {
+      attemptCardSet["payment.attempts.$[elem].payplusNumberOfPayments"] =
+        cardDetails.payplusNumberOfPayments;
+    }
+
     const updated = await Order.findOneAndUpdate(
       {
         _id: decision.orderId,
@@ -63,6 +75,7 @@ export async function persistPayPlusCallbackDecision(
           "payment.attempts.$[elem].completedAt": completedAt,
           "payment.attempts.$[elem].payplusTransactionUid": decision.payplusTransactionUid,
           "payment.attempts.$[elem].statusCode": decision.statusCode,
+          ...attemptCardSet,
         },
       },
       {

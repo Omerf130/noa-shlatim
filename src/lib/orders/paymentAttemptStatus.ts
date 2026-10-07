@@ -45,6 +45,8 @@ export type PaymentAttemptRecord = {
   payplusTransactionUid?: string;
   statusCode?: string;
   failureReason?: string;
+  payplusCardLastFourDigits?: string;
+  payplusNumberOfPayments?: number;
 };
 
 export function findPaymentAttemptById(

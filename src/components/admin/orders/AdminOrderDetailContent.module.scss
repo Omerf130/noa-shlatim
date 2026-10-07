@@ -158,3 +158,34 @@
   font-size: 0.875rem;
   color: var(--color-text-muted, #667085);
 }
+
+.accountingActions {
+  margin: var(--space-3) 0 0;
+}
+
+.accountingLink {
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.retryButton {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border, #eaecf0);
+  background: var(--color-bg, #fff);
+  cursor: pointer;
+}
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.accountingFeedback {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #667085);
+}
