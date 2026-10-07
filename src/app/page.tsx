@@ -2,7 +2,6 @@ import { BenefitsStrip } from "@/components/home/BenefitsStrip/BenefitsStrip";
 import { EmotionalCtaSection } from "@/components/home/EmotionalCtaSection/EmotionalCtaSection";
 import { HeroSection } from "@/components/home/HeroSection/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection/HowItWorksSection";
-import { IllustrationStylesSection } from "@/components/home/IllustrationStylesSection/IllustrationStylesSection";
 import { CustomerExamplesSection } from "@/components/home/CustomerExamplesSection/CustomerExamplesSection";
 import { SignExamplesSection } from "@/components/home/SignExamplesSection/SignExamplesSection";
 import { Footer } from "@/components/layout/Footer/Footer";
@@ -31,7 +30,6 @@ export default async function HomePage() {
       <main id="main">
         <HeroSection hero={home.hero} primaryCtaLabel={global.primaryCtaLabel} />
         <HowItWorksSection content={home.howItWorks} />
-        <IllustrationStylesSection />
         <SignExamplesSection content={home.signExamples} />
         <CustomerExamplesSection content={home.customerExamples} />
         <EmotionalCtaSection

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { connectDb } from "@/lib/db/connect";
 import { loadExistingShippingIds } from "@/lib/store/loadStoreSettings";
+import { buildStoreSettingsPersistUpdate } from "@/lib/store/buildStoreSettingsPersistUpdate";
 import {
   normalizeStoreSettingsSave,
   parseStoreSettingsFormPayload,
@@ -46,28 +47,21 @@ export async function saveStoreSettings(
 
   await connectDb();
 
-  const shippingMethods = normalized.data.shippingMethods.map((method) => ({
-    id: method.id,
-    displayName: method.displayName,
-    enabled: method.enabled,
-    priceMinor: method.priceMinor,
-    instructions: method.instructions,
-    sortOrder: method.sortOrder,
-  }));
+  const persistUpdate = buildStoreSettingsPersistUpdate({
+    ...normalized.data,
+    shippingMethods: normalized.data.shippingMethods.map((method) => ({
+      id: method.id,
+      displayName: method.displayName,
+      enabled: method.enabled,
+      priceMinor: method.priceMinor,
+      instructions: method.instructions,
+      sortOrder: method.sortOrder,
+    })),
+  });
 
   await StoreSettings.findOneAndUpdate(
     { singletonKey: STORE_SETTINGS_KEY },
-    {
-      $set: {
-        singletonKey: STORE_SETTINGS_KEY,
-        currency: "ILS",
-        pricing: {
-          woodPriceMinor: normalized.data.woodPriceMinor,
-          magnetPriceMinor: normalized.data.magnetPriceMinor,
-        },
-        shippingMethods,
-      },
-    },
+    { $set: persistUpdate },
     { upsert: true, new: true, runValidators: true },
   );
 
