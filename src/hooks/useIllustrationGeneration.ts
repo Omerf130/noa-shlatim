@@ -2,6 +2,10 @@
 
 import { useBuilder } from "@/components/builder/BuilderContext";
 import { createObjectUrl } from "@/lib/builder/objectUrl";
+import { reportClientOperationFailure } from "@/lib/diagnostics/reportClientFailure";
+import { appendSupportReference } from "@/lib/diagnostics/supportReference";
+import { messageForClientOperationFailure } from "@/lib/http/clientOperationErrors";
+import { readJsonResponse } from "@/lib/http/readJsonResponse";
 import { useCallback, useEffect, useState } from "react";
 
 type IllustrationApiStatus = {
@@ -14,8 +18,9 @@ type GenerateResponse =
   | {
       ok: true;
       illustration: { mimeType: string; base64: string };
+      traceId?: string;
     }
-  | { ok: false; code: string; message: string };
+  | { ok: false; code: string; message: string; traceId?: string };
 
 export function useIllustrationGeneration() {
   const { state, dispatch, getSourcePhotoFile } = useBuilder();
@@ -81,29 +86,98 @@ export function useIllustrationGeneration() {
         method: "POST",
         body: form,
       });
-      const data = (await res.json()) as GenerateResponse;
+      const parsed = await readJsonResponse<GenerateResponse>(res);
+
+      if (parsed.parseFailed || !parsed.data) {
+        let traceId = parsed.traceId;
+        if (!traceId) {
+          traceId = await reportClientOperationFailure({
+            operation: "illustration_generate",
+            clientStage: "json_parse",
+            httpStatus: parsed.status,
+          });
+        }
+        dispatch({
+          type: "AI_GENERATION_ERROR",
+          errorCode: "HTTP_ERROR",
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "illustration_generate",
+              status: parsed.status,
+              parseFailed: true,
+            }),
+            traceId,
+          ),
+        });
+        return;
+      }
+
+      const data = parsed.data;
 
       if (!data.ok) {
         dispatch({
           type: "AI_GENERATION_ERROR",
           errorCode: data.code,
-          userMessage: data.message,
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "illustration_generate",
+              status: parsed.status,
+              parseFailed: false,
+              apiMessage: data.message,
+            }),
+            parsed.traceId ?? data.traceId,
+          ),
         });
         return;
       }
 
-      const bytes = Uint8Array.from(atob(data.illustration.base64), (c) =>
-        c.charCodeAt(0),
-      );
-      const blob = new Blob([bytes], { type: data.illustration.mimeType });
-      const objectUrl = createObjectUrl(blob);
-
-      dispatch({ type: "SET_AI_ILLUSTRATION", objectUrl });
+      try {
+        const bytes = Uint8Array.from(atob(data.illustration.base64), (c) =>
+          c.charCodeAt(0),
+        );
+        const blob = new Blob([bytes], { type: data.illustration.mimeType });
+        const objectUrl = createObjectUrl(blob);
+        dispatch({ type: "SET_AI_ILLUSTRATION", objectUrl });
+      } catch {
+        const traceId =
+          (await reportClientOperationFailure({
+            operation: "illustration_generate",
+            clientStage: "decode",
+            traceId: parsed.traceId ?? data.traceId,
+          })) ??
+          parsed.traceId ??
+          data.traceId ??
+          null;
+        dispatch({
+          type: "AI_GENERATION_ERROR",
+          errorCode: "CLIENT_DECODE",
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "illustration_generate",
+              status: parsed.status,
+              parseFailed: false,
+              clientPhase: "decode",
+            }),
+            traceId,
+          ),
+        });
+      }
     } catch {
+      const traceId = await reportClientOperationFailure({
+        operation: "illustration_generate",
+        clientStage: "fetch",
+      });
       dispatch({
         type: "AI_GENERATION_ERROR",
         errorCode: "NETWORK",
-        userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
+        userMessage: appendSupportReference(
+          messageForClientOperationFailure({
+            operation: "illustration_generate",
+            status: 0,
+            parseFailed: false,
+          }),
+          traceId,
+        ),
       });
     }
   }, [
@@ -121,12 +195,11 @@ export function useIllustrationGeneration() {
   const canUseMock = Boolean(apiStatus?.allowMockIllustration);
 
   return {
-    apiStatus,
-    statusLoading,
     generate,
     applyMockIllustration,
     canUseAi,
     canUseMock,
-    aiUi: state.ui.aiIllustration,
+    statusLoading,
+    apiStatus,
   };
 }

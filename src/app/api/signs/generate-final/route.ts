@@ -4,10 +4,10 @@ import { generateFinalSignArtwork } from "@/lib/ai/generateFinalSignArtwork";
 import { isAllowedStyleId } from "@/lib/ai/finalSignPrompts";
 import { resolveBackgroundImage } from "@/lib/ai/resolveBackgroundImage";
 import { validateImageBuffer } from "@/lib/ai/validateUpload";
+import { beginOperationTrace } from "@/lib/diagnostics/operationTrace";
 import { getOpenAiImageConfig, isAiIllustrationOperational } from "@/lib/openai/config";
 import { createSignAssetStaging } from "@/lib/signAssetStaging/createSignAssetStaging";
 import type { CreationMode, TextPosition } from "@/types/signDesign";
-import { NextResponse } from "next/server";
 
 /** Inbound multipart (source + composition) remains subject to platform body limits — see stagingConfig. */
 
@@ -36,22 +36,49 @@ function parseCreationMode(value: FormDataEntryValue | null): CreationMode | nul
 }
 
 export async function POST(request: Request) {
+  const trace = beginOperationTrace("generate_final");
   const config = getOpenAiImageConfig();
 
   if (!config.apiKey) {
-    return errorResponse("AI_NOT_CONFIGURED", 503);
+    return trace.failJson({
+      stage: "auth",
+      code: "AI_NOT_CONFIGURED",
+      status: 503,
+      message: userMessageForCode("AI_NOT_CONFIGURED"),
+    });
   }
   if (!isAiIllustrationOperational()) {
-    return errorResponse("AI_DISABLED", 503);
+    return trace.failJson({
+      stage: "auth",
+      code: "AI_DISABLED",
+      status: 503,
+      message: userMessageForCode("AI_DISABLED"),
+    });
   }
 
   const clientKey = clientKeyFromRequest(request);
   if (!checkDevGenerationGuard(clientKey)) {
-    return errorResponse("RATE_LIMITED", 429);
+    return trace.failJson({
+      stage: "auth",
+      code: "RATE_LIMITED",
+      status: 429,
+      message: userMessageForCode("RATE_LIMITED"),
+    });
   }
 
   try {
-    const form = await request.formData();
+    let form: FormData;
+    try {
+      form = await request.formData();
+    } catch {
+      return trace.failJson({
+        stage: "parse_body",
+        code: "INVALID_IMAGE",
+        status: 400,
+        message: userMessageForCode("INVALID_IMAGE"),
+      });
+    }
+
     const creationMode = parseCreationMode(form.get("creationMode"));
     const styleIdRaw = form.get("styleId");
     const backgroundId = form.get("backgroundId");
@@ -60,7 +87,12 @@ export async function POST(request: Request) {
     const textPosition = parseTextPosition(form.get("textPosition"));
 
     if (!creationMode) {
-      return errorResponse("INVALID_CREATION_MODE", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_CREATION_MODE",
+        status: 400,
+        message: userMessageForCode("INVALID_CREATION_MODE"),
+      });
     }
 
     const styleId =
@@ -70,20 +102,45 @@ export async function POST(request: Request) {
 
     if (creationMode === "photo") {
       if (!styleId || !isAllowedStyleId(styleId)) {
-        return errorResponse("INVALID_STYLE", 400);
+        return trace.failJson({
+          stage: "validate",
+          code: "INVALID_STYLE",
+          status: 400,
+          message: userMessageForCode("INVALID_STYLE"),
+        });
       }
     } else if (styleId) {
-      return errorResponse("INVALID_CREATION_MODE", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_CREATION_MODE",
+        status: 400,
+        message: userMessageForCode("INVALID_CREATION_MODE"),
+      });
     }
 
     if (typeof backgroundId !== "string" || !backgroundId.trim()) {
-      return errorResponse("INVALID_BACKGROUND", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_BACKGROUND",
+        status: 400,
+        message: userMessageForCode("INVALID_BACKGROUND"),
+      });
     }
     if (!(imageEntry instanceof File)) {
-      return errorResponse("INVALID_IMAGE", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_IMAGE",
+        status: 400,
+        message: userMessageForCode("INVALID_IMAGE"),
+      });
     }
     if (!(compositionEntry instanceof File)) {
-      return errorResponse("INVALID_IMAGE", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_IMAGE",
+        status: 400,
+        message: userMessageForCode("INVALID_IMAGE"),
+      });
     }
 
     const sourceBuffer = Buffer.from(await imageEntry.arrayBuffer());
@@ -123,7 +180,7 @@ export async function POST(request: Request) {
       maxAssetBytes: config.maxUploadBytes,
     });
 
-    return NextResponse.json({
+    return trace.okJson({
       ok: true,
       artwork: {
         mimeType: "image/png",
@@ -138,27 +195,25 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     if (err instanceof AiIllustrationError) {
-      return NextResponse.json(
-        {
-          ok: false,
-          code: err.code,
-          message: userMessageForCode(err.code),
-        },
-        { status: err.httpStatus },
-      );
+      const stage =
+        err.code === "GENERATION_TIMEOUT" || err.code === "PROVIDER_ERROR"
+          ? "provider"
+          : err.code === "IMAGE_TOO_LARGE"
+            ? "validate"
+            : "unknown";
+      return trace.failJson({
+        stage,
+        code: err.code,
+        status: err.httpStatus,
+        message: userMessageForCode(err.code),
+      });
     }
-    console.error("[api/signs/generate-final]", err);
-    return errorResponse("GENERATION_FAILED", 500);
+    console.error("[api/signs/generate-final]", trace.traceId, err);
+    return trace.failJson({
+      stage: "unknown",
+      code: "GENERATION_FAILED",
+      status: 500,
+      message: userMessageForCode("GENERATION_FAILED"),
+    });
   }
-}
-
-function errorResponse(code: Parameters<typeof userMessageForCode>[0], status: number) {
-  return NextResponse.json(
-    {
-      ok: false,
-      code,
-      message: userMessageForCode(code),
-    },
-    { status },
-  );
 }

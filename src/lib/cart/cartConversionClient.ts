@@ -1,3 +1,6 @@
+export { messageForCartConversionHttpFailure as messageForCartConversionFailure } from "@/lib/http/clientOperationErrors";
+
+/** @deprecated use messageForCartConversionHttpFailure — network-only copy for status 0 */
 export const CART_CONVERSION_NETWORK_ERROR_MESSAGE =
   "לא הצלחנו להכין את ההזמנה. בדקו חיבור ונסו שוב.";
 

@@ -16,4 +16,13 @@ describe("ADMIN_NAV_ENTRIES", () => {
     const illus = ADMIN_NAV_ENTRIES.find((e) => e.id === "illustration-styles");
     assert.equal(illus, undefined);
   });
+
+  it("links diagnostics to /admin/diagnostics", () => {
+    const diagnostics = ADMIN_NAV_ENTRIES.find((e) => e.id === "diagnostics");
+    assert.ok(diagnostics);
+    assert.equal(diagnostics!.kind, "live");
+    if (diagnostics!.kind === "live") {
+      assert.equal(diagnostics.href, "/admin/diagnostics");
+    }
+  });
 });

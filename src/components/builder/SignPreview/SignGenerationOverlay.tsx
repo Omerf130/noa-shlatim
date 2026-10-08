@@ -55,6 +55,13 @@ export function SignGenerationOverlay({
   active,
 }: SignGenerationOverlayProps) {
   const [rotateIndex, setRotateIndex] = useState(0);
+  const [prevActive, setPrevActive] = useState(active);
+  if (prevActive !== active) {
+    setPrevActive(active);
+    if (!active) {
+      setRotateIndex(0);
+    }
+  }
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
     getReducedMotionSnapshot,
@@ -63,7 +70,6 @@ export function SignGenerationOverlay({
 
   useEffect(() => {
     if (!active) {
-      setRotateIndex(0);
       return;
     }
     if (reducedMotion) {

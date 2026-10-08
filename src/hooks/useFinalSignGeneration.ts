@@ -4,6 +4,10 @@ import { useBuilder } from "@/components/builder/BuilderContext";
 import { findCustomerBackground } from "@/lib/builder/backgroundSelection";
 import { isDesignWorkspaceComplete } from "@/lib/builder/validation";
 import { createObjectUrl } from "@/lib/builder/objectUrl";
+import { reportClientOperationFailure } from "@/lib/diagnostics/reportClientFailure";
+import { appendSupportReference } from "@/lib/diagnostics/supportReference";
+import { messageForClientOperationFailure } from "@/lib/http/clientOperationErrors";
+import { readJsonResponse } from "@/lib/http/readJsonResponse";
 import { buildCompositionReferenceBlob } from "@/lib/sign/buildCompositionReference";
 import { useCallback } from "react";
 
@@ -12,8 +16,9 @@ type GenerateFinalResponse =
       ok: true;
       artwork: { mimeType: string; base64: string };
       signAssetStagingToken: string;
+      traceId?: string;
     }
-  | { ok: false; code: string; message: string };
+  | { ok: false; code: string; message: string; traceId?: string };
 
 async function releaseStagingToken(token: string | null): Promise<void> {
   if (!token) {
@@ -114,14 +119,36 @@ export function useFinalSignGeneration() {
 
     dispatch({ type: "FINAL_SIGN_START" });
 
+    let compositionBlob: Blob;
     try {
-      const compositionBlob = await buildCompositionReferenceBlob({
+      compositionBlob = await buildCompositionReferenceBlob({
         backgroundImageSrc: background.imageSrc,
         backgroundObjectPosition: background.objectPosition ?? "50% 50%",
         subjectObjectUrl: subjectUrl,
         transform: design.illustrationTransform,
       });
+    } catch {
+      const traceId = await reportClientOperationFailure({
+        operation: "generate_final",
+        clientStage: "composition",
+      });
+      dispatch({
+        type: "FINAL_SIGN_ERROR",
+        errorCode: "CLIENT_COMPOSITION",
+        userMessage: appendSupportReference(
+          messageForClientOperationFailure({
+            operation: "generate_final",
+            status: 0,
+            parseFailed: false,
+            clientPhase: "composition",
+          }),
+          traceId,
+        ),
+      });
+      return;
+    }
 
+    try {
       const form = new FormData();
       form.append("creationMode", creationMode);
       if (creationMode === "photo" && styleId) {
@@ -136,13 +163,47 @@ export function useFinalSignGeneration() {
         method: "POST",
         body: form,
       });
-      const data = (await res.json()) as GenerateFinalResponse;
+      const parsed = await readJsonResponse<GenerateFinalResponse>(res);
+
+      if (parsed.parseFailed || !parsed.data) {
+        let traceId = parsed.traceId;
+        if (!traceId) {
+          traceId = await reportClientOperationFailure({
+            operation: "generate_final",
+            clientStage: "json_parse",
+            httpStatus: parsed.status,
+          });
+        }
+        dispatch({
+          type: "FINAL_SIGN_ERROR",
+          errorCode: "HTTP_ERROR",
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "generate_final",
+              status: parsed.status,
+              parseFailed: true,
+            }),
+            traceId,
+          ),
+        });
+        return;
+      }
+
+      const data = parsed.data;
 
       if (!data.ok) {
         dispatch({
           type: "FINAL_SIGN_ERROR",
           errorCode: data.code,
-          userMessage: data.message,
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "generate_final",
+              status: parsed.status,
+              parseFailed: false,
+              apiMessage: data.message,
+            }),
+            parsed.traceId ?? data.traceId,
+          ),
         });
         return;
       }
@@ -151,22 +212,64 @@ export function useFinalSignGeneration() {
         dispatch({
           type: "FINAL_SIGN_ERROR",
           errorCode: "STAGING_MISSING",
-          userMessage: "לא הצלחנו לשמור את השלט. נסו שוב.",
+          userMessage: appendSupportReference(
+            "לא הצלחנו לשמור את השלט. נסו שוב.",
+            parsed.traceId ?? data.traceId,
+          ),
         });
         return;
       }
 
-      const bytes = Uint8Array.from(atob(data.artwork.base64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: data.artwork.mimeType });
+      let blob: Blob;
+      try {
+        const bytes = Uint8Array.from(atob(data.artwork.base64), (c) => c.charCodeAt(0));
+        blob = new Blob([bytes], { type: data.artwork.mimeType });
+      } catch {
+        const traceId =
+          (await reportClientOperationFailure({
+            operation: "generate_final",
+            clientStage: "decode",
+            traceId: parsed.traceId ?? data.traceId,
+          })) ??
+          parsed.traceId ??
+          data.traceId ??
+          null;
+        dispatch({
+          type: "FINAL_SIGN_ERROR",
+          errorCode: "CLIENT_DECODE",
+          userMessage: appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "generate_final",
+              status: parsed.status,
+              parseFailed: false,
+              clientPhase: "decode",
+            }),
+            traceId,
+          ),
+        });
+        return;
+      }
+
       setFinalArtworkBlob(blob);
       setSignAssetStagingToken(data.signAssetStagingToken.trim());
       const objectUrl = createObjectUrl(blob);
       dispatch({ type: "FINAL_SIGN_SUCCESS", objectUrl });
     } catch {
+      const traceId = await reportClientOperationFailure({
+        operation: "generate_final",
+        clientStage: "fetch",
+      });
       dispatch({
         type: "FINAL_SIGN_ERROR",
         errorCode: "NETWORK",
-        userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
+        userMessage: appendSupportReference(
+          messageForClientOperationFailure({
+            operation: "generate_final",
+            status: 0,
+            parseFailed: false,
+          }),
+          traceId,
+        ),
       });
     }
   }, [

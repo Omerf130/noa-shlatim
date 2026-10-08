@@ -1,31 +1,50 @@
 import { authorizeCartConversion } from "@/lib/cart/authorizeActiveCartMutation";
-import { handleCartRouteError } from "@/lib/cart/cartApiResponse";
+import { CartError, userMessageForCartCode } from "@/lib/cart/cartErrors";
 import { convertCartToOrder } from "@/lib/cart/convertCartToOrder";
-import { CartError } from "@/lib/cart/cartErrors";
 import {
   CHECKOUT_ACCESS_COOKIE,
   CHECKOUT_ACCESS_MAX_AGE_SECONDS,
   checkoutAccessCookieOptions,
   checkoutAccessCookieValue,
 } from "@/lib/checkout/constants";
+import { beginOperationTrace } from "@/lib/diagnostics/operationTrace";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { draftIdempotencyKeySchema } from "@/lib/orders/orderDesignSchema";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
-import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 const conversionIdempotencyKeySchema = draftIdempotencyKeySchema;
 
 export async function POST(request: Request) {
+  const trace = beginOperationTrace("cart_convert");
+
   try {
-    const authorized = await authorizeCartConversion(request);
+    let authorized;
+    try {
+      authorized = await authorizeCartConversion(request);
+    } catch (err) {
+      if (err instanceof CartError) {
+        return trace.failJson({
+          stage: "auth",
+          code: err.code,
+          status: err.httpStatus,
+          message: userMessageForCartCode(err.code),
+        });
+      }
+      throw err;
+    }
 
     let body: unknown;
     try {
       body = await request.json();
     } catch {
-      throw new CartError("CART_UNAUTHORIZED", "Invalid body", 400);
+      return trace.failJson({
+        stage: "parse_body",
+        code: "CART_UNAUTHORIZED",
+        status: 400,
+        message: userMessageForCartCode("CART_UNAUTHORIZED"),
+      });
     }
 
     const parsed = conversionIdempotencyKeySchema.safeParse(
@@ -34,7 +53,12 @@ export async function POST(request: Request) {
         : undefined,
     );
     if (!parsed.success) {
-      throw new CartError("CART_UNAUTHORIZED", "Invalid idempotency key", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "CART_UNAUTHORIZED",
+        status: 400,
+        message: userMessageForCartCode("CART_UNAUTHORIZED"),
+      });
     }
 
     const result = await convertCartToOrder({
@@ -45,10 +69,15 @@ export async function POST(request: Request) {
     try {
       assertValidOrderId(result.orderId);
     } catch {
-      throw new OrderError("ORDER_PERSIST_FAILED", "Invalid order id", 500);
+      return trace.failJson({
+        stage: "persist",
+        code: "ORDER_PERSIST_FAILED",
+        status: 500,
+        message: userMessageForOrderCode("ORDER_PERSIST_FAILED"),
+      });
     }
 
-    const response = NextResponse.json({
+    const response = trace.okJson({
       ok: true,
       orderId: result.orderId,
       checkoutPath: `/checkout/${result.orderId}`,
@@ -64,15 +93,33 @@ export async function POST(request: Request) {
     return response;
   } catch (err) {
     if (err instanceof OrderError) {
-      return NextResponse.json(
-        {
-          ok: false,
-          code: err.code,
-          message: userMessageForOrderCode(err.code),
-        },
-        { status: err.httpStatus },
-      );
+      const stage =
+        err.code === "ORDER_IN_PROGRESS"
+          ? "persist"
+          : err.code === "STORAGE_FAILED"
+            ? "storage"
+            : "persist";
+      return trace.failJson({
+        stage,
+        code: err.code,
+        status: err.httpStatus,
+        message: userMessageForOrderCode(err.code),
+      });
     }
-    return handleCartRouteError(err);
+    if (err instanceof CartError) {
+      return trace.failJson({
+        stage: "auth",
+        code: err.code,
+        status: err.httpStatus,
+        message: userMessageForCartCode(err.code),
+      });
+    }
+    console.error("[api/cart/convert]", trace.traceId, err);
+    return trace.failJson({
+      stage: "unknown",
+      code: "ORDER_PERSIST_FAILED",
+      status: 500,
+      message: userMessageForOrderCode("ORDER_PERSIST_FAILED"),
+    });
   }
 }

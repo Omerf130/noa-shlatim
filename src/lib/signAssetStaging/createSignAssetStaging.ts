@@ -3,7 +3,6 @@ import { cleanupExpiredSignAssetStaging } from "@/lib/signAssetStaging/cleanupEx
 import {
   newSignAssetStagingId,
   signAssetStagingArtworkPath,
-  signAssetStagingBlobPathnames,
   signAssetStagingOriginalPath,
 } from "@/lib/signAssetStaging/stagingBlobPaths";
 import { signAssetStagingTtlMs } from "@/lib/signAssetStaging/stagingConfig";

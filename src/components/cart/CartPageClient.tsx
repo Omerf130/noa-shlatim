@@ -12,10 +12,13 @@ import {
 } from "@/lib/cart/fetchCartDetail";
 import { useCartBadgeCount } from "@/components/cart/CartCountProvider";
 import {
-  CART_CONVERSION_NETWORK_ERROR_MESSAGE,
   ConversionIdempotencyKeySession,
   parseCartConversionResponse,
 } from "@/lib/cart/cartConversionClient";
+import { reportClientOperationFailure } from "@/lib/diagnostics/reportClientFailure";
+import { appendSupportReference } from "@/lib/diagnostics/supportReference";
+import { messageForCartConversionHttpFailure } from "@/lib/http/clientOperationErrors";
+import { readJsonResponse } from "@/lib/http/readJsonResponse";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import styles from "./CartPageClient.module.scss";
@@ -104,22 +107,44 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
         body: JSON.stringify({ conversionIdempotencyKey }),
       });
 
-      let json: unknown;
-      try {
-        json = await res.json();
-      } catch {
-        setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
+      const parsed = await readJsonResponse<Record<string, unknown>>(res);
+
+      if (parsed.parseFailed || !parsed.data) {
+        let traceId = parsed.traceId;
+        if (!traceId) {
+          traceId = await reportClientOperationFailure({
+            operation: "cart_convert",
+            clientStage: "json_parse",
+            httpStatus: parsed.status,
+          });
+        }
+        setConvertError(
+          appendSupportReference(
+            messageForCartConversionHttpFailure(parsed.status, true),
+            traceId,
+          ),
+        );
         return;
       }
 
-      const data = parseCartConversionResponse(json);
+      const data = parseCartConversionResponse(parsed.data);
       if (!data || !data.ok) {
-        if (data && !data.ok) {
-          setConvertError(data.message);
-          conversionSessionRef.current.resetForNewAttempt();
-        } else {
-          setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
-        }
+        conversionSessionRef.current.resetForNewAttempt();
+        const apiMessage = data && !data.ok ? data.message : null;
+        const traceFromBody =
+          parsed.data && typeof parsed.data.traceId === "string"
+            ? parsed.data.traceId
+            : null;
+        setConvertError(
+          appendSupportReference(
+            messageForCartConversionHttpFailure(
+              parsed.status,
+              false,
+              apiMessage,
+            ),
+            parsed.traceId ?? traceFromBody,
+          ),
+        );
         return;
       }
 
@@ -127,7 +152,16 @@ export function CartPageClient({ initialDetail }: CartPageClientProps) {
       setBadgeQuantity(0);
       router.push(data.checkoutPath);
     } catch {
-      setConvertError(CART_CONVERSION_NETWORK_ERROR_MESSAGE);
+      const traceId = await reportClientOperationFailure({
+        operation: "cart_convert",
+        clientStage: "fetch",
+      });
+      setConvertError(
+        appendSupportReference(
+          messageForCartConversionHttpFailure(0, false),
+          traceId,
+        ),
+      );
     } finally {
       setConverting(false);
     }

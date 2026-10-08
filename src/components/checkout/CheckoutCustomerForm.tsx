@@ -9,6 +9,10 @@ import {
   CHECKOUT_TERMS_REQUIRED_MESSAGE,
   TERMS_VERSION,
 } from "@/lib/legal/terms";
+import { reportClientOperationFailure } from "@/lib/diagnostics/reportClientFailure";
+import { appendSupportReference } from "@/lib/diagnostics/supportReference";
+import { messageForClientOperationFailure } from "@/lib/http/clientOperationErrors";
+import { readJsonResponse } from "@/lib/http/readJsonResponse";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -38,8 +42,8 @@ type SaveResponse =
   | { ok: false; code: string; message: string };
 
 type PaymentInitResponse =
-  | { ok: true; paymentPageLink: string }
-  | { ok: false; code: string; message: string };
+  | { ok: true; paymentPageLink: string; traceId?: string }
+  | { ok: false; code: string; message: string; traceId?: string };
 
 export function CheckoutCustomerForm({
   orderId,
@@ -150,10 +154,44 @@ export function CheckoutCustomerForm({
             : {}),
         }),
       });
-      const initData = (await initRes.json()) as PaymentInitResponse;
+      const parsed = await readJsonResponse<PaymentInitResponse>(initRes);
+
+      if (parsed.parseFailed || !parsed.data) {
+        let traceId = parsed.traceId;
+        if (!traceId) {
+          traceId = await reportClientOperationFailure({
+            operation: "payment_init",
+            clientStage: "json_parse",
+            httpStatus: parsed.status,
+          });
+        }
+        setFieldError(
+          appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "payment_init",
+              status: parsed.status,
+              parseFailed: true,
+            }),
+            traceId,
+          ),
+        );
+        return;
+      }
+
+      const initData = parsed.data;
 
       if (!initData.ok) {
-        setFieldError(initData.message);
+        setFieldError(
+          appendSupportReference(
+            messageForClientOperationFailure({
+              operation: "payment_init",
+              status: parsed.status,
+              parseFailed: false,
+              apiMessage: initData.message,
+            }),
+            parsed.traceId ?? initData.traceId,
+          ),
+        );
         if (initData.code === "COMMERCIAL_TOTAL_CHANGED") {
           router.refresh();
         }
@@ -162,7 +200,20 @@ export function CheckoutCustomerForm({
 
       window.location.assign(initData.paymentPageLink);
     } catch {
-      setFieldError("לא הצלחנו לפתוח את דף התשלום. נסו שוב.");
+      const traceId = await reportClientOperationFailure({
+        operation: "payment_init",
+        clientStage: "fetch",
+      });
+      setFieldError(
+        appendSupportReference(
+          messageForClientOperationFailure({
+            operation: "payment_init",
+            status: 0,
+            parseFailed: false,
+          }),
+          traceId,
+        ),
+      );
     } finally {
       setPaymentState("idle");
     }

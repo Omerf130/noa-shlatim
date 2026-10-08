@@ -4,6 +4,7 @@ import {
   cartAccessCookieOptions,
 } from "@/lib/cart/constants";
 import { resolveActiveCartForAdd } from "@/lib/cart/resolveActiveCartForAdd";
+import { beginOperationTrace } from "@/lib/diagnostics/operationTrace";
 import {
   draftIdempotencyKeySchema,
   parseAndValidateOrderDesign,
@@ -11,7 +12,6 @@ import {
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { parseSignAssetStagingToken } from "@/lib/signAssetStaging/signAssetStagingToken";
 import { getOpenAiImageConfig } from "@/lib/openai/config";
-import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -24,6 +24,8 @@ type AddCartItemsJson = {
 };
 
 export async function POST(request: Request) {
+  const trace = beginOperationTrace("cart_add_item");
+
   try {
     const resolved = await resolveActiveCartForAdd(request);
 
@@ -31,7 +33,12 @@ export async function POST(request: Request) {
     try {
       bodyJson = (await request.json()) as AddCartItemsJson;
     } catch {
-      return cartErrorResponse("INVALID_DESIGN", 400);
+      return trace.failJson({
+        stage: "parse_body",
+        code: "INVALID_DESIGN",
+        status: 400,
+        message: userMessageForOrderCode("INVALID_DESIGN"),
+      });
     }
 
     const design = parseAndValidateOrderDesign(bodyJson.design);
@@ -40,12 +47,22 @@ export async function POST(request: Request) {
       bodyJson.addIdempotencyKey,
     );
     if (!idempotencyParsed.success) {
-      return cartErrorResponse("INVALID_DESIGN", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_DESIGN",
+        status: 400,
+        message: userMessageForOrderCode("INVALID_DESIGN"),
+      });
     }
 
     const stagingToken = parseSignAssetStagingToken(bodyJson.signAssetStagingToken);
     if (!stagingToken) {
-      return cartErrorResponse("STAGING_INVALID", 400);
+      return trace.failJson({
+        stage: "validate",
+        code: "STAGING_INVALID",
+        status: 400,
+        message: userMessageForOrderCode("STAGING_INVALID"),
+      });
     }
 
     const maxAssetBytes = getOpenAiImageConfig().maxUploadBytes;
@@ -58,7 +75,7 @@ export async function POST(request: Request) {
       maxAssetBytes,
     });
 
-    const response = NextResponse.json(result);
+    const response = trace.okJson(result);
     if (resolved.setCookie) {
       response.cookies.set(
         CART_ACCESS_COOKIE,
@@ -69,30 +86,25 @@ export async function POST(request: Request) {
     return response;
   } catch (err) {
     if (err instanceof OrderError) {
-      return NextResponse.json(
-        {
-          ok: false,
-          code: err.code,
-          message: userMessageForOrderCode(err.code),
-        },
-        { status: err.httpStatus },
-      );
+      const stage =
+        err.code === "STORAGE_FAILED"
+          ? "storage"
+          : err.code === "ORDER_PERSIST_FAILED"
+            ? "persist"
+            : "validate";
+      return trace.failJson({
+        stage,
+        code: err.code,
+        status: err.httpStatus,
+        message: userMessageForOrderCode(err.code),
+      });
     }
-    console.error("[api/cart/items]", err);
-    return cartErrorResponse("ORDER_PERSIST_FAILED", 500);
+    console.error("[api/cart/items]", trace.traceId, err);
+    return trace.failJson({
+      stage: "unknown",
+      code: "ORDER_PERSIST_FAILED",
+      status: 500,
+      message: userMessageForOrderCode("ORDER_PERSIST_FAILED"),
+    });
   }
-}
-
-function cartErrorResponse(
-  code: Parameters<typeof userMessageForOrderCode>[0],
-  status: number,
-) {
-  return NextResponse.json(
-    {
-      ok: false,
-      code,
-      message: userMessageForOrderCode(code),
-    },
-    { status },
-  );
 }

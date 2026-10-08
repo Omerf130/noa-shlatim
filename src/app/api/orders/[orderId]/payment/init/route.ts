@@ -1,8 +1,8 @@
 import { authorizeCheckoutAccess } from "@/lib/checkout/authorizeCheckoutAccess";
+import { beginOperationTrace } from "@/lib/diagnostics/operationTrace";
 import { initiateOrderPayment } from "@/lib/orders/initiateOrderPayment";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
 import { parsePaymentInitBody } from "@/lib/orders/paymentInitSchema";
-import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -11,6 +11,7 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, context: RouteContext) {
+  const trace = beginOperationTrace("payment_init");
   const { orderId } = await context.params;
 
   try {
@@ -18,11 +19,21 @@ export async function POST(request: Request, context: RouteContext) {
     try {
       body = await request.json();
     } catch {
-      return paymentInitError("INVALID_DESIGN", 400, "יש לאשר את התקנון כדי להמשיך.");
+      return trace.failJson({
+        stage: "parse_body",
+        code: "INVALID_DESIGN",
+        status: 400,
+        message: "יש לאשר את התקנון כדי להמשיך.",
+      });
     }
 
     if (!parsePaymentInitBody(body)) {
-      return paymentInitError("INVALID_DESIGN", 400, "יש לאשר את התקנון כדי להמשיך.");
+      return trace.failJson({
+        stage: "validate",
+        code: "INVALID_DESIGN",
+        status: 400,
+        message: "יש לאשר את התקנון כדי להמשיך.",
+      });
     }
 
     const auth = await authorizeCheckoutAccess(orderId, request, {
@@ -62,48 +73,34 @@ export async function POST(request: Request, context: RouteContext) {
                 : err.httpStatus === 502 || err.code === "PAYPLUS_LINK_FAILED"
                   ? 502
                   : 404;
-      return NextResponse.json(
-        {
-          ok: false,
-          code: err.code,
-          message: userMessageForOrderCode(err.code),
-        },
-        { status },
-      );
+      return trace.failJson({
+        stage: err.code === "PAYPLUS_LINK_FAILED" ? "provider" : "persist",
+        code: err.code,
+        status,
+        message: userMessageForOrderCode(err.code),
+      });
     }
 
-    return NextResponse.json({
+    return trace.okJson({
       ok: true,
       paymentPageLink: result.paymentPageLink,
     });
   } catch (err) {
     if (err instanceof OrderError) {
       const status = err.httpStatus === 401 ? 401 : 404;
-      return NextResponse.json(
-        {
-          ok: false,
-          code: err.code,
-          message: userMessageForOrderCode(err.code),
-        },
-        { status },
-      );
+      return trace.failJson({
+        stage: "auth",
+        code: err.code,
+        status,
+        message: userMessageForOrderCode(err.code),
+      });
     }
-    console.error("[api/orders/payment/init POST]", err);
-    return paymentInitError("ORDER_PERSIST_FAILED", 500);
+    console.error("[api/orders/payment/init POST]", trace.traceId, err);
+    return trace.failJson({
+      stage: "unknown",
+      code: "ORDER_PERSIST_FAILED",
+      status: 500,
+      message: userMessageForOrderCode("ORDER_PERSIST_FAILED"),
+    });
   }
-}
-
-function paymentInitError(
-  code: Parameters<typeof userMessageForOrderCode>[0],
-  status: number,
-  message?: string,
-) {
-  return NextResponse.json(
-    {
-      ok: false,
-      code,
-      message: message ?? userMessageForOrderCode(code),
-    },
-    { status },
-  );
 }

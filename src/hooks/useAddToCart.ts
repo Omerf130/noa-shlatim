@@ -7,6 +7,9 @@ import {
   parseAddToCartResponse,
   type AddToCartSuccessResponse,
 } from "@/lib/cart/addToCartClient";
+import { reportClientOperationFailure } from "@/lib/diagnostics/reportClientFailure";
+import { appendSupportReference } from "@/lib/diagnostics/supportReference";
+import { readJsonResponse } from "@/lib/http/readJsonResponse";
 import {
   ADD_TO_CART_API_PATH,
   buildAddToCartJsonBody,
@@ -70,28 +73,47 @@ export function useAddToCart() {
         }),
       });
 
-      let json: unknown = null;
-      let parseFailed = false;
-      try {
-        json = await res.json();
-      } catch {
-        parseFailed = true;
-      }
+      const parsed = await readJsonResponse<Record<string, unknown>>(res);
 
-      if (parseFailed) {
-        setErrorMessage(messageForAddToCartHttpFailure(res.status));
+      if (parsed.parseFailed || !parsed.data) {
+        let traceId = parsed.traceId;
+        if (!traceId) {
+          traceId = await reportClientOperationFailure({
+            operation: "cart_add_item",
+            clientStage: "json_parse",
+            httpStatus: parsed.status,
+          });
+        }
+        setErrorMessage(
+          appendSupportReference(
+            messageForAddToCartHttpFailure(parsed.status),
+            traceId,
+          ),
+        );
         return;
       }
 
-      const data = parseAddToCartResponse(json);
+      const data = parseAddToCartResponse(parsed.data);
       if (!data) {
-        setErrorMessage(messageForAddToCartHttpFailure(res.status));
+        const traceFromBody =
+          typeof parsed.data.traceId === "string" ? parsed.data.traceId : null;
+        setErrorMessage(
+          appendSupportReference(
+            messageForAddToCartHttpFailure(parsed.status),
+            parsed.traceId ?? traceFromBody,
+          ),
+        );
         return;
       }
 
       if (!data.ok) {
+        const traceFromBody =
+          typeof parsed.data.traceId === "string" ? parsed.data.traceId : null;
         setErrorMessage(
-          messageForAddToCartHttpFailure(res.status, data.message),
+          appendSupportReference(
+            messageForAddToCartHttpFailure(parsed.status, data.message),
+            parsed.traceId ?? traceFromBody,
+          ),
         );
         return;
       }
@@ -100,7 +122,13 @@ export function useAddToCart() {
       setBadgeQuantity(data.totalQuantity);
       setAddSuccess(data);
     } catch {
-      setErrorMessage(messageForAddToCartHttpFailure(0));
+      const traceId = await reportClientOperationFailure({
+        operation: "cart_add_item",
+        clientStage: "fetch",
+      });
+      setErrorMessage(
+        appendSupportReference(messageForAddToCartHttpFailure(0), traceId),
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangle,
   FileText,
   Image,
   LayoutDashboard,
@@ -43,6 +44,14 @@ export const ADMIN_NAV_ENTRIES: AdminNavEntry[] = [
     label: "הזמנות",
     href: "/admin/orders",
     icon: ShoppingBag,
+    match: "prefix",
+  },
+  {
+    kind: "live",
+    id: "diagnostics",
+    label: "תקלות מערכת",
+    href: "/admin/diagnostics",
+    icon: AlertTriangle,
     match: "prefix",
   },
   {
