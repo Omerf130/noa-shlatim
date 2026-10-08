@@ -5,8 +5,11 @@ import { isAllowedStyleId } from "@/lib/ai/finalSignPrompts";
 import { resolveBackgroundImage } from "@/lib/ai/resolveBackgroundImage";
 import { validateImageBuffer } from "@/lib/ai/validateUpload";
 import { getOpenAiImageConfig, isAiIllustrationOperational } from "@/lib/openai/config";
+import { createSignAssetStaging } from "@/lib/signAssetStaging/createSignAssetStaging";
 import type { CreationMode, TextPosition } from "@/types/signDesign";
 import { NextResponse } from "next/server";
+
+/** Inbound multipart (source + composition) remains subject to platform body limits — see stagingConfig. */
 
 export const runtime = "nodejs";
 
@@ -114,12 +117,19 @@ export async function POST(request: Request) {
       textPosition,
     });
 
+    const staged = await createSignAssetStaging({
+      originalBuffer: sourceBuffer,
+      finalArtworkBuffer: result.pngBuffer,
+      maxAssetBytes: config.maxUploadBytes,
+    });
+
     return NextResponse.json({
       ok: true,
       artwork: {
         mimeType: "image/png",
         base64: result.pngBuffer.toString("base64"),
       },
+      signAssetStagingToken: staged.signAssetStagingToken,
       meta: {
         creationMode,
         styleId: styleId ?? undefined,

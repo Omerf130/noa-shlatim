@@ -11,12 +11,35 @@ type GenerateFinalResponse =
   | {
       ok: true;
       artwork: { mimeType: string; base64: string };
+      signAssetStagingToken: string;
     }
   | { ok: false; code: string; message: string };
 
+async function releaseStagingToken(token: string | null): Promise<void> {
+  if (!token) {
+    return;
+  }
+  try {
+    await fetch("/api/signs/release-staging", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signAssetStagingToken: token }),
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
 export function useFinalSignGeneration() {
-  const { state, dispatch, getSourcePhotoFile, setFinalArtworkBlob, customerBackgrounds } =
-    useBuilder();
+  const {
+    state,
+    dispatch,
+    getSourcePhotoFile,
+    setFinalArtworkBlob,
+    getSignAssetStagingToken,
+    setSignAssetStagingToken,
+    customerBackgrounds,
+  } = useBuilder();
   const finalArt = state.ui.finalSignArtwork;
 
   const generateFinalSign = useCallback(async () => {
@@ -85,6 +108,10 @@ export function useFinalSignGeneration() {
       return;
     }
 
+    const previousStagingToken = getSignAssetStagingToken();
+    void releaseStagingToken(previousStagingToken);
+    setSignAssetStagingToken(null);
+
     dispatch({ type: "FINAL_SIGN_START" });
 
     try {
@@ -120,9 +147,19 @@ export function useFinalSignGeneration() {
         return;
       }
 
+      if (!data.signAssetStagingToken?.trim()) {
+        dispatch({
+          type: "FINAL_SIGN_ERROR",
+          errorCode: "STAGING_MISSING",
+          userMessage: "לא הצלחנו לשמור את השלט. נסו שוב.",
+        });
+        return;
+      }
+
       const bytes = Uint8Array.from(atob(data.artwork.base64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: data.artwork.mimeType });
       setFinalArtworkBlob(blob);
+      setSignAssetStagingToken(data.signAssetStagingToken.trim());
       const objectUrl = createObjectUrl(blob);
       dispatch({ type: "FINAL_SIGN_SUCCESS", objectUrl });
     } catch {
@@ -132,7 +169,15 @@ export function useFinalSignGeneration() {
         userMessage: "לא הצלחנו להתחבר לשרת. בדקו חיבור ונסו שוב.",
       });
     }
-  }, [customerBackgrounds, dispatch, getSourcePhotoFile, setFinalArtworkBlob, state]);
+  }, [
+    customerBackgrounds,
+    dispatch,
+    getSignAssetStagingToken,
+    getSourcePhotoFile,
+    setFinalArtworkBlob,
+    setSignAssetStagingToken,
+    state,
+  ]);
 
   const showDraftPreview = useCallback(() => {
     dispatch({ type: "FINAL_SIGN_SHOW_DRAFT" });

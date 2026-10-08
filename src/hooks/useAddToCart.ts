@@ -2,15 +2,15 @@
 
 import { useBuilder } from "@/components/builder/BuilderContext";
 import {
-  ADD_TO_CART_NETWORK_ERROR_MESSAGE,
   AddIdempotencyKeySession,
+  messageForAddToCartHttpFailure,
   parseAddToCartResponse,
   type AddToCartSuccessResponse,
 } from "@/lib/cart/addToCartClient";
 import {
   ADD_TO_CART_API_PATH,
-  buildAddToCartFormData,
-} from "@/lib/cart/buildAddToCartFormData";
+  buildAddToCartJsonBody,
+} from "@/lib/cart/buildAddToCartJsonBody";
 import { buildOrderDesignPayload } from "@/lib/orders/buildDesignPayload";
 import { hasValidFinalSignArtwork } from "@/lib/builder/validation";
 import { useCartBadgeCount } from "@/components/cart/CartCountProvider";
@@ -19,8 +19,7 @@ import { useCallback, useRef, useState } from "react";
 export function useAddToCart() {
   const {
     state,
-    getSourcePhotoFile,
-    getFinalArtworkBlob,
+    getSignAssetStagingToken,
     resetBuilderSession,
   } = useBuilder();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,12 +44,13 @@ export function useAddToCart() {
       return;
     }
 
-    const originalFile = getSourcePhotoFile();
-    const finalBlob = getFinalArtworkBlob();
+    const stagingToken = getSignAssetStagingToken();
     const designPayload = buildOrderDesignPayload(design);
 
-    if (!originalFile || !finalBlob || !designPayload) {
-      setErrorMessage("חסרים נתונים להוספה לסל. חזרו לעריכה ונסו שוב.");
+    if (!stagingToken || !designPayload) {
+      setErrorMessage(
+        "חסרים נתונים להוספה לסל. צרו את השלט מחדש ונסו שוב.",
+      );
       return;
     }
 
@@ -60,34 +60,39 @@ export function useAddToCart() {
     const addIdempotencyKey = idempotencySessionRef.current.getOrCreate();
 
     try {
-      const form = buildAddToCartFormData({
-        designPayload,
-        addIdempotencyKey,
-        originalFile,
-        finalArtworkBlob: finalBlob,
-      });
-
       const res = await fetch(ADD_TO_CART_API_PATH, {
         method: "POST",
-        body: form,
+        headers: { "Content-Type": "application/json" },
+        body: buildAddToCartJsonBody({
+          design: designPayload,
+          addIdempotencyKey,
+          signAssetStagingToken: stagingToken,
+        }),
       });
 
-      let json: unknown;
+      let json: unknown = null;
+      let parseFailed = false;
       try {
         json = await res.json();
       } catch {
-        setErrorMessage(ADD_TO_CART_NETWORK_ERROR_MESSAGE);
+        parseFailed = true;
+      }
+
+      if (parseFailed) {
+        setErrorMessage(messageForAddToCartHttpFailure(res.status));
         return;
       }
 
       const data = parseAddToCartResponse(json);
       if (!data) {
-        setErrorMessage(ADD_TO_CART_NETWORK_ERROR_MESSAGE);
+        setErrorMessage(messageForAddToCartHttpFailure(res.status));
         return;
       }
 
       if (!data.ok) {
-        setErrorMessage(data.message);
+        setErrorMessage(
+          messageForAddToCartHttpFailure(res.status, data.message),
+        );
         return;
       }
 
@@ -95,11 +100,11 @@ export function useAddToCart() {
       setBadgeQuantity(data.totalQuantity);
       setAddSuccess(data);
     } catch {
-      setErrorMessage(ADD_TO_CART_NETWORK_ERROR_MESSAGE);
+      setErrorMessage(messageForAddToCartHttpFailure(0));
     } finally {
       setIsSubmitting(false);
     }
-  }, [getFinalArtworkBlob, getSourcePhotoFile, setBadgeQuantity, state]);
+  }, [getSignAssetStagingToken, setBadgeQuantity, state]);
 
   const startNewSign = useCallback(() => {
     idempotencySessionRef.current.resetForNewSign();
@@ -108,10 +113,13 @@ export function useAddToCart() {
     resetBuilderSession();
   }, [resetBuilderSession]);
 
+  const hasStagingToken = Boolean(getSignAssetStagingToken());
+
   const canAddToCart =
     (state.design.creationMode === "photo" ||
       state.design.creationMode === "illustration") &&
     hasValidFinalSignArtwork(state.ui) &&
+    hasStagingToken &&
     addSuccess === null;
 
   return {

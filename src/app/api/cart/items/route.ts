@@ -1,4 +1,4 @@
-import { addCartItem } from "@/lib/cart/addCartItem";
+import { addCartItemFromStaging } from "@/lib/cart/addCartItemFromStaging";
 import {
   CART_ACCESS_COOKIE,
   cartAccessCookieOptions,
@@ -9,6 +9,7 @@ import {
   parseAndValidateOrderDesign,
 } from "@/lib/orders/orderDesignSchema";
 import { OrderError, userMessageForOrderCode } from "@/lib/orders/errors";
+import { parseSignAssetStagingToken } from "@/lib/signAssetStaging/signAssetStagingToken";
 import { getOpenAiImageConfig } from "@/lib/openai/config";
 import { NextResponse } from "next/server";
 
@@ -16,48 +17,44 @@ export const runtime = "nodejs";
 
 const addIdempotencyKeySchema = draftIdempotencyKeySchema;
 
+type AddCartItemsJson = {
+  design?: unknown;
+  addIdempotencyKey?: unknown;
+  signAssetStagingToken?: unknown;
+};
+
 export async function POST(request: Request) {
   try {
     const resolved = await resolveActiveCartForAdd(request);
 
-    const form = await request.formData();
-    const designRaw = form.get("design");
-    const idempotencyKeyRaw = form.get("addIdempotencyKey");
-    const originalEntry = form.get("originalImage");
-    const artworkEntry = form.get("finalArtwork");
-
-    if (typeof designRaw !== "string") {
-      return cartErrorResponse("INVALID_DESIGN", 400);
-    }
-
-    let designJson: unknown;
+    let bodyJson: AddCartItemsJson;
     try {
-      designJson = JSON.parse(designRaw) as unknown;
+      bodyJson = (await request.json()) as AddCartItemsJson;
     } catch {
       return cartErrorResponse("INVALID_DESIGN", 400);
     }
 
-    const design = parseAndValidateOrderDesign(designJson);
+    const design = parseAndValidateOrderDesign(bodyJson.design);
 
-    const idempotencyParsed = addIdempotencyKeySchema.safeParse(idempotencyKeyRaw);
+    const idempotencyParsed = addIdempotencyKeySchema.safeParse(
+      bodyJson.addIdempotencyKey,
+    );
     if (!idempotencyParsed.success) {
       return cartErrorResponse("INVALID_DESIGN", 400);
     }
 
-    if (!(originalEntry instanceof File) || !(artworkEntry instanceof File)) {
-      return cartErrorResponse("INVALID_ASSET", 400);
+    const stagingToken = parseSignAssetStagingToken(bodyJson.signAssetStagingToken);
+    if (!stagingToken) {
+      return cartErrorResponse("STAGING_INVALID", 400);
     }
 
-    const originalBuffer = Buffer.from(await originalEntry.arrayBuffer());
-    const finalArtworkBuffer = Buffer.from(await artworkEntry.arrayBuffer());
     const maxAssetBytes = getOpenAiImageConfig().maxUploadBytes;
 
-    const result = await addCartItem({
+    const result = await addCartItemFromStaging({
       cartId: resolved.cartId,
       addIdempotencyKey: idempotencyParsed.data,
       design,
-      originalBuffer,
-      finalArtworkBuffer,
+      signAssetStagingToken: stagingToken,
       maxAssetBytes,
     });
 

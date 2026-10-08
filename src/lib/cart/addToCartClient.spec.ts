@@ -63,3 +63,10 @@ describe("network error copy", () => {
     assert.match(ADD_TO_CART_NETWORK_ERROR_MESSAGE, /לסל/);
   });
 });
+
+describe("messageForAddToCartHttpFailure export", () => {
+  it("is re-exported from addToCartClient", async () => {
+    const mod = await import("@/lib/cart/addToCartClient");
+    assert.equal(typeof mod.messageForAddToCartHttpFailure, "function");
+  });
+});

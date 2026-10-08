@@ -29,6 +29,8 @@ type BuilderContextValue = {
   getSourcePhotoFile: () => File | null;
   setFinalArtworkBlob: (blob: Blob | null) => void;
   getFinalArtworkBlob: () => Blob | null;
+  setSignAssetStagingToken: (token: string | null) => void;
+  getSignAssetStagingToken: () => string | null;
   /** Full Builder reset for a new sign (does not touch server Cart). */
   resetBuilderSession: () => void;
 };
@@ -51,6 +53,7 @@ export function BuilderProvider({
   const [state, dispatch] = useReducer(builderReducer, initialBuilderState);
   const sourcePhotoFileRef = useRef<File | null>(null);
   const finalArtworkBlobRef = useRef<Blob | null>(null);
+  const signAssetStagingTokenRef = useRef<string | null>(null);
 
   const setSourcePhotoFile = useCallback((file: File | null) => {
     sourcePhotoFileRef.current = file;
@@ -64,10 +67,20 @@ export function BuilderProvider({
 
   const getFinalArtworkBlob = useCallback(() => finalArtworkBlobRef.current, []);
 
+  const setSignAssetStagingToken = useCallback((token: string | null) => {
+    signAssetStagingTokenRef.current = token;
+  }, []);
+
+  const getSignAssetStagingToken = useCallback(
+    () => signAssetStagingTokenRef.current,
+    [],
+  );
+
   const resetBuilderSession = useCallback(() => {
     dispatch({ type: "RESET_BUILDER_SESSION" });
     sourcePhotoFileRef.current = null;
     finalArtworkBlobRef.current = null;
+    signAssetStagingTokenRef.current = null;
   }, []);
 
   const value = useMemo(
@@ -81,6 +94,8 @@ export function BuilderProvider({
       getSourcePhotoFile,
       setFinalArtworkBlob,
       getFinalArtworkBlob,
+      setSignAssetStagingToken,
+      getSignAssetStagingToken,
       resetBuilderSession,
     }),
     [
@@ -92,6 +107,8 @@ export function BuilderProvider({
       getSourcePhotoFile,
       setFinalArtworkBlob,
       getFinalArtworkBlob,
+      setSignAssetStagingToken,
+      getSignAssetStagingToken,
       resetBuilderSession,
     ],
   );

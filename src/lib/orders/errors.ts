@@ -13,7 +13,11 @@ export type OrderErrorCode =
   | "COMMERCIAL_TOTAL_CHANGED"
   | "MATERIAL_UNAVAILABLE"
   | "MAGNET_SIZE_UNAVAILABLE"
-  | "BACKGROUND_UNAVAILABLE";
+  | "BACKGROUND_UNAVAILABLE"
+  | "STAGING_INVALID"
+  | "STAGING_EXPIRED"
+  | "STAGING_UNAVAILABLE"
+  | "STAGING_IN_PROGRESS";
 
 export class OrderError extends Error {
   readonly code: OrderErrorCode;
@@ -47,6 +51,14 @@ const USER_MESSAGES: Record<OrderErrorCode, string> = {
     "גודל המגנט שבחרתם אינו זמין. בחרו גודל אחר או חזרו לעריכת השלט.",
   BACKGROUND_UNAVAILABLE:
     "הרקע שבחרתם אינו זמין כרגע. בחרו רקע אחר והמשיכו.",
+  STAGING_INVALID:
+    "לא נמצאו קבצי השלט. צרו את השלט מחדש ונסו להוסיף לסל.",
+  STAGING_EXPIRED:
+    "פג תוקף קבצי השלט. צרו את השלט מחדש ואז הוסיפו לסל.",
+  STAGING_UNAVAILABLE:
+    "קבצי השלט כבר נוצלו או אינם זמינים. צרו את השלט מחדש.",
+  STAGING_IN_PROGRESS:
+    "הוספה לסל כבר מתבצעת. המתינו רגע ונסו שוב.",
 };
 
 export function userMessageForOrderCode(code: OrderErrorCode): string {

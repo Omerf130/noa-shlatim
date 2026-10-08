@@ -1,5 +1,7 @@
-export const ADD_TO_CART_NETWORK_ERROR_MESSAGE =
-  "לא הצלחנו להוסיף את השלט לסל. בדקו חיבור ונסו שוב.";
+export {
+  ADD_TO_CART_NETWORK_ERROR_MESSAGE,
+  messageForAddToCartHttpFailure,
+} from "@/lib/cart/addToCartHttpErrors";
 
 export type AddToCartSuccessResponse = {
   ok: true;
