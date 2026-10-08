@@ -6,21 +6,14 @@ import styles from "./SignGenerationOverlay.module.scss";
 
 const PRIMARY_MESSAGE = "יוצרים את השלט שלכם...";
 
-const PHOTO_ROTATING_MESSAGES = [
-  "מכינים את האיור שלכם...",
-  "מחברים את המשפחה לרקע...",
-  "מתאימים את הסגנון שבחרתם...",
-  "עוד רגע השלט שלכם מוכן ✨",
+const PLAYFUL_ROTATING_MESSAGES = [
+  "נועה בודקת אם כולם יצאו פוטוגניים...",
+  "רגע, מי הזיז את העצם?",
+  "מסדרים את הפרווה לפני התמונה...",
+  "עוד רגע, נועה נותנת אישור סופי 🐾",
 ] as const;
 
-const ILLUSTRATION_ROTATING_MESSAGES = [
-  "מכינים את האיור שלכם...",
-  "משלבים את האיור ברקע...",
-  "מחברים את הדמויות לסביבה...",
-  "עוד רגע השלט שלכם מוכן ✨",
-] as const;
-
-const ROTATE_MS = 6000;
+const ROTATE_MS = 5500;
 
 function subscribeReducedMotion(onStoreChange: () => void) {
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -36,23 +29,31 @@ function getReducedMotionServerSnapshot() {
   return false;
 }
 
-function rotatingMessagesForMode(mode: CreationMode | null): readonly string[] {
-  if (mode === "illustration") {
-    return ILLUSTRATION_ROTATING_MESSAGES;
-  }
-  return PHOTO_ROTATING_MESSAGES;
-}
-
 type SignGenerationOverlayProps = {
   active: boolean;
   creationMode?: CreationMode | null;
 };
 
+function PawMark({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      width={20}
+      height={20}
+      aria-hidden="true"
+    >
+      <ellipse cx="8" cy="11" rx="3.2" ry="2.6" fill="currentColor" />
+      <circle cx="4.5" cy="6.5" r="1.6" fill="currentColor" />
+      <circle cx="8" cy="5" r="1.7" fill="currentColor" />
+      <circle cx="11.5" cy="6.5" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function SignGenerationOverlay({
   active,
-  creationMode = "photo",
 }: SignGenerationOverlayProps) {
-  const messages = rotatingMessagesForMode(creationMode);
   const [rotateIndex, setRotateIndex] = useState(0);
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
@@ -61,22 +62,26 @@ export function SignGenerationOverlay({
   );
 
   useEffect(() => {
-    if (!active || reducedMotion) {
+    if (!active) {
+      setRotateIndex(0);
+      return;
+    }
+    if (reducedMotion) {
       return;
     }
     const id = window.setInterval(() => {
-      setRotateIndex((i) => (i + 1) % messages.length);
+      setRotateIndex((i) => (i + 1) % PLAYFUL_ROTATING_MESSAGES.length);
     }, ROTATE_MS);
     return () => window.clearInterval(id);
-  }, [active, reducedMotion, messages.length]);
+  }, [active, reducedMotion]);
 
   if (!active) {
     return null;
   }
 
   const supporting = reducedMotion
-    ? messages[0]
-    : messages[rotateIndex % messages.length];
+    ? PLAYFUL_ROTATING_MESSAGES[0]
+    : PLAYFUL_ROTATING_MESSAGES[rotateIndex % PLAYFUL_ROTATING_MESSAGES.length];
 
   return (
     <div
@@ -86,14 +91,20 @@ export function SignGenerationOverlay({
       ]
         .filter(Boolean)
         .join(" ")}
+      role="status"
       aria-busy="true"
+      aria-live="polite"
     >
       <div className={styles.glowRing} aria-hidden="true" />
       <div className={styles.panel}>
+        <div className={styles.playScene} aria-hidden="true">
+          <div className={styles.doorSign}>
+            <span className={styles.doorSignLabel}>נועה</span>
+          </div>
+          <PawMark className={styles.pawRunner} />
+        </div>
         <p className={styles.primary}>{PRIMARY_MESSAGE}</p>
-        <p className={styles.supporting} aria-live="polite">
-          {supporting}
-        </p>
+        <p className={styles.supporting}>{supporting}</p>
       </div>
     </div>
   );

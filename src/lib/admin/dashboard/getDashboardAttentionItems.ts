@@ -1,5 +1,4 @@
 import { formatDashboardAttentionDate } from "@/lib/admin/dashboard/adminDashboardOrderPresentation";
-import { adminOrderAssetApiPath } from "@/lib/admin/orders/adminOrderAssets";
 import {
   buildAdminOrderListItemDto,
   type AdminOrderListItemDto,
@@ -37,12 +36,9 @@ export async function getDashboardAttentionItems(): Promise<DashboardAttentionIt
       if (!item) {
         return null;
       }
-      const hasArtwork = Boolean(order.assets?.finalArtwork);
       return {
         ...item,
-        artworkThumbnailUrl: hasArtwork
-          ? adminOrderAssetApiPath(item.orderId, "artwork")
-          : null,
+        artworkThumbnailUrl: item.artworkThumbnailUrl,
         attentionDateLabel: formatDashboardAttentionDate(order.createdAt),
         issueLabel: "ממתינה לתשלום",
       };

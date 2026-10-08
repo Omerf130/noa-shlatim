@@ -151,12 +151,13 @@ describe("payment gating", () => {
     assert.match(route, /checkoutSource\.items/);
   });
 
-  it("CASE 17: client hides payment when canInitiatePayment false", () => {
+  it("CASE 17: client uses save-and-continue primary action", () => {
     const form = readFileSync(
       join(repoRoot, "src/components/checkout/CheckoutCustomerForm.tsx"),
       "utf8",
     );
-    assert.match(form, /canInitiatePayment/);
+    assert.match(form, /שמירה והמשך לתשלום/);
+    assert.match(form, /onSecurePayment/);
   });
 });
 

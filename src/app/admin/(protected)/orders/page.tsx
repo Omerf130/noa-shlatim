@@ -35,6 +35,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
               <thead>
                 <tr>
                   <th scope="col">הזמנה</th>
+                  <th scope="col">מוצר</th>
                   <th scope="col">לקוח</th>
                   <th scope="col">טלפון</th>
                   <th scope="col">נוצר</th>
@@ -51,6 +52,23 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   <tr key={item.orderId}>
                     <td className={styles.mono} dir="ltr">
                       {item.orderReference}
+                    </td>
+                    <td className={styles.productCell}>
+                      {item.artworkThumbnailUrl ? (
+                        <span className={styles.thumbFrame}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={item.artworkThumbnailUrl}
+                            alt=""
+                            className={styles.thumb}
+                            width={76}
+                            height={51}
+                            decoding="async"
+                          />
+                        </span>
+                      ) : (
+                        <span className={styles.thumbEmpty} aria-hidden />
+                      )}
                     </td>
                     <td>{item.customerDisplayName}</td>
                     <td className={styles.mono} dir="ltr">
@@ -80,9 +98,26 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
             {list.items.map((item) => (
               <li key={item.orderId} className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <span className={styles.mono} dir="ltr">
-                    {item.orderReference}
-                  </span>
+                  <div className={styles.cardHeaderStart}>
+                    {item.artworkThumbnailUrl ? (
+                      <span className={styles.thumbFrameMobile}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.artworkThumbnailUrl}
+                          alt=""
+                          className={styles.thumbMobile}
+                          width={64}
+                          height={43}
+                          decoding="async"
+                        />
+                      </span>
+                    ) : (
+                      <span className={styles.thumbEmptyMobile} aria-hidden />
+                    )}
+                    <span className={styles.mono} dir="ltr">
+                      {item.orderReference}
+                    </span>
+                  </div>
                   <AdminStatusBadge statusKey={item.statusKey} label={item.statusLabel} />
                 </div>
                 <dl className={styles.cardMeta}>

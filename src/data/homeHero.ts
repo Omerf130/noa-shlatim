@@ -15,7 +15,7 @@ export const homeHeroAccentLine = "הבית שלכם, הסיפור שלכם";
 export const homeHeroValueItems = [
   { id: "personal", label: "עיצוב אישי באמת" },
   { id: "process", label: "תהליך פשוט וברור" },
-  { id: "material", label: "עץ או מגנט" },
+  { id: "material", label: "מגנט לדלת" },
 ] as const;
 
 export type HomeHeroValueItemId = (typeof homeHeroValueItems)[number]["id"];

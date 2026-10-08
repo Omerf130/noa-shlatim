@@ -81,7 +81,7 @@ describe("PromotionBanner static presentation", () => {
       join(repoRoot, "src/components/promotions/PromotionBanner.tsx"),
       "utf8",
     );
-    assert.match(tsx, /items\.length === 0/);
+    assert.match(tsx, /baseCycle\.length === 0/);
     assert.match(tsx, /return null/);
   });
 

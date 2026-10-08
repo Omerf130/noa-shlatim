@@ -218,3 +218,65 @@
   border: 1px solid var(--color-border, #eaecf0);
   background: var(--color-bg-muted, #f9fafb);
 }
+
+.productCell {
+  width: 5.5rem;
+}
+
+.thumbFrame,
+.thumbFrameMobile {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 0.35rem;
+  border: 1px solid var(--color-border, #e8e0d6);
+  background: var(--color-surface-muted, #f3ede4);
+}
+
+.thumbFrame {
+  width: 4.75rem;
+  height: 3.2rem;
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbEmpty {
+  display: inline-block;
+  width: 4.75rem;
+  height: 3.2rem;
+  border-radius: 0.35rem;
+  background: var(--color-surface-muted, #f3ede4);
+  border: 1px dashed var(--color-border, #e8e0d6);
+}
+
+.cardHeaderStart {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.thumbFrameMobile {
+  width: 4rem;
+  height: 2.7rem;
+  flex-shrink: 0;
+}
+
+.thumbMobile {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbEmptyMobile {
+  display: inline-block;
+  width: 4rem;
+  height: 2.7rem;
+  flex-shrink: 0;
+  border-radius: 0.35rem;
+  background: var(--color-surface-muted, #f3ede4);
+  border: 1px dashed var(--color-border, #e8e0d6);
+}

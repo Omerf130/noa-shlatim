@@ -1,4 +1,5 @@
-import { buildAdminOrderDetailDto, isAdminVisibleOrderStatus } from "@/lib/admin/orders/adminOrderDtos";
+import { buildAdminOrderDetailDto } from "@/lib/admin/orders/adminOrderDtos";
+import { isAdminVisibleOrderDocument } from "@/lib/admin/orders/adminOrderVisibility";
 import { connectDb } from "@/lib/db/connect";
 import { assertValidOrderId } from "@/lib/orders/orderBlobPaths";
 import { Order } from "@/models/Order";
@@ -16,11 +17,7 @@ export async function getAdminOrderDetail(orderId: string) {
     return null;
   }
 
-  const mode = order.creationMode;
-  if (
-    !isAdminVisibleOrderStatus(order.status) ||
-    (mode !== "photo" && mode !== "illustration")
-  ) {
+  if (!isAdminVisibleOrderDocument(order)) {
     return null;
   }
 

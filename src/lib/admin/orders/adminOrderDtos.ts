@@ -27,6 +27,7 @@ import { resolveOrderItems } from "@/lib/orders/resolveOrderItems";
 import {
   adminOrderAssetApiPath,
   adminOrderItemAssetApiPath,
+  resolveAdminOrderArtworkThumbnailApiPath,
 } from "@/lib/admin/orders/adminOrderAssets";
 import { formatMinorToIlsDisplay } from "@/lib/money/ils";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
@@ -70,6 +71,7 @@ export type AdminOrderListItemDto = {
   customerDisplayName: string;
   customerPhone: string | null;
   productSummaryLabel: string | null;
+  artworkThumbnailUrl: string | null;
   detailHref: string;
 };
 
@@ -441,6 +443,12 @@ export function buildAdminOrderListItemDto(
     customerDisplayName: customerDisplayName(order.customer),
     customerPhone: order.customer?.phone?.trim() || null,
     productSummaryLabel: summary,
+    artworkThumbnailUrl: resolveAdminOrderArtworkThumbnailApiPath(orderId, {
+      creationMode: order.creationMode as "photo" | "illustration" | undefined,
+      design: order.design,
+      assets: order.assets as Parameters<typeof resolveOrderItems>[0]["assets"],
+      items: order.items as Parameters<typeof resolveOrderItems>[0]["items"],
+    }),
     detailHref: `/admin/orders/${orderId}`,
   };
 }

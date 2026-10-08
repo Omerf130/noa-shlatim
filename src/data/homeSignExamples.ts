@@ -25,22 +25,22 @@ export const homeSignExamples: HomeSignExampleItem[] = [
   {
     id: "example-family",
     title: "שלט משפחתי",
-    caption: "שם המשפחה בראש השלט, האיור במרכז — עץ חם לכניסה ביתית.",
-    previewAriaLabel: "דוגמת שלט משפחתי — משפחת לוי, חצר ביתית, שלט עץ",
+    caption: "שם המשפחה בראש השלט, האיור במרכז — מגנט חם לכניסה ביתית.",
+    previewAriaLabel: "דוגמת שלט משפחתי — משפחת לוי, חצר ביתית, שלט מגנט",
     finishedSignImageSrc: finishedSignExamples.familyCourtyard,
   },
   {
     id: "example-view",
     title: "שלט עם נוף",
     caption: "רקע נוף פתוח, טקסט צבעוני למטה — מגנט עדין למרפסת או דלת פנים.",
-    previewAriaLabel: "דוגמת שלט עם נוף — משפחת כהן, נוף שקיעה, שלט עץ",
+    previewAriaLabel: "דוגמת שלט עם נוף — משפחת כהן, נוף שקיעה, שלט מגנט",
     finishedSignImageSrc: finishedSignExamples.familySunsetView,
   },
   {
     id: "example-welcome",
     title: "שלט לכניסה",
-    caption: "ברכת כניסה בולטת, איור שובב — עץ חם על רקע כניסה ביתית.",
-    previewAriaLabel: "דוגמת שלט לכניסה — משפחת כהן, דלת כניסה, שלט עץ",
+    caption: "ברכת כניסה בולטת, איור שובב — מגנט חם על רקע כניסה ביתית.",
+    previewAriaLabel: "דוגמת שלט לכניסה — משפחת כהן, דלת כניסה, שלט מגנט",
     finishedSignImageSrc: finishedSignExamples.familyEntry,
   },
 ];

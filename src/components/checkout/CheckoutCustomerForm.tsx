@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import styles from "./CheckoutCustomerForm.module.scss";
 
-type SaveState = "idle" | "submitting" | "success" | "error";
 type PaymentState = "idle" | "processing";
 
 type CheckoutCustomerFormProps = {
@@ -48,7 +47,6 @@ export function CheckoutCustomerForm({
   initialNotes,
   commercial,
   canSaveCommercialCheckout,
-  canInitiatePayment,
   initialSelectedShippingMethodId,
   onShippingSelectionChange,
 }: CheckoutCustomerFormProps) {
@@ -61,7 +59,6 @@ export function CheckoutCustomerForm({
   >(initialSelectedShippingMethodId);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [paymentState, setPaymentState] = useState<PaymentState>("idle");
   const router = useRouter();
 
@@ -97,46 +94,11 @@ export function CheckoutCustomerForm({
     selectedShippingMethodId,
   ]);
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      setFieldError(null);
-
-      if (!termsAccepted) {
-        setFieldError(CHECKOUT_TERMS_REQUIRED_MESSAGE);
-        setSaveState("error");
-        return;
-      }
-
-      setSaveState("submitting");
-
-      try {
-        const data = await persistCheckoutDetails();
-        if (!data.ok) {
-          setFieldError(data.message);
-          setSaveState("error");
-          return;
-        }
-
-        setFullName(data.customer.fullName);
-        setPhone(data.customer.phone);
-        setEmail(data.customer.email);
-        setNotes(data.notes);
-        setSelectedShippingMethodId(data.selectedShippingMethodId);
-        onShippingSelectionChange?.(data.selectedShippingMethodId);
-        setSaveState("success");
-      } catch {
-        setFieldError("לא הצלחנו לשמור את הפרטים. נסו שוב.");
-        setSaveState("error");
-      }
-    },
-    [onShippingSelectionChange, persistCheckoutDetails, termsAccepted],
-  );
-
   const onSecurePayment = useCallback(async () => {
     setFieldError(null);
 
-    if (!canInitiatePayment || !canSaveCommercialCheckout || !commercial.available) {
+    if (!canSaveCommercialCheckout || !commercial.available) {
+      setFieldError("לא ניתן להמשיך לתשלום כרגע.");
       return;
     }
 
@@ -147,6 +109,15 @@ export function CheckoutCustomerForm({
 
     if (!termsAccepted) {
       setFieldError(CHECKOUT_TERMS_REQUIRED_MESSAGE);
+      return;
+    }
+
+    if (
+      !fullName.trim() ||
+      !phone.trim() ||
+      !email.trim()
+    ) {
+      setFieldError("יש למלא את כל שדות החובה.");
       return;
     }
 
@@ -165,7 +136,6 @@ export function CheckoutCustomerForm({
       setNotes(saveData.notes);
       setSelectedShippingMethodId(saveData.selectedShippingMethodId);
       onShippingSelectionChange?.(saveData.selectedShippingMethodId);
-      setSaveState("success");
 
       const acknowledgedTotalAmountMinor =
         saveData.commercial.summary.totalAmountMinor ?? undefined;
@@ -197,22 +167,31 @@ export function CheckoutCustomerForm({
       setPaymentState("idle");
     }
   }, [
-    canInitiatePayment,
     canSaveCommercialCheckout,
     commercial.available,
+    email,
+    fullName,
     onShippingSelectionChange,
     orderId,
     persistCheckoutDetails,
+    phone,
     selectedShippingMethodId,
     termsAccepted,
     router,
   ]);
 
   const formDisabled = !canSaveCommercialCheckout;
-  const paymentBusy = paymentState === "processing" || saveState === "submitting";
+  const paymentBusy = paymentState === "processing";
 
   return (
-    <form className={styles.form} onSubmit={(e) => void onSubmit(e)} noValidate>
+    <form
+      className={styles.form}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void onSecurePayment();
+      }}
+      noValidate
+    >
       {!commercial.available && (
         <p className={styles.unavailable} role="status">
           {commercial.message}
@@ -231,10 +210,7 @@ export function CheckoutCustomerForm({
           required
           disabled={formDisabled || paymentBusy}
           value={fullName}
-          onChange={(e) => {
-            setFullName(e.target.value);
-            if (saveState === "success") setSaveState("idle");
-          }}
+          onChange={(e) => setFullName(e.target.value)}
         />
       </label>
 
@@ -250,10 +226,7 @@ export function CheckoutCustomerForm({
           disabled={formDisabled || paymentBusy}
           dir="ltr"
           value={phone}
-          onChange={(e) => {
-            setPhone(e.target.value);
-            if (saveState === "success") setSaveState("idle");
-          }}
+          onChange={(e) => setPhone(e.target.value)}
         />
       </label>
 
@@ -268,10 +241,7 @@ export function CheckoutCustomerForm({
           disabled={formDisabled || paymentBusy}
           dir="ltr"
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (saveState === "success") setSaveState("idle");
-          }}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </label>
 
@@ -284,10 +254,7 @@ export function CheckoutCustomerForm({
           maxLength={500}
           disabled={formDisabled || paymentBusy}
           value={notes}
-          onChange={(e) => {
-            setNotes(e.target.value);
-            if (saveState === "success") setSaveState("idle");
-          }}
+          onChange={(e) => setNotes(e.target.value)}
         />
       </label>
 
@@ -298,7 +265,6 @@ export function CheckoutCustomerForm({
           onSelect={(id) => {
             setSelectedShippingMethodId(id);
             onShippingSelectionChange?.(id);
-            if (saveState === "success") setSaveState("idle");
           }}
           disabled={formDisabled || paymentBusy}
         />
@@ -315,7 +281,6 @@ export function CheckoutCustomerForm({
           data-terms-version={TERMS_VERSION}
           onChange={(e) => {
             setTermsAccepted(e.target.checked);
-            if (saveState === "success") setSaveState("idle");
             if (fieldError === CHECKOUT_TERMS_REQUIRED_MESSAGE) {
               setFieldError(null);
             }
@@ -351,30 +316,13 @@ export function CheckoutCustomerForm({
         </p>
       )}
 
-      {saveState === "success" && (
-        <p className={styles.success} role="status">
-          הפרטים נשמרו
-        </p>
-      )}
-
       <Button
         type="submit"
         disabled={paymentBusy || formDisabled}
         className={styles.submit}
       >
-        {saveState === "submitting" ? "שומרים…" : "שמירת פרטים ומשלוח"}
+        {paymentBusy ? "שומרים וממשיכים לתשלום…" : "שמירה והמשך לתשלום"}
       </Button>
-
-      {canInitiatePayment && (
-        <Button
-          type="button"
-          disabled={paymentBusy || formDisabled}
-          className={styles.payButton}
-          onClick={() => void onSecurePayment()}
-        >
-          {paymentState === "processing" ? "פותחים תשלום מאובטח…" : "מעבר לתשלום מאובטח"}
-        </Button>
-      )}
     </form>
   );
 }

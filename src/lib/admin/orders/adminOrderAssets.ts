@@ -1,3 +1,4 @@
+import { LEGACY_ORDER_LINE_ID } from "@/lib/orders/orderItemConstants";
 import {
   resolveOrderItems,
   type OrderLikeForResolveItems,
@@ -51,6 +52,24 @@ export function adminOrderItemAssetApiPath(
   assetType: AdminOrderAssetType,
 ): string {
   return `/api/admin/orders/${orderId}/items/${lineId}/assets/${assetType}`;
+}
+
+/** First line with final artwork — secure Admin API path (not Blob URL). */
+export function resolveAdminOrderArtworkThumbnailApiPath(
+  orderId: string,
+  order: OrderLikeForResolveItems,
+): string | null {
+  const resolved = resolveOrderItems(order);
+  for (const line of resolved) {
+    if (!line.assets.finalArtwork?.pathname) {
+      continue;
+    }
+    if (line.lineId === LEGACY_ORDER_LINE_ID) {
+      return adminOrderAssetApiPath(orderId, "artwork");
+    }
+    return adminOrderItemAssetApiPath(orderId, line.lineId, "artwork");
+  }
+  return null;
 }
 
 export function resolveOrderItemAssetPathname(
