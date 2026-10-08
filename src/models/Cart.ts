@@ -46,17 +46,23 @@ const cartSchema = new Schema(
       enum: CART_STATUSES,
       default: "active",
     },
-    convertedOrderId: { type: String, required: false, default: null },
-    conversionIdempotencyKey: { type: String, required: false, default: null },
+    convertedOrderId: { type: String, required: false },
+    conversionIdempotencyKey: { type: String, required: false },
     items: { type: [cartItemSchema], default: [] },
   },
   { timestamps: true },
 );
 
 cartSchema.index({ accessTokenHash: 1 });
+/** Only converted carts carry a key — omit field on create (never store null). */
 cartSchema.index(
   { conversionIdempotencyKey: 1 },
-  { unique: true, sparse: true },
+  {
+    unique: true,
+    partialFilterExpression: {
+      conversionIdempotencyKey: { $exists: true, $type: "string" },
+    },
+  },
 );
 
 export type CartDocument = InferSchemaType<typeof cartSchema> & {

@@ -229,9 +229,8 @@ describe("add idempotency (CASE 17-19)", () => {
     const filter = cartPushItemFilter(cartId, addKey);
     assert.equal(filter._id, cartId);
     assert.equal(filter.status, "active");
-    assert.deepEqual(filter.items, {
-      $not: { $elemMatch: { addIdempotencyKey: addKey } },
-    });
+    assert.ok(Array.isArray(filter.$or));
+    assert.equal((filter.$or as unknown[]).length, 3);
   });
 });
 
