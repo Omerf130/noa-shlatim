@@ -52,6 +52,7 @@ export async function POST(request: Request, context: RouteContext) {
         assets: auth.order.assets,
         items: auth.checkoutSource.items,
         customer: auth.order.customer,
+        shippingAddress: auth.order.shippingAddress,
         checkoutSelection: auth.order.checkoutSelection,
         commercialSnapshot: auth.order.commercialSnapshot,
         termsAcceptance: auth.order.termsAcceptance,

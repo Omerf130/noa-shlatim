@@ -1,7 +1,10 @@
 import type { SignBackground } from "@/types/signBackground";
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
+import type { ShippingAddress } from "@/lib/checkout/shippingAddressSchema";
 import type { SignDesignState } from "@/types/signDesign";
+
+export type CheckoutShippingAddressDto = ShippingAddress;
 
 export type CheckoutCustomerDto = {
   fullName: string;
@@ -32,6 +35,7 @@ export type CheckoutPageDto = {
   items: CheckoutLineItemDto[];
   hasValidDesign: boolean;
   customer: CheckoutCustomerDto;
+  shippingAddress: CheckoutShippingAddressDto | null;
   notes: string;
   commercial: CheckoutCommercialDto;
   canSaveCommercialCheckout: boolean;
@@ -41,6 +45,7 @@ export type CheckoutPageDto = {
 export type CheckoutSaveResponseDto = {
   ok: true;
   customer: CheckoutCustomerDto;
+  shippingAddress: CheckoutShippingAddressDto;
   notes: string;
   selectedShippingMethodId: string;
   commercial: Extract<CheckoutCommercialDto, { available: true }>;
@@ -48,6 +53,7 @@ export type CheckoutSaveResponseDto = {
 
 export function buildCheckoutSaveResponseDto(params: {
   customer: CheckoutCustomerDto;
+  shippingAddress: CheckoutShippingAddressDto;
   notes: string;
   selectedShippingMethodId: string;
   commercial: Extract<CheckoutCommercialDto, { available: true }>;
@@ -55,6 +61,7 @@ export function buildCheckoutSaveResponseDto(params: {
   return {
     ok: true,
     customer: params.customer,
+    shippingAddress: params.shippingAddress,
     notes: params.notes,
     selectedShippingMethodId: params.selectedShippingMethodId,
     commercial: params.commercial,

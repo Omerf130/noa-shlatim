@@ -21,6 +21,28 @@
   font-weight: 700;
 }
 
+.formSectionLead {
+  margin: 0 0 var(--space-4);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-text-muted, #6d5a4a);
+}
+
+.addressRow {
+  display: grid;
+  gap: var(--space-5);
+
+  @media (min-width: 36rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-danger, #b42318);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -53,6 +75,7 @@
   margin: 0;
   color: var(--color-danger, #b42318);
   font-size: 0.875rem;
+  white-space: pre-line;
 }
 
 .success {

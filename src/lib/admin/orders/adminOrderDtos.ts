@@ -29,7 +29,9 @@ import {
   adminOrderItemAssetApiPath,
   resolveAdminOrderArtworkThumbnailApiPath,
 } from "@/lib/admin/orders/adminOrderAssets";
+import type { ShippingAddress } from "@/lib/checkout/shippingAddressSchema";
 import { formatMinorToIlsDisplay } from "@/lib/money/ils";
+import { parsePersistedShippingAddress } from "@/lib/orders/formatShippingAddress";
 import type { IntegratedFinalPreviewConfig } from "@/components/builder/SignPreview/SignPreview";
 import type { SignDesignState } from "@/types/signDesign";
 import type { OrderStatus } from "@/models/Order";
@@ -164,6 +166,7 @@ export type AdminOrderDetailDto = {
     email: string | null;
   };
   customerNotes: string;
+  shippingAddress: ShippingAddress | null;
   productSummaryLabel: string | null;
   orderLines: AdminOrderLineDetailDto[];
   designPreview: AdminOrderDesignPreviewDto | null;
@@ -183,6 +186,7 @@ type OrderLeanForAdmin = {
   design?: unknown;
   items?: unknown;
   customer?: { fullName?: string; phone?: string; email?: string };
+  shippingAddress?: unknown;
   notes?: string;
   assets?: {
     originalImage?: unknown;
@@ -581,6 +585,7 @@ export async function buildAdminOrderDetailDto(
       email: order.customer?.email?.trim() || null,
     },
     customerNotes: order.notes?.trim() ?? "",
+    shippingAddress: parsePersistedShippingAddress(order.shippingAddress),
     productSummaryLabel: adminProductSummaryLabel(order),
     orderLines,
     designPreview,

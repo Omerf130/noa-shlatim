@@ -32,6 +32,7 @@ export type CheckoutOrderKind = "legacy" | "cart_items";
 
 export type CheckoutSourceOrder = OrderLikeForResolveItems & {
   customer?: { fullName?: string; phone?: string; email?: string };
+  shippingAddress?: unknown;
   notes?: string;
   checkoutSelection?: { shippingMethodId?: string };
   commercialSnapshot?: unknown;
@@ -53,6 +54,7 @@ export type AuthorizedCheckoutOrder = {
       finalArtwork?: { pathname: string; contentType: string; sizeBytes: number };
     };
     customer?: { fullName?: string; phone?: string; email?: string };
+    shippingAddress?: unknown;
     notes?: string;
     checkoutSelection?: { shippingMethodId?: string };
     commercialSnapshot?: OrderCommercialSnapshot | null;
@@ -173,6 +175,7 @@ export async function authorizeCheckoutAccess(
     assets: order.assets,
     items: order.items,
     customer: order.customer,
+    shippingAddress: order.shippingAddress,
     notes: order.notes,
     checkoutSelection: order.checkoutSelection,
     commercialSnapshot: order.commercialSnapshot,
@@ -191,6 +194,7 @@ export async function authorizeCheckoutAccess(
       design: first.design,
       assets: first.assets,
       customer: order.customer,
+      shippingAddress: order.shippingAddress,
       notes: order.notes,
       checkoutSelection: order.checkoutSelection,
       commercialSnapshot: order.commercialSnapshot ?? null,

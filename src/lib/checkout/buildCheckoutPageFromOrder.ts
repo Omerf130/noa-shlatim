@@ -12,6 +12,7 @@ import type {
   CheckoutLineItemDto,
   CheckoutPageDto,
 } from "@/lib/checkout/checkoutPageDto";
+import { parsePersistedShippingAddress } from "@/lib/orders/formatShippingAddress";
 import { formatCheckoutProductLabel } from "@/lib/checkout/formatProductLabelForCheckout";
 import {
   orderDesignSchema,
@@ -120,6 +121,7 @@ export async function buildCheckoutPageFromOrder(params: {
   orderId: string;
   order: OrderLikeForResolveItems & {
     customer?: { fullName?: string; phone?: string; email?: string } | null;
+    shippingAddress?: unknown;
     notes?: string | null;
     checkoutSelection?: { shippingMethodId?: string } | null;
     commercialSnapshot?: unknown;
@@ -133,6 +135,7 @@ export async function buildCheckoutPageFromOrder(params: {
     phone: params.order.customer?.phone ?? "",
     email: params.order.customer?.email ?? "",
   };
+  const shippingAddress = parsePersistedShippingAddress(params.order.shippingAddress);
 
   if (resolved.length === 0) {
     const commercial: CheckoutCommercialDto = {
@@ -144,6 +147,7 @@ export async function buildCheckoutPageFromOrder(params: {
       items: [],
       hasValidDesign: false,
       customer,
+      shippingAddress,
       notes: params.order.notes ?? "",
       commercial,
       canSaveCommercialCheckout: false,
@@ -220,6 +224,7 @@ export async function buildCheckoutPageFromOrder(params: {
     items,
     hasValidDesign,
     customer,
+    shippingAddress,
     notes: params.order.notes ?? "",
     commercial,
     canSaveCommercialCheckout,

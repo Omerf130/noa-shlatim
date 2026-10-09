@@ -1,6 +1,8 @@
 "use client";
 
 import type { CheckoutCommercialDto } from "@/lib/checkout/buildCheckoutCommercialView";
+import type { ShippingAddress } from "@/lib/checkout/shippingAddressSchema";
+import { formatShippingAddressBlock } from "@/lib/orders/formatShippingAddress";
 import { computeCheckoutTotals } from "@/lib/checkout/computeCheckoutTotals";
 import {
   CHECKOUT_SHIPPING_LINE_PENDING,
@@ -11,11 +13,26 @@ import styles from "./CheckoutOrderSummary.module.scss";
 type CheckoutOrderSummaryProps = {
   commercial: CheckoutCommercialDto;
   selectedShippingMethodId: string | null;
+  shippingAddress?: ShippingAddress | null;
 };
+
+function ShippingAddressSummaryBlock({
+  shippingAddress,
+}: {
+  shippingAddress: ShippingAddress;
+}) {
+  return (
+    <div className={styles.addressBlock}>
+      <h3 className={styles.addressTitle}>כתובת למשלוח</h3>
+      <p className={styles.addressText}>{formatShippingAddressBlock(shippingAddress)}</p>
+    </div>
+  );
+}
 
 export function CheckoutOrderSummary({
   commercial,
   selectedShippingMethodId,
+  shippingAddress,
 }: CheckoutOrderSummaryProps) {
   if (!commercial.available) {
     return null;
@@ -96,6 +113,9 @@ export function CheckoutOrderSummary({
             {summary.promotionMessage}
           </p>
         ) : null}
+        {shippingAddress ? (
+          <ShippingAddressSummaryBlock shippingAddress={shippingAddress} />
+        ) : null}
       </section>
     );
   }
@@ -138,6 +158,9 @@ export function CheckoutOrderSummary({
           </div>
         )}
       </dl>
+      {shippingAddress ? (
+        <ShippingAddressSummaryBlock shippingAddress={shippingAddress} />
+      ) : null}
     </section>
   );
 }

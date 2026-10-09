@@ -45,6 +45,8 @@ describe("checkout save-and-pay regression", () => {
     assert.match(form, /disabled=\{paymentBusy \|\| formDisabled\}/);
     assert.match(form, /CHECKOUT_TERMS_REQUIRED_MESSAGE/);
     assert.match(form, /CHECKOUT_SHIPPING_REQUIRED_MESSAGE/);
+    assert.match(form, /validateShippingAddressFields/);
+    assert.match(form, /shippingAddress/);
   });
 
   it("9: COMMERCIAL_TOTAL_CHANGED refreshes for reconfirmation", () => {

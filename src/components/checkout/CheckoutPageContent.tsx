@@ -5,7 +5,9 @@ import { CheckoutCustomerForm } from "@/components/checkout/CheckoutCustomerForm
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
 import { CheckoutProductItems } from "@/components/checkout/CheckoutProductItems";
 import type { CheckoutPageDto } from "@/lib/checkout/checkoutPageDto";
-import { useState } from "react";
+import type { ShippingAddressInput } from "@/lib/checkout/shippingAddressSchema";
+import { isCompleteShippingAddress } from "@/lib/checkout/shippingAddressSchema";
+import { useMemo, useState } from "react";
 import styles from "./CheckoutPageContent.module.scss";
 
 type CheckoutPageContentProps = {
@@ -23,6 +25,29 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<
     string | null
   >(initialShippingId);
+
+  const initialShippingPreview = useMemo((): ShippingAddressInput => {
+    if (dto.shippingAddress) {
+      return {
+        ...dto.shippingAddress,
+        floor: dto.shippingAddress.floor ?? "",
+      };
+    }
+    return {
+      city: "",
+      street: "",
+      houseNumber: "",
+      floor: "",
+      postalCode: "",
+    };
+  }, [dto.shippingAddress]);
+
+  const [shippingPreview, setShippingPreview] =
+    useState<ShippingAddressInput>(initialShippingPreview);
+
+  const shippingAddressSummary = isCompleteShippingAddress(shippingPreview)
+    ? shippingPreview
+    : null;
 
   const productSectionLabel =
     dto.items.length > 1 ? "סיכום השלטים" : "סיכום השלט";
@@ -46,6 +71,7 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
             <CheckoutOrderSummary
               commercial={dto.commercial}
               selectedShippingMethodId={selectedShippingMethodId}
+              shippingAddress={shippingAddressSummary}
             />
           </section>
 
@@ -59,7 +85,9 @@ export function CheckoutPageContent({ dto }: CheckoutPageContentProps) {
               canSaveCommercialCheckout={dto.canSaveCommercialCheckout}
               canInitiatePayment={dto.canInitiatePayment}
               initialSelectedShippingMethodId={initialShippingId}
+              initialShippingAddress={dto.shippingAddress}
               onShippingSelectionChange={setSelectedShippingMethodId}
+              onShippingAddressPreviewChange={setShippingPreview}
             />
           </section>
         </div>

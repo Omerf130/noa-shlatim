@@ -13,6 +13,7 @@ import {
   type PaymentAttemptRecord,
 } from "@/lib/orders/paymentAttemptStatus";
 import { validatePersistedCheckoutCustomer } from "@/lib/orders/validatePersistedCheckoutCustomer";
+import { validatePersistedShippingAddress } from "@/lib/orders/validatePersistedShippingAddress";
 import { buildPayPlusGenerateLinkRequest } from "@/lib/payplus/buildGenerateLinkRequest";
 import { getPayPlusConfig } from "@/lib/payplus/env";
 import {
@@ -32,6 +33,7 @@ export type OrderLeanForPayment = {
   assets?: unknown;
   items?: unknown;
   customer?: { fullName?: string; phone?: string; email?: string };
+  shippingAddress?: unknown;
   checkoutSelection?: { shippingMethodId?: string };
   commercialSnapshot?: unknown;
   termsAcceptance?: OrderTermsAcceptance | null;
@@ -255,6 +257,13 @@ export async function initiateOrderPayment(params: {
   }
 
   if (!validatePersistedCheckoutCustomer(params.order.customer)) {
+    return {
+      ok: false,
+      error: new OrderError("PAYMENT_NOT_READY", "Not ready", 400),
+    };
+  }
+
+  if (!validatePersistedShippingAddress(params.order.shippingAddress)) {
     return {
       ok: false,
       error: new OrderError("PAYMENT_NOT_READY", "Not ready", 400),

@@ -35,6 +35,26 @@
   font-weight: 600;
 }
 
+.addressBlock {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border, #e8e0d6);
+}
+
+.addressTitle {
+  margin: 0 0 var(--space-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.addressText {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  color: var(--color-text-muted, #6d5a4a);
+}
+
 .totalLine {
   padding-top: var(--space-3);
   border-top: 1px dashed var(--color-border, #e8e0d6);

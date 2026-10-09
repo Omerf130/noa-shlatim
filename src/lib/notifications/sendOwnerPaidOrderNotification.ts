@@ -8,6 +8,7 @@ import { buildOwnerPaidOrderEmail } from "@/lib/notifications/buildOwnerPaidOrde
 import { connectDb } from "@/lib/db/connect";
 import { parseOrderCommercialSnapshot } from "@/lib/orders/commercialSnapshotAccess";
 import type { PaymentAttemptRecord } from "@/lib/orders/paymentAttemptStatus";
+import { parsePersistedShippingAddress } from "@/lib/orders/formatShippingAddress";
 import { validatePersistedCheckoutCustomer } from "@/lib/orders/validatePersistedCheckoutCustomer";
 import { getResendNotificationConfig, type ResendNotificationConfig } from "@/lib/resend/env";
 import { adminOrderDetailUrl } from "@/lib/site/siteUrl";
@@ -67,6 +68,7 @@ type SendOwnerPaidOrderTestDeps = {
   loadPaidOrder?: (orderId: string) => Promise<{
     status: string;
     customer?: { fullName?: string; phone?: string; email?: string };
+    shippingAddress?: unknown;
     commercialSnapshot?: unknown;
     payment?: { attempts?: PaymentAttemptRecord[] };
   } | null>;
@@ -148,6 +150,7 @@ export async function sendOwnerPaidOrderNotification(params: {
       phone: order.customer!.phone!.trim(),
       email: order.customer!.email!.trim(),
     },
+    shippingAddress: parsePersistedShippingAddress(order.shippingAddress),
     snapshot: order.commercialSnapshot,
     paymentCompletedAtIso,
     adminOrderUrl,

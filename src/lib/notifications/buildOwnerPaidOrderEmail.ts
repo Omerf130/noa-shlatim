@@ -13,6 +13,8 @@ import {
   parseOrderCommercialSnapshot,
 } from "@/lib/orders/commercialSnapshotAccess";
 import type { OrderCommercialSnapshot } from "@/lib/orders/commercialSnapshot";
+import type { ShippingAddress } from "@/lib/checkout/shippingAddressSchema";
+import { formatShippingAddressBlock } from "@/lib/orders/formatShippingAddress";
 import {
   OWNER_PAID_ORDER_EMAIL_FROM,
   OWNER_PAID_ORDER_EMAIL_SUBJECT,
@@ -106,6 +108,7 @@ function formatPaidCommercialSummary(parsed: ReturnType<typeof parseOrderCommerc
 export function buildOwnerPaidOrderEmail(params: {
   orderId: string;
   customer: { fullName: string; phone: string; email: string };
+  shippingAddress?: ShippingAddress | null;
   snapshot: unknown;
   paymentCompletedAtIso: string;
   adminOrderUrl: string;
@@ -132,6 +135,16 @@ export function buildOwnerPaidOrderEmail(params: {
   const phone = escapeHtml(params.customer.phone.trim());
   const email = escapeHtml(params.customer.email.trim());
   const adminUrl = escapeHtml(params.adminOrderUrl);
+
+  const shippingBlock = params.shippingAddress
+    ? formatShippingAddressBlock(params.shippingAddress)
+    : null;
+  const shippingHtml = shippingBlock
+    ? `<tr><td style="padding:0 16px 14px;font-size:14px;white-space:pre-line;"><strong>כתובת למשלוח:</strong><br />${escapeHtml(shippingBlock)}</td></tr>`
+    : `<tr><td style="padding:0 16px 14px;font-size:14px;"><strong>כתובת למשלוח:</strong> לא הוזנה</td></tr>`;
+  const shippingText = shippingBlock
+    ? `כתובת למשלוח:\n${shippingBlock}`
+    : "כתובת למשלוח: לא הוזנה";
 
   const html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -167,6 +180,7 @@ export function buildOwnerPaidOrderEmail(params: {
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>לקוח:</strong> ${name}</td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>טלפון:</strong> <span dir="ltr">${phone}</span></td></tr>
                 <tr><td style="padding:0 16px 14px;font-size:14px;"><strong>אימייל:</strong> <span dir="ltr">${email}</span></td></tr>
+                ${shippingHtml}
                 <tr><td style="padding:0 16px 10px;font-size:14px;"><strong>פריטים:</strong></td></tr>
                 ${lineRows.htmlRows}
                 <tr><td style="padding:0 16px 10px;font-size:14px;"><strong>סיכום מחיר:</strong></td></tr>
@@ -206,6 +220,8 @@ export function buildOwnerPaidOrderEmail(params: {
     `לקוח: ${params.customer.fullName.trim()}`,
     `טלפון: ${params.customer.phone.trim()}`,
     `אימייל: ${params.customer.email.trim()}`,
+    "",
+    shippingText,
     "",
     "פריטים:",
     ...lineRows.textLines,

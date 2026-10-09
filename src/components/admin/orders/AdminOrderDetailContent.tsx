@@ -1,6 +1,7 @@
 "use client";
 
 import { AdminOrderAccountingSection } from "@/components/admin/orders/AdminOrderAccountingSection";
+import { AdminOrderShippingSection } from "@/components/admin/orders/AdminOrderShippingSection";
 import { AdminOrderPreview } from "@/components/admin/orders/AdminOrderPreview";
 import { AdminStatusBadge } from "@/components/admin/ui/AdminStatusBadge";
 import type {
@@ -281,6 +282,8 @@ export function AdminOrderDetailContent({ dto }: AdminOrderDetailContentProps) {
           </dl>
         </section>
       )}
+
+      <AdminOrderShippingSection shippingAddress={dto.shippingAddress} />
 
       <section className={styles.section} aria-labelledby="customer-heading">
         <h2 id="customer-heading" className={styles.sectionTitle}>

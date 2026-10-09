@@ -43,6 +43,46 @@ describe("buildOwnerPaidOrderEmail", () => {
     assert.ok(email.text.includes(adminOrderUrl));
   });
 
+  it("includes shipping address when provided and escapes HTML", () => {
+    const email = buildOwnerPaidOrderEmail({
+      orderId: "507f1f77bcf86cd799439011",
+      customer: {
+        fullName: "Test",
+        phone: "0501234567",
+        email: "a@b.com",
+      },
+      shippingAddress: {
+        city: "חיפה",
+        street: "הרצל",
+        houseNumber: "12א",
+        floor: "2",
+        postalCode: "0123456",
+      },
+      snapshot,
+      paymentCompletedAtIso: "2026-10-07T10:00:00.000Z",
+      adminOrderUrl: "https://www.noa-sign.co.il/admin/orders/x",
+    });
+    assert.match(email.html, /כתובת למשלוח/);
+    assert.match(email.html, /12א/);
+    assert.match(email.text, /0123456/);
+    assert.doesNotMatch(email.html, /<script/i);
+  });
+
+  it("handles missing shipping address safely", () => {
+    const email = buildOwnerPaidOrderEmail({
+      orderId: "507f1f77bcf86cd799439011",
+      customer: {
+        fullName: "Test",
+        phone: "0501234567",
+        email: "a@b.com",
+      },
+      snapshot,
+      paymentCompletedAtIso: "2026-10-07T10:00:00.000Z",
+      adminOrderUrl: "https://www.noa-sign.co.il/admin/orders/x",
+    });
+    assert.match(email.text, /לא הוזנה/);
+  });
+
   it("does not embed customer images or attachments", () => {
     const email = buildOwnerPaidOrderEmail({
       orderId: "507f1f77bcf86cd799439011",

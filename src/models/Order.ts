@@ -168,6 +168,13 @@ const orderSchema = new Schema(
       phone: { type: String, required: false },
       email: { type: String, required: false },
     },
+    shippingAddress: {
+      city: { type: String, required: false },
+      street: { type: String, required: false },
+      houseNumber: { type: String, required: false },
+      floor: { type: String, required: false },
+      postalCode: { type: String, required: false },
+    },
     notes: { type: String, required: false, default: "" },
     checkoutSelection: {
       shippingMethodId: { type: String, required: false },

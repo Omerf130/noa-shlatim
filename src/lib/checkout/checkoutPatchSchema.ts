@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { checkoutCustomerSchema, formatCheckoutValidationError } from "@/lib/checkout/customerSchema";
+import {
+  formatShippingAddressValidationError,
+  shippingAddressSchema,
+} from "@/lib/checkout/shippingAddressSchema";
 
 export const checkoutPatchSchema = checkoutCustomerSchema
   .extend({
     selectedShippingMethodId: z.string().trim().min(1).max(64),
+    shippingAddress: shippingAddressSchema,
   })
   .strict();
 
@@ -27,6 +32,9 @@ export function formatCheckoutPatchError(raw: unknown): string {
     const path = issue.path.join(".");
     if (path === "selectedShippingMethodId") {
       return "יש לבחור שיטת משלוח.";
+    }
+    if (path.startsWith("shippingAddress")) {
+      return formatShippingAddressValidationError(issue);
     }
     if (path.startsWith("customer") || path === "notes") {
       return formatCheckoutValidationError(issue);

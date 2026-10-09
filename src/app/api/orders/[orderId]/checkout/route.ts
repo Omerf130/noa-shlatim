@@ -80,6 +80,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       {
         $set: {
           customer: parsed.customer,
+          shippingAddress: {
+            city: parsed.shippingAddress.city,
+            street: parsed.shippingAddress.street,
+            houseNumber: parsed.shippingAddress.houseNumber,
+            ...(parsed.shippingAddress.floor
+              ? { floor: parsed.shippingAddress.floor }
+              : {}),
+            postalCode: parsed.shippingAddress.postalCode,
+          },
           notes: parsed.notes,
           checkoutSelection: {
             shippingMethodId: parsed.selectedShippingMethodId,
@@ -142,6 +151,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           phone: parsed.customer.phone,
           email: parsed.customer.email,
         },
+        shippingAddress: parsed.shippingAddress,
         notes: parsed.notes,
         selectedShippingMethodId: parsed.selectedShippingMethodId,
         commercial: commercialWithSummary,

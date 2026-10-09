@@ -137,6 +137,8 @@ describe("checkout UI wiring", () => {
       "utf8",
     );
     assert.match(form, /CheckoutShippingSelector/);
+    assert.match(form, /כתובת למשלוח/);
+    assert.match(form, /shippingAddress/);
     assert.ok((form.match(/checkout-terms-accepted/g) ?? []).length >= 1);
   });
 });
