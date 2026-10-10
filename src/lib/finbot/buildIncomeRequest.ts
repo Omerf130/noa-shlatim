@@ -27,11 +27,54 @@ export type FinbotIncomeRequestBody = {
     type: string;
     date: string;
     sum: number;
-    cardNumber: string;
+    cardNumber: number;
     numberPayments: number;
     transactionNumber: string;
   }>;
 };
+
+const PAYPLUS_LAST_FOUR_DIGITS = /^\d{4}$/;
+
+export class FinbotIncomeRequestBuildError extends Error {
+  readonly code: string;
+
+  constructor(message: string, code: string) {
+    super(message);
+    this.name = "FinbotIncomeRequestBuildError";
+    this.code = code;
+  }
+}
+
+/**
+ * Maps PayPlus last-four (stored as string) to Finbot `payments.cardNumber` (JSON number).
+ * Finbot docs: https://finbot.helpjuice.com/he_IL/E-INT-PRC/api-docs-create-income
+ */
+export function finbotCardNumberFromPayPlusLastFour(lastFourDigits: string): number {
+  const trimmed = lastFourDigits.trim();
+  if (!PAYPLUS_LAST_FOUR_DIGITS.test(trimmed)) {
+    throw new FinbotIncomeRequestBuildError(
+      "4 ספרות אחרונות של כרטיס אינן תקינות להפקת מסמך.",
+      "INVALID_CARD_LAST_FOUR",
+    );
+  }
+
+  if (trimmed.startsWith("0")) {
+    throw new FinbotIncomeRequestBuildError(
+      "לא ניתן למפות ל-Finbot 4 ספרות שמתחילות ב-0: Finbot דורש מספר JSON, ואפס מוביל אינו נשמר. יש לפנות ל-Finbot לאישור הפורמט.",
+      "FINBOT_CARD_LEADING_ZERO",
+    );
+  }
+
+  const asNumber = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(asNumber) || String(asNumber) !== trimmed) {
+    throw new FinbotIncomeRequestBuildError(
+      "4 ספרות אחרונות של כרטיס אינן תקינות להפקת מסמך.",
+      "INVALID_CARD_LAST_FOUR",
+    );
+  }
+
+  return asNumber;
+}
 
 export function formatFinbotDocumentDateFromIso(iso: string): string {
   const d = new Date(iso);
@@ -78,7 +121,9 @@ export function buildFinbotIncomeRequest(params: {
         type: "2",
         date: docDate,
         sum: finbotPaymentSumIlsFromSnapshot(params.snapshot),
-        cardNumber: params.card.payplusCardLastFourDigits,
+        cardNumber: finbotCardNumberFromPayPlusLastFour(
+          params.card.payplusCardLastFourDigits,
+        ),
         numberPayments: params.card.payplusNumberOfPayments,
         transactionNumber: params.payplusTransactionUid,
       },

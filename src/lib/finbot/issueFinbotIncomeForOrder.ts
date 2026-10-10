@@ -1,5 +1,8 @@
 import { connectDb } from "@/lib/db/connect";
-import { buildFinbotIncomeRequest } from "@/lib/finbot/buildIncomeRequest";
+import {
+  buildFinbotIncomeRequest,
+  FinbotIncomeRequestBuildError,
+} from "@/lib/finbot/buildIncomeRequest";
 import { createFinbotIncomeDocument, type FinbotFetchFn } from "@/lib/finbot/createIncomeDocument";
 import {
   claimAccountingIssuance,
@@ -168,7 +171,10 @@ export async function issueFinbotIncomeForOrder(params: {
       payplusTransactionUid,
       paymentCompletedAtIso: completedAt,
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof FinbotIncomeRequestBuildError) {
+      return failAccounting(err.message, err.code);
+    }
     return failAccounting("שגיאה בהכנת נתוני המסמך.", "BUILD_REQUEST");
   }
 

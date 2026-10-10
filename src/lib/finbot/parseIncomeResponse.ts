@@ -68,39 +68,64 @@ function extractDocumentUrl(body: Record<string, unknown>): string | null {
   return null;
 }
 
+function finbotErrorEntries(body: Record<string, unknown>): unknown[] {
+  const errors = body.errors ?? body.error;
+  if (Array.isArray(errors)) {
+    return errors;
+  }
+  return [];
+}
+
+function formatFinbotErrorEntry(entry: unknown): string | null {
+  if (typeof entry === "string" && entry.trim()) {
+    return entry.trim();
+  }
+  if (typeof entry !== "object" || entry === null) {
+    return null;
+  }
+  const row = entry as Record<string, unknown>;
+  const fieldRaw =
+    row.field ?? row.fieldName ?? row.name ?? row.key ?? row.param ?? row.parameter;
+  const textRaw = row.text ?? row.message ?? row.error;
+  const codeRaw = row.code ?? row.number ?? row.errorCode;
+
+  const parts: string[] = [];
+  if (typeof fieldRaw === "string" && fieldRaw.trim()) {
+    parts.push(fieldRaw.trim());
+  }
+  if (codeRaw !== undefined && codeRaw !== null && String(codeRaw).trim()) {
+    parts.push(String(codeRaw).trim());
+  }
+  if (typeof textRaw === "string" && textRaw.trim()) {
+    parts.push(textRaw.trim());
+  }
+  return parts.length > 0 ? parts.join(": ") : null;
+}
+
 function extractErrorMessage(body: Record<string, unknown>): string {
   const message = typeof body.message === "string" ? body.message.trim() : "";
-  const errors = body.errors ?? body.error;
-  if (Array.isArray(errors) && errors.length > 0) {
-    const first = errors[0];
-    if (typeof first === "object" && first !== null) {
-      const text = (first as Record<string, unknown>).text ?? (first as Record<string, unknown>).message;
-      const code = (first as Record<string, unknown>).code ?? (first as Record<string, unknown>).number;
-      const parts: string[] = [];
-      if (code !== undefined && code !== null) {
-        parts.push(String(code));
-      }
-      if (typeof text === "string" && text.trim()) {
-        parts.push(text.trim());
-      }
-      if (parts.length) {
-        return parts.join(": ");
-      }
-    }
+  const formatted = finbotErrorEntries(body)
+    .map(formatFinbotErrorEntry)
+    .filter((line): line is string => Boolean(line));
+  if (formatted.length > 0) {
+    return formatted.join(" | ");
   }
   return message || "שגיאה בהפקת המסמך";
 }
 
 function extractErrorCode(body: Record<string, unknown>): string | null {
-  const errors = body.errors ?? body.error;
-  if (Array.isArray(errors) && errors.length > 0) {
-    const first = errors[0];
-    if (typeof first === "object" && first !== null) {
-      const code = (first as Record<string, unknown>).code ?? (first as Record<string, unknown>).number;
-      if (code !== undefined && code !== null) {
-        return String(code);
-      }
+  const codes: string[] = [];
+  for (const entry of finbotErrorEntries(body)) {
+    if (typeof entry !== "object" || entry === null) {
+      continue;
     }
+    const code = (entry as Record<string, unknown>).code ?? (entry as Record<string, unknown>).number;
+    if (code !== undefined && code !== null && String(code).trim()) {
+      codes.push(String(code).trim());
+    }
+  }
+  if (codes.length > 0) {
+    return codes.join(",");
   }
   return null;
 }

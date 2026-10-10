@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   adminOrderStatusLabel,
+  buildAdminOrderAccountingDocumentDto,
   buildAdminOrderListItemDto,
   buildAdminOrderPaymentSummaryDto,
 } from "@/lib/admin/orders/adminOrderDtos";
@@ -98,5 +99,51 @@ describe("admin order DTOs — payment visibility", () => {
     assert.equal(summary!.payplusTransactionUid, "tx-uid-123");
     assert.equal(summary!.termsVersion, "2026-10-v2");
     assert.equal(JSON.stringify(summary).includes("paymentPageLink"), false);
+  });
+});
+
+describe("admin order DTOs — accounting document retry", () => {
+  const paidOrderBase = {
+    _id: { toString: () => "507f1f77bcf86cd799439011" },
+    status: "paid" as const,
+    creationMode: "photo" as const,
+    design: {},
+  };
+
+  it("failed accounting status allows Admin retry", () => {
+    const dto = buildAdminOrderAccountingDocumentDto({
+      ...paidOrderBase,
+      accountingDocument: {
+        status: "failed",
+        errorMessage: "cardNumber: 412: invalid",
+      },
+    });
+    assert.ok(dto);
+    assert.equal(dto!.statusKey, "failed");
+    assert.equal(dto!.canRetry, true);
+    assert.match(dto!.errorMessage ?? "", /412/);
+  });
+
+  it("uncertain accounting status does not allow blind retry", () => {
+    const dto = buildAdminOrderAccountingDocumentDto({
+      ...paidOrderBase,
+      accountingDocument: {
+        status: "uncertain",
+      },
+    });
+    assert.ok(dto);
+    assert.equal(dto!.canRetry, false);
+  });
+
+  it("issued accounting status does not allow retry", () => {
+    const dto = buildAdminOrderAccountingDocumentDto({
+      ...paidOrderBase,
+      accountingDocument: {
+        status: "issued",
+        documentUrl: "https://finbot.example/doc",
+      },
+    });
+    assert.ok(dto);
+    assert.equal(dto!.canRetry, false);
   });
 });
